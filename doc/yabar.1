@@ -1,0 +1,228 @@
+.TH Yabar
+.SH NAME
+Yabar \- a modern and lightweight status bar for X window managers.
+
+.SH SYNOPSIS
+.PP
+yabar [-c CONFIG_FILE] [-v] [-h]
+
+.SH DESCRIPTION
+.PP
+Yabar is a modern and lightweight status bar that is intended to be used along with minimal X window managers like \fB\fCbspwm\fR and \fB\fCi3\fR\&. Yabar has the following features:
+.IP \(bu 2
+Simple configuration using a single config file based on libconfig syntax.
+.IP \(bu 2
+Pango font rendering with support of pango markup language (Xft may be supported in the future).
+.IP \(bu 2
+Support for transparency (Yabar currently uses a hard\-coded depth of 32).
+.IP \(bu 2
+Multiple bars within the same session.
+
+.PP
+\fBWarning\fP: Yabar is still in its infancy and far from being mature. Feel free to contribute or report bugs!
+
+.SH TERMINOLOGY
+.PP
+A Yabar session should contain one or more \fIbars\fP within the same session. Each bar should contain one or more \fIblocks\fP\&. Each block should display some useful info to the user (free memory, CPU temperature, etc...).
+
+.SH CONFIGURATION
+.PP
+Yabar currently by default accepts configuration from the config file \fB\fC\~/.config/yabar/yabar.conf\fR or using \fB\fCyabar \-c [CONFIG\_FILE]\fR\&. The config file should like something like this:
+
+.PP
+.RS
+
+.nf
+bar\-list: ["bar1", "bar2", ...];
+
+bar1: {
+    \\\\bar specific options\\\\
+    block\-list: ["block1", "block2", ...];
+    block1: {
+        \\\\block specific options\\\\
+    }
+    block2: {
+        \\\\block specific options\\\\
+    }
+}
+
+.fi
+.RE
+
+.PP
+A bar or a block can be named to whatever name (preferably a short and meaningful name). Only names that are included in the "bar\-list" and "block\-list" entries will be drawn on the screen.
+
+.SS BAR\-SPECIFIC OPTIONS
+.PP
+Each bar can have its font, position (currently only top and bottom), background color, height, horizontal and vertical gaps, and other options.
+.IP \(bu 2
+Font: Yabar currently accepts a string that contains a font or a list of fonts (similar to i3). Example:
+.PP
+.RS
+
+.nf
+font: "Droid Sans, FontAwesome Bold 9";
+
+.fi
+.RE
+.IP \(bu 2
+Position: Yabar currently accepts top and bottom. Example:
+.PP
+.RS
+
+.nf
+position: "top";
+
+.fi
+.RE
+.IP \(bu 2
+Gaps: You can define the size of horizontal and vertical gaps in pixels. Default is zero. Examples:
+.PP
+.RS
+
+.nf
+gap\-horizontal: 20;
+gap\-vertical: 5;
+
+.fi
+.RE
+.IP \(bu 2
+Height: Default is 20 pixels. Example:
+.PP
+.RS
+
+.nf
+height: 25;
+
+.fi
+.RE
+.IP \(bu 2
+Underline and overline sizes: This option defines the thickness
+of underlines and overlines. Default is 0. Example:
+.PP
+.RS
+
+.nf
+underline\-size: 2;
+overline\-size: 2;
+
+.fi
+.RE
+.IP \(bu 2
+Slack: You can define the size of the slack (i.e. the unused space between blocks). Default is 0. Example:
+.PP
+.RS
+
+.nf
+slack: 2;
+
+.fi
+.RE
+
+.SS BLOCK\-SPECIFIC OPTIONS
+.PP
+Each block can have its command/script, background, foreground (i.e. font), underline and overline colors, alignment and other options.
+.IP \(bu 2
+Execution: the path to the command/script to be executed. Yabar consumes the output of the command/script's stdout and shows it on the bar. Example:
+.PP
+.RS
+
+.nf
+exec: "date";
+
+.fi
+.RE
+.IP \(bu 2
+Alignment: Yabar accepts \fIleft\fP, \fIcenter\fP or \fIright\fP alignments. consecutive blocks will be placed to the right of each other. Example:
+.PP
+.RS
+
+.nf
+align: "right";
+
+.fi
+.RE
+.IP \(bu 2
+Type: The block type can be \fIperiodic\fP where the command/script is executed within a fixed interval of time, \fIpersistent\fP where the command/script runs in a persistent way like \fB\fCxtitle\fR or \fIonce\fP where the command/script is executed only once where the intended info should not change like in \fB\fCwhoami\fR\&. Examples:
+.PP
+.RS
+
+.nf
+type: "periodic";
+type: "persist";
+type: "once";
+
+.fi
+.RE
+.IP \(bu 2
+Interval: In seconds. This is only useful when the type is periodic. Example:
+.PP
+.RS
+
+.nf
+interval: 3;
+
+.fi
+.RE
+.IP \(bu 2
+Fixed size: You should define the fixed width size of the block. Yabar currently only supports fixed widths (this will be improved soon). You can know the relevant width using trial and error.
+.PP
+.RS
+
+.nf
+fixed\-size: 80;
+
+.fi
+.RE
+.IP \(bu 2
+Pango markup: Yabar accepts either true or false without quotes. Default is false. Example:
+.PP
+.RS
+
+.nf
+pango\-markup: true;
+
+.fi
+.RE
+.IP \(bu 2
+Colors: A block has 4 kinds of colors. Background, foreground which is the font color when pango markup is not used, underline and overline. Colors are accepted in hex RRGGBB and AARRGGBB representations. Examples:
+.PP
+.RS
+
+.nf
+foreground\-color\-rgb    : 0xeeeeee;
+background\-color\-argb   : 0x1dc93582;
+underline\-color\-rgb     : 0x1d1d1d;
+overline\-color\-argb     : 0xf0642356;
+
+.fi
+.RE
+
+.PP
+Note that the values are integers and not double\-quoted strings.
+.IP \(bu 2
+Pointer commands: invoke a command/script upon a mouse button pressing. You have 5 buttons that are usually represent left click, right click, middle click, scroll up and scroll down respectively but this may not be the case for everyone. Examples:
+.PP
+.RS
+
+.nf
+command\-button1: "pavucontrol";
+command\-button4: "pactl set\-sink\-volume 0 +10%";
+command\-button5: "pactl set\-sink\-volume 0 \-10%";
+
+.fi
+.RE
+
+.SH TODO
+.PP
+There is a lot to do, but among the most important things:
+.IP \(bu 2
+RandR support.
+.IP \(bu 2
+Automatic size of blocks.
+.IP \(bu 2
+Internal blocks.
+
+.SH AUTHOR
+.PP
+George Badawi <geommer at gmail.com>
