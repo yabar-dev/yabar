@@ -115,7 +115,7 @@ Each block can have its command/script, background, foreground (i.e. font), unde
 
     Note that the values are integers and not double-quoted strings.
 
-* Pointer commands: This option is used to invoke a command/script upon a mouse button pressing. You have 5 buttons that are usually represent left click, right click, middle click, scroll up and scroll down respectively but this may not be the case for everyone. Examples:
+* Pointer commands: This option is used to invoke a command/script upon a mouse button press. You have 5 buttons that usually represent left click, right click, middle click, scroll up and scroll down respectively but this may not be the case for everyone. Examples:
 
         command-button1: "pavucontrol";
         command-button4: "pactl set-sink-volume 0 +10%";
