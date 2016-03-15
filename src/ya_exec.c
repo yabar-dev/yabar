@@ -14,88 +14,86 @@ static const char * const yashell = "/bin/sh";
 static void ya_exec_redir_once(ya_block_t *blk) {
 	int opipe[2];
 	pipe(opipe);
-    if (fork() == 0) {
-	    dup2(opipe[1], STDOUT_FILENO);
-	    close(opipe[1]);
-	    setvbuf(stdout,NULL,_IONBF,0);
+	if (fork() == 0) {
+		dup2(opipe[1], STDOUT_FILENO);
+		close(opipe[1]);
+		setvbuf(stdout,NULL,_IONBF,0);
 
-	    execl(yashell, yashell, "-c", blk->cmd, (char *) NULL);
-	    exit(EXIT_SUCCESS);
+		execl(yashell, yashell, "-c", blk->cmd, (char *) NULL);
+		exit(EXIT_SUCCESS);
 	}
-    else {
-	    wait(NULL);
+	else {
+		wait(NULL);
 		if (read(opipe[0], blk->buf, BUFSIZE) != 0) {
-            ya_draw_pango_text(blk);
-        }
-    }
-
+			ya_draw_pango_text(blk);
+		}
+	}
 }
 
 
 static void ya_exec_redir_period(ya_block_t *blk) {
 	int opipe[2];
 	pipe(opipe);
-    while (1) {
-        if (fork() == 0) {
-	        dup2(opipe[1], STDOUT_FILENO);
-	        close(opipe[1]);
-	        setvbuf(stdout,NULL,_IONBF,0);
+	while (1) {
+		if (fork() == 0) {
+			dup2(opipe[1], STDOUT_FILENO);
+			close(opipe[1]);
+			setvbuf(stdout,NULL,_IONBF,0);
 
-	        execl(yashell, yashell, "-c", blk->cmd, (char *) NULL);
-	        exit(EXIT_SUCCESS);
-	    }
+			execl(yashell, yashell, "-c", blk->cmd, (char *) NULL);
+			exit(EXIT_SUCCESS);
+		}
 		//close(opipe[1]);
 		wait(NULL);
 		if (read(opipe[0], blk->buf, BUFSIZE) != 0) {
-            ya_draw_pango_text(blk);
-            memset(blk->buf, '\0', BUFSIZE);
-        }
-        sleep(blk->sleep);
-    }
-
+			ya_draw_pango_text(blk);
+			memset(blk->buf, '\0', BUFSIZE);
+		}
+		sleep(blk->sleep);
+	}
 }
 
 static void ya_exec_redir_persist(ya_block_t *blk) {
 	int opipe[2];
 	pipe(opipe);
-    if (fork() == 0) {
-	    dup2(opipe[1], STDOUT_FILENO);
-	    close(opipe[1]);
-	    setvbuf(stdout,NULL,_IONBF,0);
+	if (fork() == 0) {
+		dup2(opipe[1], STDOUT_FILENO);
+		close(opipe[1]);
+		setvbuf(stdout,NULL,_IONBF,0);
 
-	    execl(yashell, yashell, "-c", blk->cmd, (char *) NULL);
-	    _exit(EXIT_SUCCESS);
+		execl(yashell, yashell, "-c", blk->cmd, (char *) NULL);
+		_exit(EXIT_SUCCESS);
 	}
 	close(opipe[1]);
 	while (read(opipe[0], blk->buf, BUFSIZE) != 0) {
-        ya_draw_pango_text(blk);
-        memset(blk->buf, '\0', BUFSIZE);
-    }
+		ya_draw_pango_text(blk);
+		memset(blk->buf, '\0', BUFSIZE);
+	}
 }
 
 void * ya_exec_l (void * _blk) {
-    ya_block_t *blk = (ya_block_t *) _blk;
-    if (blk->type & BLKA_EXTERNAL) {
-        if (blk->type & BLKA_PERIODIC) {
-            ya_exec_redir_period(blk);
-        }
-        else if (blk->type & BLKA_PERSIST) {
-            ya_exec_redir_persist(blk);
-        }
-        else if (blk->type & BLKA_ONCE) {
-            ya_exec_redir_once(blk);
-        }
-        /*Shouldn't get here*/
-        else {
-        }
-    }
-    else if (blk->type & BLKA_INTERNAL) {
-        /*TODO*/
-    }
-    /*Shouldn't get here*/
-    else {
-    }
-    return NULL;
+	ya_block_t *blk = (ya_block_t *) _blk;
+	if (blk->type & BLKA_EXTERNAL) {
+		if (blk->type & BLKA_PERIODIC) {
+			ya_exec_redir_period(blk);
+		}
+		else if (blk->type & BLKA_PERSIST) {
+			ya_exec_redir_persist(blk);
+		}
+		else if (blk->type & BLKA_ONCE) {
+			ya_exec_redir_once(blk);
+		}
+		/*Shouldn't get here*/
+		else {
+		}
+	}
+	else if (blk->type & BLKA_INTERNAL) {
+		/*TODO*/
+	}
+	/*Shouldn't get here*/
+	else {
+	}
+	return NULL;
 }
 
 
@@ -222,8 +220,10 @@ void ya_setup_bar(config_setting_t * set) {
 	}
 	ya_create_bar(bar);
 }
+
 #define YA_RESERVED_NUM 1
 char *ya_reserved_blocks[YA_RESERVED_NUM]={"ya_time"};
+
 void ya_setup_block(config_setting_t * set, uint32_t type_init) {
 	struct ya_block * blk = calloc(1,sizeof(ya_block_t));
 	int retcnf, retint;
@@ -235,15 +235,15 @@ void ya_setup_block(config_setting_t * set, uint32_t type_init) {
 		return;
 	}
 	else {
-	    int len = strlen(retstr);
-	    if (len) {
-		    blk->cmd = malloc(len);
-		    strcpy(blk->cmd, retstr);
-        }
-        else {
-            free(blk);
-            return;
-        }
+		int len = strlen(retstr);
+		if (len) {
+			blk->cmd = malloc(len);
+			strcpy(blk->cmd, retstr);
+		}
+		else {
+			free(blk);
+			return;
+		}
 	}
 	retcnf = config_setting_lookup_string(set, "command-button1", &retstr);
 	if(retcnf == CONFIG_TRUE) {
@@ -441,42 +441,42 @@ void ya_execute() {
 
 void ya_exec_cmd(char * cmd) {
 	if (fork() == 0) {
-	    execl(yashell, yashell, "-c", cmd, (char *) NULL);
-	    _exit(EXIT_SUCCESS);
-    }
-    else
-        wait(NULL);
+		execl(yashell, yashell, "-c", cmd, (char *) NULL);
+		_exit(EXIT_SUCCESS);
+	}
+	else
+		wait(NULL);
 }
 
 
 void ya_process_path(char *cpath) {
-    struct stat st;
-    if (stat(cpath, &st)==0) {
-        strncpy(conf_file, cpath, CFILELEN);
-        ya.gen_flag |= GEN_EXT_CONF;
-    }
-    else {
-        printf("Invalid config file path.\nExiting...\n");
-        exit(EXIT_SUCCESS);
-    }
+	struct stat st;
+	if (stat(cpath, &st)==0) {
+		strncpy(conf_file, cpath, CFILELEN);
+		ya.gen_flag |= GEN_EXT_CONF;
+	}
+	else {
+		printf("Invalid config file path.\nExiting...\n");
+		exit(EXIT_SUCCESS);
+	}
 }
 
 void ya_process_opt(int argc, char *argv[]) {
-    char opt;
+	char opt;
 
-    while ((opt = getopt(argc, argv, "cvh")) != (char)-1) {
-        switch (opt) {
-            case 'c':
-                ya_process_path(*(argv+2));
-                break;
-            case 'h':
-                printf("Usage: yabar [-c CONFIG_FILE] [-h] [-v]\n");
-                exit(EXIT_SUCCESS);
-            case 'v':
-                printf ("%s\n", "0.1.0-alpha");
-                exit(EXIT_SUCCESS);
-            default:
-                break;
-        }
-    }
+	while ((opt = getopt(argc, argv, "cvh")) != (char)-1) {
+		switch (opt) {
+			case 'c':
+				ya_process_path(*(argv+2));
+				break;
+			case 'h':
+				printf("Usage: yabar [-c CONFIG_FILE] [-h] [-v]\n");
+				exit(EXIT_SUCCESS);
+			case 'v':
+				printf ("%s\n", "0.1.0-alpha");
+				exit(EXIT_SUCCESS);
+			default:
+				break;
+		}
+	}
 }

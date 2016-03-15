@@ -129,7 +129,7 @@ struct ya_bar {
 typedef struct ya_bar ya_bar_t;
 
 enum {
-    GEN_EXT_CONF = 1 << 0
+	GEN_EXT_CONF = 1 << 0
 };
 
 struct yabar_gen_info {

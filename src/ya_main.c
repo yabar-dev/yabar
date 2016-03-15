@@ -12,9 +12,7 @@
 yabar_info_t ya;
 
 int main (int argc, char * argv[]) {
-    
-
-    ya_process_opt(argc, argv);
+	ya_process_opt(argc, argv);
 	ya_init();
 	ya_execute();
 
@@ -37,7 +35,7 @@ int main (int argc, char * argv[]) {
 		}
 		free(ev);
 	}
-    //shouldn't get here
+	//shouldn't get here
 	xcb_disconnect(ya.c);
 }
 

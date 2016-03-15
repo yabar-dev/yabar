@@ -97,8 +97,8 @@ int ya_create_bar(ya_bar_t * bar) {
 xcb_visualtype_t * ya_get_visualtype() {
 	xcb_depth_iterator_t depth_iter;
 	xcb_visualtype_t *vist;
-    depth_iter = xcb_screen_allowed_depths_iterator (ya.scr);
-    for (; depth_iter.rem; xcb_depth_next (&depth_iter)) {
+	depth_iter = xcb_screen_allowed_depths_iterator (ya.scr);
+	for (; depth_iter.rem; xcb_depth_next (&depth_iter)) {
 		xcb_visualtype_iterator_t visual_iter;
 		visual_iter = xcb_depth_visuals_iterator (depth_iter.data);
 		for (; visual_iter.rem; xcb_visualtype_next (&visual_iter)) {
@@ -106,7 +106,6 @@ xcb_visualtype_t * ya_get_visualtype() {
 		}
 	}
 	return vist;
-
 }
 
 void ya_draw_pango_text(struct ya_block *blk) {
@@ -174,66 +173,65 @@ void ya_draw_pango_text(struct ya_block *blk) {
 
 
 enum {
-    NET_WM_WINDOW_TYPE,
-    NET_WM_WINDOW_TYPE_DOCK,
-    NET_WM_DESKTOP,
-    NET_WM_STRUT_PARTIAL,
-    NET_WM_STRUT,
-    NET_WM_STATE,
-    NET_WM_STATE_STICKY,
-    NET_WM_STATE_ABOVE,
+	NET_WM_WINDOW_TYPE,
+	NET_WM_WINDOW_TYPE_DOCK,
+	NET_WM_DESKTOP,
+	NET_WM_STRUT_PARTIAL,
+	NET_WM_STRUT,
+	NET_WM_STATE,
+	NET_WM_STATE_STICKY,
+	NET_WM_STATE_ABOVE,
 };
 
 void ya_setup_ewmh(ya_bar_t *bar) {
-    // I really hope I understood this from lemonbar code :| 
-    const char *atom_names[] = {
-        "_NET_WM_WINDOW_TYPE",
-        "_NET_WM_WINDOW_TYPE_DOCK",
-        "_NET_WM_DESKTOP",
-        "_NET_WM_STRUT_PARTIAL",
-        "_NET_WM_STRUT",
-        "_NET_WM_STATE",
-        "_NET_WM_STATE_STICKY",
-        "_NET_WM_STATE_ABOVE",
-    };
-    const int atoms = sizeof(atom_names)/sizeof(char *);
-    xcb_intern_atom_cookie_t atom_cookie[atoms];
-    xcb_atom_t atom_list[atoms];
-    xcb_intern_atom_reply_t *atom_reply;
+	// I really hope I understood this correctly from lemonbar code :| 
+	const char *atom_names[] = {
+		"_NET_WM_WINDOW_TYPE",
+		"_NET_WM_WINDOW_TYPE_DOCK",
+		"_NET_WM_DESKTOP",
+		"_NET_WM_STRUT_PARTIAL",
+		"_NET_WM_STRUT",
+		"_NET_WM_STATE",
+		"_NET_WM_STATE_STICKY",
+		"_NET_WM_STATE_ABOVE",
+	};
+	const int atoms = sizeof(atom_names)/sizeof(char *);
+	xcb_intern_atom_cookie_t atom_cookie[atoms];
+	xcb_atom_t atom_list[atoms];
+	xcb_intern_atom_reply_t *atom_reply;
+	for (int i = 0; i < atoms; i++)
+		atom_cookie[i] = xcb_intern_atom(ya.c, 0, strlen(atom_names[i]), atom_names[i]);
 
-    for (int i = 0; i < atoms; i++)
-        atom_cookie[i] = xcb_intern_atom(ya.c, 0, strlen(atom_names[i]), atom_names[i]);
+	for (int i = 0; i < atoms; i++) {
+		atom_reply = xcb_intern_atom_reply(ya.c, atom_cookie[i], NULL);
+		if (!atom_reply)
+			return;
+		atom_list[i] = atom_reply->atom;
+		free(atom_reply);
+	}
 
-    for (int i = 0; i < atoms; i++) {
-        atom_reply = xcb_intern_atom_reply(ya.c, atom_cookie[i], NULL);
-        if (!atom_reply)
-            return;
-        atom_list[i] = atom_reply->atom;
-        free(atom_reply);
-    }
+	int strut[12];
 
-    int strut[12];
+	if (bar->position == YA_TOP) {
+		strut[2] = bar->height;
+		strut[8] = bar->hgap;
+		strut[9] = bar->hgap + bar->width;
+	}
+	else if (bar->position == YA_BOTTOM) {
+		strut[3] = bar->height;
+		strut[10] = bar->hgap;
+		strut[11] = bar->hgap + bar->width;
+	}
+	else {
+	//TODO right and left bars if implemented.
+	}
 
-    if (bar->position == YA_TOP) {
-        strut[2] = bar->height;
-        strut[8] = bar->hgap;
-        strut[9] = bar->hgap + bar->width;
-    }
-    else if (bar->position == YA_BOTTOM) {
-        strut[3] = bar->height;
-        strut[10] = bar->hgap;
-        strut[11] = bar->hgap + bar->width;
-    }
-    else {
-    //TODO right and left bars if implemented.
-    }
-
-    xcb_change_property(ya.c, XCB_PROP_MODE_REPLACE, bar->win, atom_list[NET_WM_WINDOW_TYPE], XCB_ATOM_ATOM, 32, 1, &atom_list[NET_WM_WINDOW_TYPE_DOCK]);
-    xcb_change_property(ya.c, XCB_PROP_MODE_APPEND,  bar->win, atom_list[NET_WM_STATE], XCB_ATOM_ATOM, 32, 2, &atom_list[NET_WM_STATE_STICKY]);
-    xcb_change_property(ya.c, XCB_PROP_MODE_REPLACE, bar->win, atom_list[NET_WM_DESKTOP], XCB_ATOM_CARDINAL, 32, 1, (const uint32_t []){ -1 } );
-    xcb_change_property(ya.c, XCB_PROP_MODE_REPLACE, bar->win, atom_list[NET_WM_STRUT_PARTIAL], XCB_ATOM_CARDINAL, 32, 12, strut);
-    xcb_change_property(ya.c, XCB_PROP_MODE_REPLACE, bar->win, atom_list[NET_WM_STRUT], XCB_ATOM_CARDINAL, 32, 4, strut);
-    xcb_change_property(ya.c, XCB_PROP_MODE_REPLACE, bar->win, XCB_ATOM_WM_NAME, XCB_ATOM_STRING, 8, strlen("Yabar"), "Yabar");
+	xcb_change_property(ya.c, XCB_PROP_MODE_REPLACE, bar->win, atom_list[NET_WM_WINDOW_TYPE], XCB_ATOM_ATOM, 32, 1, &atom_list[NET_WM_WINDOW_TYPE_DOCK]);
+	xcb_change_property(ya.c, XCB_PROP_MODE_APPEND,  bar->win, atom_list[NET_WM_STATE], XCB_ATOM_ATOM, 32, 2, &atom_list[NET_WM_STATE_STICKY]);
+	xcb_change_property(ya.c, XCB_PROP_MODE_REPLACE, bar->win, atom_list[NET_WM_DESKTOP], XCB_ATOM_CARDINAL, 32, 1, (const uint32_t []){ -1 } );
+	xcb_change_property(ya.c, XCB_PROP_MODE_REPLACE, bar->win, atom_list[NET_WM_STRUT_PARTIAL], XCB_ATOM_CARDINAL, 32, 12, strut);
+	xcb_change_property(ya.c, XCB_PROP_MODE_REPLACE, bar->win, atom_list[NET_WM_STRUT], XCB_ATOM_CARDINAL, 32, 4, strut);
+	xcb_change_property(ya.c, XCB_PROP_MODE_REPLACE, bar->win, XCB_ATOM_WM_NAME, XCB_ATOM_STRING, 8, strlen("Yabar"), "Yabar");
 }
 
 
