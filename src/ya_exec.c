@@ -297,7 +297,7 @@ void ya_setup_block(config_setting_t * set, uint32_t type_init) {
 	}
 	retcnf = config_setting_lookup_int(set, "fixed-size", &retint);
 	if(retcnf == CONFIG_FALSE) {
-		blk->width = 0;
+		blk->width = 80;
 	}
 	else {
 		blk->width = retint;

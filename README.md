@@ -102,9 +102,9 @@ Each block can have its command/script, background, foreground (i.e. font), unde
 
         interval: 3;
 
-* Fixed size: You should define the fixed width size of the block. Yabar currently only supports fixed widths (this will be improved soon). You can deduce the appropriate width using trial and error. Example:
+* Fixed size: You should define the fixed width size of the block. Yabar currently only supports fixed widths (this will be improved soon). You can deduce the appropriate width using trial and error. The current default value is 80 but you are encouraged to ovveride it to an appropriate value. Example:
 
-        fixed-size: 80;
+        fixed-size: 90;
 
 * Pango markup: Yabar accepts either true or false without quotes. Default is false. Example:
 
