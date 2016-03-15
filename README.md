@@ -24,9 +24,14 @@ Yabar is a modern and lightweight status bar that is intended to be used along w
 A Yabar session should contain one or more *bars* within the same session. Each bar should contain one or more *blocks*. Each block should display some useful info to the user (free memory, CPU temperature, etc...).
 
 ## Installation
-Yabar requires libconfig, cairo, and pango. These dependencies can be installed through your distribution's package manager, such as `dnf install libconfig-devel cairo-devel pango-devel` on Fedora or `apt-get install libconfig-dev cairo-dev pango-dev` on Ubuntu.
+Yabar requires libconfig>= 1.5, cairo, and pango. These dependencies can be installed through your distribution's package manager, such as `dnf install libconfig-devel cairo-devel pango-devel` on Fedora or `apt-get install libconfig-dev cairo-dev pango-dev` on Ubuntu.
 
-Once these are installed, running `make` will output the yabar executable. Copy this onto your PATH (`sudo cp yabar /usr/local/bin`) to install yabar globally on your system.
+You can install yabar as follows:
+
+		git clone https://github.com/geommer/yabar
+		cd yabar
+		make
+		sudo make install
 
 ## Configuration
 
