@@ -27,6 +27,10 @@
 #include <getopt.h>
 #include <libconfig.h>
 
+#ifndef VERSION
+#define VERSION ""
+#endif
+
 #define BUFSIZE 512
 #define CFILELEN 256
 #define YA_DEF_FONT "sans bold 9"

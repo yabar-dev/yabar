@@ -480,7 +480,7 @@ void ya_process_opt(int argc, char *argv[]) {
 				printf("Usage: yabar [-c CONFIG_FILE] [-h] [-v]\n");
 				exit(EXIT_SUCCESS);
 			case 'v':
-				printf ("%s\n", "0.1.0-alpha");
+				printf ("Yabar version %s\n", VERSION);
 				exit(EXIT_SUCCESS);
 			default:
 				break;
