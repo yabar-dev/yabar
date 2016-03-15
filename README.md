@@ -4,9 +4,9 @@ A modern and lightweight status bar for X window managers.
 
 ## Screenshots
 
-![screen 1](https://i.imgur.com/nu66q4g.png)
-![screen 2](https://i.imgur.com/kajYJMy.png)
-![screen 3](https://i.imgur.com/FaAHwA8.png)
+![screen 01](examples/screenshots/scr01.png)
+![screen 02](examples/screenshots/scr02.png)
+![screen 03](examples/screenshots/scr03.png)
 
 ## Description
 
