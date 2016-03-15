@@ -26,19 +26,19 @@ void ya_create_block(ya_block_t *blk) {
 			tmpblk = blk->bar->curblk[A_CENTER];
 			if(tmpblk) {
 				for(;tmpblk->prev_blk; tmpblk = tmpblk->prev_blk);
-				tmpblk->xpos = (ya.scr->width_in_pixels - blk->bar->occupied_width[A_CENTER] - 2*blk->bar->hgap)/2;
+				tmpblk->xpos = (blk->bar->width - blk->bar->occupied_width[A_CENTER])/2;
 				for(tmpblk = tmpblk->next_blk; tmpblk; tmpblk = tmpblk->next_blk) {
 					tmpblk->xpos = tmpblk->prev_blk->xpos + tmpblk->prev_blk->width + blk->bar->slack;	
 				}
 			}
 			else {
-				blk->xpos = (ya.scr->width_in_pixels - blk->bar->occupied_width[A_CENTER] - 2*blk->bar->hgap)/2;
+				blk->xpos = (blk->bar->width - blk->bar->occupied_width[A_CENTER])/2;
 			}
 			break;
 		case A_RIGHT:
 			tmpblk = blk->bar->curblk[A_RIGHT];
 			blk->bar->occupied_width[A_RIGHT] += (blk->width + blk->bar->slack);
-			blk->xpos = ya.scr->width_in_pixels - blk->width - 2*blk->bar->hgap;
+			blk->xpos = blk->bar->width - blk->width;
 			if(tmpblk) {
 				for(; tmpblk; tmpblk = tmpblk->prev_blk) {
 					tmpblk->xpos -= (blk->width + blk->bar->slack);
@@ -62,17 +62,16 @@ void ya_create_block(ya_block_t *blk) {
 }
 
 int ya_create_bar(ya_bar_t * bar) {
-	bar->width = ya.scr->width_in_pixels - 2*(bar->hgap);
+	//bar->width = ya.scr->width_in_pixels - 2*(bar->hgap);
 	bar->win = xcb_generate_id(ya.c);
 	int x, y;
+    x = (ya.scr->width_in_pixels - bar->width) /2;
 	switch(bar->position){
 		case YA_TOP:{
-			x = bar->hgap;
 			y = bar->vgap;
 			break;
 		} 
 		case YA_BOTTOM: {
-			x = bar->hgap;
 			y = ya.scr->height_in_pixels - bar->vgap - bar->height;
 			break;
 		}
