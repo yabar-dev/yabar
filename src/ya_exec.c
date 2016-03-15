@@ -195,6 +195,13 @@ void ya_setup_bar(config_setting_t * set) {
 	else {
 		bar->height = retint;
 	}
+	retcnf = config_setting_lookup_int(set, "width", &retint);
+	if(retcnf == CONFIG_FALSE) {
+		bar->width = ya.scr->width_in_pixels - 2*(bar->hgap);
+	}
+	else {
+		bar->width = retint;
+	}
 	retcnf = config_setting_lookup_int(set, "underline-size", &retint);
 	if(retcnf == CONFIG_TRUE) {
 		bar->ulsize = retint;
