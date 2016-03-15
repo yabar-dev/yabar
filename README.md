@@ -63,6 +63,10 @@ Each bar can have its font, position (currently only top and bottom), background
 * Height: Default is 20 pixels. Example:
 
         height: 25;
+        
+* Width: The default bar width is `screen size - 2 * horizontal gap`. However, if this option is used, the horizontal gap works as an offset. Example:
+
+		width: 800;
 
 * Underline and overline sizes: This option defines the thickness of underlines and overlines. Default is 0. Example:
 

@@ -64,7 +64,7 @@ void ya_create_block(ya_block_t *blk) {
 int ya_create_bar(ya_bar_t * bar) {
 	bar->win = xcb_generate_id(ya.c);
 	int x, y;
-    x = bar->hgap;
+	x = bar->hgap;
 	switch(bar->position){
 		case YA_TOP:{
 			y = bar->vgap;
