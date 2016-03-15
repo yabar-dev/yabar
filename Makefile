@@ -15,12 +15,14 @@ all: $(PROGRAM)
 $(PROGRAM): $(OBJS)
 	$(CC) $(LDLIBS) -o $@ $^
 install:
-	mkdir -p "$(BINPREFIX)"
-	cp -pf $(PROGRAM) "$(BINPREFIX)"
-	mkdir -p "$(MANPREFIX)"/man1
-	cp -pf doc/yabar.1 "$(MANPREFIX)"/man1
+	mkdir -p "$(DESTDIR)$(BINPREFIX)"
+	cp -pf $(PROGRAM) "$(DESTDIR)$(BINPREFIX)"
+	mkdir -p "$(DESTDIR)$(MANPREFIX)"/man1
+	cp -pf doc/yabar.1 "$(DESTDIR)$(MANPREFIX)"/man1
 uninstall:
-	rm -f "$(BINPREFIX)/$(PROGRAM)"
-	rm -f "$(MANPREFIX)"/man1/yabar.1
+	rm -f "$(DESTDIR)$(BINPREFIX)/$(PROGRAM)"
+	rm -f "$(DESTDIR)$(MANPREFIX)"/man1/yabar.1
 clean:
 	rm -f src/*.o $(PROGRAM)
+
+.PHONY: all install uninstall clean
