@@ -203,8 +203,6 @@ void ya_setup_bar(config_setting_t * set) {
 	}
 	else {
 		bar->width = retint;
-		//ignore hgap if width was specified
-		bar->hgap = 0;
 	}
 	retcnf = config_setting_lookup_int(set, "underline-size", &retint);
 	if(retcnf == CONFIG_TRUE) {

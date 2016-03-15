@@ -65,7 +65,7 @@ int ya_create_bar(ya_bar_t * bar) {
 	//bar->width = ya.scr->width_in_pixels - 2*(bar->hgap);
 	bar->win = xcb_generate_id(ya.c);
 	int x, y;
-    x = (ya.scr->width_in_pixels - bar->width) /2;
+    x = bar->hgap;
 	switch(bar->position){
 		case YA_TOP:{
 			y = bar->vgap;
