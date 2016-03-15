@@ -64,7 +64,7 @@ Each bar can have its font, position (currently only top and bottom), background
 
         height: 25;
         
-* Width: The default bar width is `screen size - 2 * horizontal gap`. However, if this option is used, the horizontal gap works as an offset. Example:
+* Width: The default bar width is `screen size - 2 * horizontal gap`. However, if this option is used, the bar starts at `horizontal gap` and ends at `horizontal gap + width`. Example:
 
 		width: 800;
 
