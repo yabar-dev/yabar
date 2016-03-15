@@ -54,7 +54,7 @@ A bar or a block can be named to whatever name (preferably a short and meaningfu
 
 .SS BAR\-SPECIFIC OPTIONS
 .PP
-Each bar can have its font, position (currently only top and bottom), background color, height, horizontal and vertical gaps, and other options.
+Each bar can have its font, position (currently only top and bottom), background color, height, width, horizontal and vertical gaps, and other options.
 .IP \(bu 2
 Font: Yabar currently accepts a string that contains a font or a list of fonts (similar to i3). Example:
 .PP
@@ -93,6 +93,16 @@ Height: Default is 20 pixels. Example:
 
 .nf
 height: 25;
+
+.fi
+.RE
+.IP \(bu 2
+Width: Default is screen size - 2 * horizontal gap. Example:
+.PP
+.RS
+
+.nf
+width: 800;
 
 .fi
 .RE
