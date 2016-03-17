@@ -10,6 +10,7 @@
 #define _YABAR_H
 
 #include <stdio.h>
+#define __USE_XOPEN2K //for setenv implicit function decleration warning
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
@@ -30,6 +31,7 @@
 #ifndef VERSION
 #define VERSION ""
 #endif
+
 
 #define BUFSIZE 512
 #define CFILELEN 256
@@ -130,7 +132,7 @@ struct ya_bar {
 	uint8_t slack;
 };
 
-typedef struct ya_bar ya_bar_t;
+//typedef struct ya_bar ya_bar_t;
 
 enum {
 	GEN_EXT_CONF = 1 << 0

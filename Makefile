@@ -1,6 +1,6 @@
 VERSION = $(shell git describe)
 CPPFLAGS += -DVERSION=\"$(VERSION)\"
-CFLAGS += -std=c99 -Wall `pkg-config --cflags pango pangocairo libconfig`
+CFLAGS += -std=c99 -pedantic -Wall `pkg-config --cflags pango pangocairo libconfig`
 INCLDS := -I.
 LDLIBS := -lxcb -lpthread `pkg-config --libs pango pangocairo libconfig`
 PROGRAM := yabar
