@@ -446,9 +446,16 @@ void ya_execute() {
 	}
 }
 
-void ya_exec_cmd(char * cmd) {
+inline void ya_exec_cmd(ya_block_t * blk, xcb_button_press_event_t *eb) {
 	if (fork() == 0) {
-		execl(yashell, yashell, "-c", cmd, (char *) NULL);
+		char blkx[5], blky[5], blkw[5];
+		snprintf(blkx, 5, "%d", eb->root_x);
+		snprintf(blky, 5, "%d", eb->root_y);
+		snprintf(blkw, 5, "%d", blk->width);
+		setenv("YABAR_BLOCK_X", blkx, 1);
+		setenv("YABAR_BLOCK_Y", blky, 1);
+		setenv("YABAR_BLOCK_WIDTH", blkw, 1);
+		execl(yashell, yashell, "-c", blk->button_cmd[eb->detail-1], (char *) NULL);
 		_exit(EXIT_SUCCESS);
 	}
 	else
