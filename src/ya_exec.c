@@ -448,10 +448,16 @@ void ya_execute() {
 
 inline void ya_exec_cmd(ya_block_t * blk, xcb_button_press_event_t *eb) {
 	if (fork() == 0) {
-		char blkx[5], blky[5], blkw[5];
-		snprintf(blkx, 5, "%d", eb->root_x);
-		snprintf(blky, 5, "%d", eb->root_y);
-		snprintf(blkw, 5, "%d", blk->width);
+		char blkx[6], blky[6], blkw[6];
+		snprintf(blkx, 6, "%d", eb->root_x - eb->event_x + blk->xpos);
+		if (blk->bar->position == YA_TOP)
+			snprintf(blky, 6, "%d", blk->bar->height + blk->bar->vgap);
+		else if (blk->bar->position == YA_BOTTOM)
+			snprintf(blky, 6, "%d", ya.scr->height_in_pixels - (blk->bar->height + blk->bar->vgap));
+		else {
+			//TODO for right and left
+		}
+		snprintf(blkw, 6, "%d", blk->width);
 		setenv("YABAR_BLOCK_X", blkx, 1);
 		setenv("YABAR_BLOCK_Y", blky, 1);
 		setenv("YABAR_BLOCK_WIDTH", blkw, 1);
