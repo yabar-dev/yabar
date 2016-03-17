@@ -130,6 +130,14 @@ void ya_init() {
 	ya.depth = 32;
 	ya.colormap = xcb_generate_id(ya.c);
 	xcb_create_colormap(ya.c, XCB_COLORMAP_ALLOC_NONE, ya.colormap, ya.scr->root, ya.visualtype->visual_id);
+#ifdef YABAR_RANDR
+	const xcb_query_extension_reply_t  *ya_reply;
+	ya_reply = xcb_get_extension_data(ya.c, &xcb_randr_id);
+	if (ya_reply->present) {
+		ya.gen_flag |= GEN_RANDR;
+		ya_init_randr();
+	}
+#endif //YABAR_RANDR
 	ya_config_parse();
 }
 
@@ -500,3 +508,42 @@ void ya_process_opt(int argc, char *argv[]) {
 		}
 	}
 }
+
+#ifdef YABAR_RANDR
+int ya_init_randr() {
+	xcb_randr_get_screen_resources_current_reply_t *res_reply;
+	res_reply = xcb_randr_get_screen_resources_current_reply(ya.c,
+			xcb_randr_get_screen_resources_current(ya.c, ya.scr->root), NULL); 
+	if (!res_reply) {
+		printf("NOPE\n");
+		return -1; //just report error
+	}
+	int mon_num = xcb_randr_get_screen_resources_current_outputs_length(res_reply);
+	xcb_randr_output_t *ops = xcb_randr_get_screen_resources_current_outputs(res_reply);
+
+	xcb_randr_get_output_info_reply_t *op_reply;
+	xcb_randr_get_crtc_info_reply_t *crtc_reply;
+
+	ya_monitor_t *tmpmon;
+
+	for (int i=0; i < mon_num; i++) {
+		op_reply = xcb_randr_get_output_info_reply(ya.c,
+				xcb_randr_get_output_info(ya.c, ops[i], XCB_CURRENT_TIME), NULL);
+		if (op_reply->crtc == XCB_NONE)
+			continue;
+		crtc_reply = xcb_randr_get_crtc_info_reply(ya.c,
+				xcb_randr_get_crtc_info(ya.c, op_reply->crtc, XCB_CURRENT_TIME), NULL);
+		if(!crtc_reply)
+			continue;
+		tmpmon = calloc(1, sizeof(ya_monitor_t));
+		tmpmon->pos = (xcb_rectangle_t){crtc_reply->x, 
+			crtc_reply->y, crtc_reply->width, crtc_reply->height};
+		if (ya.curmon) {
+			ya.curmon->next_mon = tmpmon;
+			tmpmon->prev_mon = ya.curmon;
+		}
+		ya.curmon = tmpmon;
+	}
+	return 0;
+}
+#endif //YABAR_RANDR

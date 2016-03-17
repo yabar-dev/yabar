@@ -28,6 +28,8 @@
 #include <getopt.h>
 #include <libconfig.h>
 
+#include <xcb/randr.h>
+
 #ifndef VERSION
 #define VERSION ""
 #endif
@@ -135,8 +137,22 @@ struct ya_bar {
 //typedef struct ya_bar ya_bar_t;
 
 enum {
-	GEN_EXT_CONF = 1 << 0
+	GEN_EXT_CONF	= 1 << 0,
+	GEN_RANDR		= 1 << 1
 };
+
+#ifdef YABAR_RANDR
+
+#define CMONLEN 20
+
+typedef struct ya_monitor ya_monitor_t;
+struct ya_monitor {
+	char name[CMONLEN];
+	xcb_rectangle_t pos;
+	struct ya_monitor *prev_mon;
+	struct ya_monitor *next_mon;
+};
+#endif // YABAR_RANDR
 
 struct yabar_gen_info {
 	xcb_connection_t *c;
@@ -147,6 +163,9 @@ struct yabar_gen_info {
 	ya_bar_t *curbar;
 	uint8_t depth;
 	uint8_t gen_flag;
+#ifdef YABAR_RANDR
+	ya_monitor_t *curmon;
+#endif //YABAR_RANDR
 };
 typedef struct yabar_gen_info yabar_info_t;
 
@@ -168,4 +187,5 @@ void ya_cleanup_x();
 void ya_create_block(ya_block_t *blk);
 ya_block_t * ya_get_blk_from_event( xcb_button_press_event_t *eb);
 void ya_process_opt(int argc, char *argv[]);
+int ya_init_randr();
 #endif /*_YABAR_H*/

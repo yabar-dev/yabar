@@ -1,8 +1,8 @@
 VERSION = $(shell git describe)
-CPPFLAGS += -DVERSION=\"$(VERSION)\"
+CPPFLAGS += -DVERSION=\"$(VERSION)\" -DYABAR_RANDR
 CFLAGS += -std=c99 -pedantic -Wall `pkg-config --cflags pango pangocairo libconfig`
 INCLDS := -I.
-LDLIBS := -lxcb -lpthread `pkg-config --libs pango pangocairo libconfig`
+LDLIBS := -lxcb -lpthread -lxcb-randr `pkg-config --libs pango pangocairo libconfig`
 PROGRAM := yabar
 PREFIX ?= /usr
 BINPREFIX ?= $(PREFIX)/bin
