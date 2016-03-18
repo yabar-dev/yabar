@@ -141,6 +141,15 @@ Each block can have its command/script, background, foreground (i.e. font), unde
         command-button4: "pactl set-sink-volume 0 +10%";
         command-button5: "pactl set-sink-volume 0 -10%";
 
+
+### Environment variables
+
+Yabar sets a handful of environment variables before executing your commands/scripts that are defined in the `command-button{1-5}` entry. Such env variables can be useful when drawing your window on the corresponding button press. Current env variables are:
+
+		YABAR_BLOCK_X
+		YABAR_BLOCK_Y
+		YABAR_BLOCK_WIDTH
+
 ## TODO
 
 There is a lot to do, but among the most important things:
