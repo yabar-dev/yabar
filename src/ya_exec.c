@@ -515,7 +515,6 @@ int ya_init_randr() {
 	res_reply = xcb_randr_get_screen_resources_current_reply(ya.c,
 			xcb_randr_get_screen_resources_current(ya.c, ya.scr->root), NULL); 
 	if (!res_reply) {
-		printf("NOPE\n");
 		return -1; //just report error
 	}
 	int mon_num = xcb_randr_get_screen_resources_current_outputs_length(res_reply);
@@ -525,6 +524,7 @@ int ya_init_randr() {
 	xcb_randr_get_crtc_info_reply_t *crtc_reply;
 
 	ya_monitor_t *tmpmon;
+	char *tname;
 
 	for (int i=0; i < mon_num; i++) {
 		op_reply = xcb_randr_get_output_info_reply(ya.c,
@@ -538,6 +538,8 @@ int ya_init_randr() {
 		tmpmon = calloc(1, sizeof(ya_monitor_t));
 		tmpmon->pos = (xcb_rectangle_t){crtc_reply->x, 
 			crtc_reply->y, crtc_reply->width, crtc_reply->height};
+		tname = (char *)xcb_randr_get_output_info_name(op_reply);
+		strncpy(tmpmon->name, tname, CMONLEN);
 		if (ya.curmon) {
 			ya.curmon->next_mon = tmpmon;
 			tmpmon->prev_mon = ya.curmon;
@@ -546,4 +548,17 @@ int ya_init_randr() {
 	}
 	return 0;
 }
+
+ya_monitor_t * ya_get_monitor_from_name(char * name) {
+	ya_monitor_t *mon = ya.curmon;
+	if (mon == NULL)
+		return NULL;
+	for(mon=ya.curmon; mon->prev_mon; mon = mon->prev_mon);
+	for(; mon; mon = mon->next_mon){
+		if (strcmp(mon->name, name)==0)
+			return mon;
+	}
+	return NULL;
+}
+
 #endif //YABAR_RANDR

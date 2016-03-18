@@ -143,7 +143,7 @@ enum {
 
 #ifdef YABAR_RANDR
 
-#define CMONLEN 20
+#define CMONLEN 16
 
 typedef struct ya_monitor ya_monitor_t;
 struct ya_monitor {
