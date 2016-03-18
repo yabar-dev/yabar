@@ -6,8 +6,8 @@
  *
  */
 
-#ifndef _YABAR_H
-#define _YABAR_H
+#ifndef YABAR_H
+#define YABAR_H
 
 #include <stdio.h>
 #define __USE_XOPEN2K //for setenv implicit function decleration warning
@@ -33,6 +33,7 @@
 #ifndef VERSION
 #define VERSION ""
 #endif
+
 
 
 #define BUFSIZE 512
@@ -77,6 +78,19 @@ enum {
 	BLKA_UNDERLINE 		= 1<<12,
 	BLKA_OVERLINE 		= 1<<13
 };
+
+#ifdef YABAR_RANDR
+
+#define CMONLEN 16
+
+typedef struct ya_monitor ya_monitor_t;
+struct ya_monitor {
+	char name[CMONLEN];
+	xcb_rectangle_t pos;
+	struct ya_monitor *prev_mon;
+	struct ya_monitor *next_mon;
+};
+#endif // YABAR_RANDR
 
 typedef struct ya_bar ya_bar_t;
 struct ya_block {
@@ -132,6 +146,10 @@ struct ya_bar {
 	uint8_t ulsize;
 	uint8_t olsize;
 	uint8_t slack;
+
+#ifdef YABAR_RANDR
+	ya_monitor_t *mon;
+#endif //YABAR_RANDR
 };
 
 //typedef struct ya_bar ya_bar_t;
@@ -140,19 +158,6 @@ enum {
 	GEN_EXT_CONF	= 1 << 0,
 	GEN_RANDR		= 1 << 1
 };
-
-#ifdef YABAR_RANDR
-
-#define CMONLEN 16
-
-typedef struct ya_monitor ya_monitor_t;
-struct ya_monitor {
-	char name[CMONLEN];
-	xcb_rectangle_t pos;
-	struct ya_monitor *prev_mon;
-	struct ya_monitor *next_mon;
-};
-#endif // YABAR_RANDR
 
 struct yabar_gen_info {
 	xcb_connection_t *c;
@@ -188,4 +193,7 @@ void ya_create_block(ya_block_t *blk);
 ya_block_t * ya_get_blk_from_event( xcb_button_press_event_t *eb);
 void ya_process_opt(int argc, char *argv[]);
 int ya_init_randr();
-#endif /*_YABAR_H*/
+#ifdef YABAR_RANDR
+ya_monitor_t * ya_get_monitor_from_name(const char *name);
+#endif //YABAR_RANDR
+#endif /*YABAR_H*/

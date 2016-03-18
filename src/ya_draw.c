@@ -64,14 +64,35 @@ void ya_create_block(ya_block_t *blk) {
 int ya_create_bar(ya_bar_t * bar) {
 	bar->win = xcb_generate_id(ya.c);
 	int x, y;
+#ifdef YABAR_RANDR
+	if ((ya.gen_flag & GEN_RANDR))
+		x = bar->hgap + bar->mon->pos.x;
+	else 
+		x = bar->hgap;
+#else
 	x = bar->hgap;
+#endif //YABAR_RANDR
 	switch(bar->position){
 		case YA_TOP:{
+#ifdef YABAR_RANDR
+			if ((ya.gen_flag & GEN_RANDR))
+				y = bar->vgap + bar->mon->pos.y;
+			else
+				y = bar->vgap;
+#else
 			y = bar->vgap;
+#endif //YABAR_RANDR
 			break;
 		} 
 		case YA_BOTTOM: {
+#ifdef YABAR_RANDR
+			if ((ya.gen_flag & GEN_RANDR))
+				y = bar->mon->pos.height - bar->vgap - bar->height;
+			else
+				y = ya.scr->height_in_pixels - bar->vgap - bar->height;
+#else
 			y = ya.scr->height_in_pixels - bar->vgap - bar->height;
+#endif //YABAR_RANDR
 			break;
 		}
 	}

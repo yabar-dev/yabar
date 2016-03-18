@@ -180,6 +180,17 @@ void ya_setup_bar(config_setting_t * set) {
 			bar->position = YA_TOP;
 		}
 	}
+#ifdef YABAR_RANDR
+	retcnf = config_setting_lookup_string(set, "monitor", &retstr);
+	if(retcnf == CONFIG_FALSE) {
+		//TODO
+	}
+	else {
+		if((ya.gen_flag & GEN_RANDR)) {
+			bar->mon = ya_get_monitor_from_name(retstr);
+		}
+	}
+#endif //YABAR_RANDR
 
 	retcnf = config_setting_lookup_int(set, "gap-horizontal", &retint);
 	if(retcnf == CONFIG_FALSE) {
@@ -198,14 +209,23 @@ void ya_setup_bar(config_setting_t * set) {
 	}
 	retcnf = config_setting_lookup_int(set, "height", &retint);
 	if(retcnf == CONFIG_FALSE) {
-		bar->height = 30;
+		bar->height = 20;
 	}
 	else {
 		bar->height = retint;
 	}
 	retcnf = config_setting_lookup_int(set, "width", &retint);
 	if(retcnf == CONFIG_FALSE) {
+#ifdef YABAR_RANDR
+		if(bar->mon) {
+			bar->width = bar->mon->pos.width - 2*(bar->hgap);
+		}
+		else {
+			bar->width = ya.scr->width_in_pixels - 2*(bar->hgap);
+		}
+#else
 		bar->width = ya.scr->width_in_pixels - 2*(bar->hgap);
+#endif //YABAR_RANDR
 	}
 	else {
 		bar->width = retint;
@@ -545,11 +565,13 @@ int ya_init_randr() {
 			tmpmon->prev_mon = ya.curmon;
 		}
 		ya.curmon = tmpmon;
+		//printf("%s %d %d %d %d\n", tmpmon->name, tmpmon->pos.x,
+		//		tmpmon->pos.y, tmpmon->pos.width, tmpmon->pos.height);
 	}
 	return 0;
 }
 
-ya_monitor_t * ya_get_monitor_from_name(char * name) {
+ya_monitor_t * ya_get_monitor_from_name(const char *name) {
 	ya_monitor_t *mon = ya.curmon;
 	if (mon == NULL)
 		return NULL;
