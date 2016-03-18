@@ -15,6 +15,7 @@ Yabar is a modern and lightweight status bar that is intended to be used along w
 * Simple configuration using a single config file based on libconfig syntax.
 * Pango font rendering with support of pango markup language (Xft may be supported in the future).
 * Support for transparency (Yabar currently uses a hard-coded depth of 32).
+* Multi-monitor support using RandR (experimental).
 * Multiple bars within the same session.
 
 **Warning**: Yabar is still in its infancy and far from being mature. Feel free to contribute or report bugs!
@@ -78,6 +79,11 @@ Each bar can have its font, position (currently only top and bottom), background
 
 		width: 800;
 
+* Monitor: This option is used to specify the monitor using randr extension for the bar to be drawn on. You can find the name of your monitors using `xrandr -q` command. The default value is the first active monitor. Example:
+
+		monitor: "LVDS1";
+		monitor: "VGA1";
+
 * Underline and overline sizes: This option defines the thickness of underlines and overlines. Default is 0. Example:
 
         underline-size: 2;
@@ -138,7 +144,6 @@ Each block can have its command/script, background, foreground (i.e. font), unde
 ## TODO
 
 There is a lot to do, but among the most important things:
-* RandR support.
 * Automatic size of blocks.
 * Internal blocks.
 
