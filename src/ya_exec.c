@@ -183,7 +183,7 @@ void ya_setup_bar(config_setting_t * set) {
 #ifdef YABAR_RANDR
 	retcnf = config_setting_lookup_string(set, "monitor", &retstr);
 	if(retcnf == CONFIG_FALSE) {
-		//
+		//If not explicitly specified, fall back to the first active monitor.
 		if((ya.gen_flag & GEN_RANDR)) {
 			for(bar->mon= ya.curmon; bar->mon->prev_mon; bar->mon = bar->mon->prev_mon);
 		}
@@ -191,6 +191,7 @@ void ya_setup_bar(config_setting_t * set) {
 	else {
 		if((ya.gen_flag & GEN_RANDR)) {
 			bar->mon = ya_get_monitor_from_name(retstr);
+			//If null, fall back to the first active monitor
 			if(bar->mon == NULL)
 				for(bar->mon= ya.curmon; bar->mon->prev_mon; bar->mon = bar->mon->prev_mon);
 		}
@@ -269,8 +270,37 @@ void ya_setup_block(config_setting_t * set, uint32_t type_init) {
 	int retcnf, retint;
 	const char *retstr;
 	blk->type = type_init;
+
+	retcnf = config_setting_lookup_string(set, "type", &retstr);
+	if(retcnf == CONFIG_FALSE) {
+		fprintf(stderr, "No type is defined for block: %s. Skipping this block...\n", config_setting_name(set));
+		free(blk);
+		return;
+	}
+	else {
+		if(strcmp(retstr, "persist")==0) {
+			blk->type |= BLKA_PERSIST;
+		}
+		else if(strcmp(retstr, "once")==0) {
+			blk->type |= BLKA_ONCE;
+		}
+		else if(strcmp(retstr, "periodic")==0) {
+			blk->type |= BLKA_PERIODIC;
+			retcnf = config_setting_lookup_int(set, "interval", &retint);
+			if(retcnf == CONFIG_FALSE) {
+				blk->sleep = 5;
+			}
+			else {
+				blk->sleep = retint;
+			}
+
+		}
+	}
+
+
 	retcnf = config_setting_lookup_string(set, "exec", &retstr);
 	if(retcnf == CONFIG_FALSE) {
+		fprintf(stderr, "No exec is defined for block: %s. Skipping this block...\n", config_setting_name(set));
 		free(blk);
 		return;
 	}
@@ -340,28 +370,6 @@ void ya_setup_block(config_setting_t * set, uint32_t type_init) {
 		blk->type |= BLKA_MARKUP_PANGO;
 	}
 
-	retcnf = config_setting_lookup_string(set, "type", &retstr);
-	if(retcnf == CONFIG_FALSE) {
-	}
-	else {
-		if(strcmp(retstr, "persist")==0) {
-			blk->type |= BLKA_PERSIST;
-		}
-		else if(strcmp(retstr, "once")==0) {
-			blk->type |= BLKA_ONCE;
-		}
-		else if(strcmp(retstr, "periodic")==0) {
-			blk->type |= BLKA_PERIODIC;
-			retcnf = config_setting_lookup_int(set, "interval", &retint);
-			if(retcnf == CONFIG_FALSE) {
-				blk->sleep = 1;
-			}
-			else {
-				blk->sleep = retint;
-			}
-
-		}
-	}
 	retcnf = config_setting_lookup_int(set, "background-color-argb", &retint);
 	if(retcnf == CONFIG_TRUE) {
 		blk->bgcolor = (uint32_t) retint;
