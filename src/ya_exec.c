@@ -191,6 +191,8 @@ void ya_setup_bar(config_setting_t * set) {
 	else {
 		if((ya.gen_flag & GEN_RANDR)) {
 			bar->mon = ya_get_monitor_from_name(retstr);
+			if(bar->mon == NULL)
+				for(bar->mon= ya.curmon; bar->mon->prev_mon; bar->mon = bar->mon->prev_mon);
 		}
 	}
 #endif //YABAR_RANDR
