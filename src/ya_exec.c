@@ -183,7 +183,10 @@ void ya_setup_bar(config_setting_t * set) {
 #ifdef YABAR_RANDR
 	retcnf = config_setting_lookup_string(set, "monitor", &retstr);
 	if(retcnf == CONFIG_FALSE) {
-		//TODO
+		//
+		if((ya.gen_flag & GEN_RANDR)) {
+			for(bar->mon= ya.curmon; bar->mon->prev_mon; bar->mon = bar->mon->prev_mon);
+		}
 	}
 	else {
 		if((ya.gen_flag & GEN_RANDR)) {
