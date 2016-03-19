@@ -124,10 +124,15 @@ void ya_init() {
 	signal(SIGINT, ya_sighandler);
 	signal(SIGKILL, ya_sighandler);
 	signal(SIGHUP, ya_sighandler);
+	ya.depth = 32;
 	ya.c 	= xcb_connect(NULL, NULL);
 	ya.scr 	= xcb_setup_roots_iterator(xcb_get_setup(ya.c)).data;
 	ya.visualtype = ya_get_visualtype();
-	ya.depth = 32;
+	if (ya.visualtype == NULL) {
+		// if depth=32 not found, fallback to depth=24
+		ya.depth = 24;
+		ya.visualtype = ya_get_visualtype();
+	}
 	ya.colormap = xcb_generate_id(ya.c);
 	xcb_create_colormap(ya.c, XCB_COLORMAP_ALLOC_NONE, ya.colormap, ya.scr->root, ya.visualtype->visual_id);
 #ifdef YABAR_RANDR

@@ -14,7 +14,7 @@ Yabar is a modern and lightweight status bar that is intended to be used along w
 
 * Simple configuration using a single config file based on libconfig syntax.
 * Pango font rendering with support of pango markup language (Xft may be supported in the future).
-* Support for transparency (Yabar currently uses a hard-coded depth of 32).
+* Support for transparency.
 * Multi-monitor support using RandR (experimental).
 * Multiple bars within the same session.
 
