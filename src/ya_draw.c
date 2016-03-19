@@ -63,7 +63,7 @@ void ya_create_block(ya_block_t *blk) {
 
 int ya_create_bar(ya_bar_t * bar) {
 	bar->win = xcb_generate_id(ya.c);
-	int x, y;
+	int x=0, y=0;
 #ifdef YABAR_RANDR
 	if ((ya.gen_flag & GEN_RANDR))
 		x = bar->hgap + bar->mon->pos.x;
@@ -114,17 +114,24 @@ int ya_create_bar(ya_bar_t * bar) {
 }
 
 xcb_visualtype_t * ya_get_visualtype() {
+	ya.depth = 32;
 	xcb_depth_iterator_t depth_iter;
-	xcb_visualtype_t *vist;
+	//xcb_visualtype_t *vist;
 	depth_iter = xcb_screen_allowed_depths_iterator (ya.scr);
+	xcb_visualtype_iterator_t visual_iter;
 	for (; depth_iter.rem; xcb_depth_next (&depth_iter)) {
-		xcb_visualtype_iterator_t visual_iter;
-		visual_iter = xcb_depth_visuals_iterator (depth_iter.data);
-		for (; visual_iter.rem; xcb_visualtype_next (&visual_iter)) {
-			vist = visual_iter.data;
+		printf("%d %d\n", ya.depth, depth_iter.data->depth);
+		if(depth_iter.data->depth == ya.depth) {
+			visual_iter = xcb_depth_visuals_iterator(depth_iter.data);
+			return visual_iter.data;
+		//for (; visual_iter.rem; xcb_visualtype_next (&visual_iter)) {
+		//	printf("HH\n");
+		//	vist = visual_iter.data;
+		//}
 		}
 	}
-	return vist;
+	//return vist;
+	return NULL;
 }
 
 void ya_draw_pango_text(struct ya_block *blk) {
