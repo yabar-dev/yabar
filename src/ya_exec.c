@@ -446,7 +446,7 @@ void ya_config_parse() {
 		blknum = config_setting_length(blklist_set);
 
 		for (int i=0; i < blknum; i++) {
-			uint32_t type_init;
+			uint32_t type_init = 0;
 			blkstr = (char *)config_setting_get_string_elem(blklist_set, i);
 			curblk_set = config_setting_lookup(curbar_set, blkstr);
 			for(int i=0; i < YA_RESERVED_NUM; i++) {
