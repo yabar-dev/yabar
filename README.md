@@ -91,7 +91,7 @@ Each bar can have its font, position (currently only top and bottom), background
 
 * Slack: You can define the size of the slack (i.e. the unused space between blocks). Default is 0. Example:
 
-        slack: 2;
+        slack-size: 2;
 
 
 
