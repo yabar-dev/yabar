@@ -120,7 +120,6 @@ xcb_visualtype_t * ya_get_visualtype() {
 	depth_iter = xcb_screen_allowed_depths_iterator (ya.scr);
 	xcb_visualtype_iterator_t visual_iter;
 	for (; depth_iter.rem; xcb_depth_next (&depth_iter)) {
-		printf("%d %d\n", ya.depth, depth_iter.data->depth);
 		if(depth_iter.data->depth == ya.depth) {
 			visual_iter = xcb_depth_visuals_iterator(depth_iter.data);
 			return visual_iter.data;
