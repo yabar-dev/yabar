@@ -203,12 +203,14 @@ void ya_setup_bar(config_setting_t * set) {
 	}
 #endif //YABAR_RANDR
 
+	bool is_gap_horizontal_defined = false;
 	retcnf = config_setting_lookup_int(set, "gap-horizontal", &retint);
 	if(retcnf == CONFIG_FALSE) {
 		bar->hgap = 0;
 	}
 	else {
 		bar->hgap = retint;
+		is_gap_horizontal_defined = true;
 	}
 
 	retcnf = config_setting_lookup_int(set, "gap-vertical", &retint);
@@ -240,6 +242,18 @@ void ya_setup_bar(config_setting_t * set) {
 	}
 	else {
 		bar->width = retint;
+		if(!is_gap_horizontal_defined) {
+#ifdef YABAR_RANDR
+			if(bar->mon) {
+				bar->hgap = (bar->mon->pos.width - bar->width) /2;
+			}
+			else {
+				bar->hgap = (ya.scr->width_in_pixels - bar->width) /2;
+			}
+#else
+			bar->hgap = (ya.scr->width_in_pixels - bar->width) /2;
+#endif //YABAR_RANDR
+		}
 	}
 	retcnf = config_setting_lookup_int(set, "underline-size", &retint);
 	if(retcnf == CONFIG_TRUE) {
