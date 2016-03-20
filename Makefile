@@ -15,7 +15,7 @@ OBJS := $(OBJS:.c=.o)
 	$(CC) $(CFLAGS) -c -o $@ $<
 all: $(PROGRAM)
 $(PROGRAM): $(OBJS)
-	$(CC) $(LDLIBS) -o $@ $^
+	$(CC) -o $@ $^ $(LDLIBS)
 install:
 	mkdir -p "$(DESTDIR)$(BINPREFIX)"
 	cp -pf $(PROGRAM) "$(DESTDIR)$(BINPREFIX)"
