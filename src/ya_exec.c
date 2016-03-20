@@ -244,7 +244,7 @@ void ya_setup_bar(config_setting_t * set) {
 		bar->width = retint;
 		if(!is_gap_horizontal_defined) {
 #ifdef YABAR_RANDR
-			if(bar->mon) {
+			if((ya.gen_flag & GEN_RANDR)) {
 				bar->hgap = (bar->mon->pos.width - bar->width) /2;
 			}
 			else {
