@@ -1,5 +1,5 @@
 VERSION = $(shell git describe)
-CPPFLAGS += -DVERSION=\"$(VERSION)\" -DYABAR_RANDR
+CPPFLAGS += -DVERSION=\"$(VERSION)\" -DYABAR_RANDR -D_POSIX_C_SOURCE=199309L
 CFLAGS += -std=c99 -pedantic -Wall -O2 `pkg-config --cflags pango pangocairo libconfig`
 INCLDS := -I.
 LDLIBS := -lxcb -lpthread -lxcb-randr `pkg-config --libs pango pangocairo libconfig`
