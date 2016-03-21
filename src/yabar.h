@@ -117,8 +117,6 @@ struct ya_block {
 	uint32_t fgcolor;
 	uint32_t ulcolor;
 	uint32_t olcolor;
-
-	//pid_t pid;
 };
 
 typedef struct ya_block ya_block_t;
@@ -146,6 +144,9 @@ struct ya_bar {
 	uint8_t ulsize;
 	uint8_t olsize;
 	uint8_t slack;
+
+	uint32_t brcolor;
+	uint8_t brsize;
 
 #ifdef YABAR_RANDR
 	ya_monitor_t *mon;

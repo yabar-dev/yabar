@@ -93,6 +93,11 @@ Each bar can have its font, position (currently only top and bottom), background
 
         slack-size: 2;
 
+* Borders: You can optionally define a size and a color for a border surrounding the bar. Default is no borders. Example:
+
+		border-size: 2;
+		border-color-rgb: 0xffffff;
+
 
 
 ### Block-specific options

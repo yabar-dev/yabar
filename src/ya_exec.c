@@ -278,6 +278,15 @@ void ya_setup_bar(config_setting_t * set) {
 	if(retcnf == CONFIG_TRUE) {
 		bar->slack = retint;
 	}
+	retcnf = config_setting_lookup_int(set, "border-size", &retint);
+	if(retcnf == CONFIG_TRUE) {
+		bar->brsize = retint;
+		//
+		retcnf = config_setting_lookup_int(set, "border-color-rgb", &retint);
+		if(retcnf == CONFIG_TRUE) {
+			bar->brcolor = retint;
+		}
+	}
 	ya_create_bar(bar);
 }
 

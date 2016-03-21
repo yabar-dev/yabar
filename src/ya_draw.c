@@ -66,11 +66,11 @@ int ya_create_bar(ya_bar_t * bar) {
 	int x=0, y=0;
 #ifdef YABAR_RANDR
 	if ((ya.gen_flag & GEN_RANDR))
-		x = bar->hgap + bar->mon->pos.x;
+		x = bar->hgap + bar->mon->pos.x - bar->brsize;
 	else 
-		x = bar->hgap;
+		x = bar->hgap - bar->brsize;
 #else
-	x = bar->hgap;
+	x = bar->hgap - bar->brsize;
 #endif //YABAR_RANDR
 	switch(bar->position){
 		case YA_TOP:{
@@ -87,24 +87,24 @@ int ya_create_bar(ya_bar_t * bar) {
 		case YA_BOTTOM: {
 #ifdef YABAR_RANDR
 			if ((ya.gen_flag & GEN_RANDR))
-				y = bar->mon->pos.height - bar->vgap - bar->height;
+				y = bar->mon->pos.height - bar->vgap - bar->height - 2*bar->brsize;
 			else
-				y = ya.scr->height_in_pixels - bar->vgap - bar->height;
+				y = ya.scr->height_in_pixels - bar->vgap - bar->height - 2*bar->brsize;
 #else
-			y = ya.scr->height_in_pixels - bar->vgap - bar->height;
+			y = ya.scr->height_in_pixels - bar->vgap - bar->height - 2*bar->brsize;
 #endif //YABAR_RANDR
 			break;
 		}
 	}
 	uint32_t w_mask = XCB_CW_BACK_PIXEL | XCB_CW_BORDER_PIXEL | XCB_CW_EVENT_MASK | XCB_CW_COLORMAP;
-	uint32_t w_val[] = {bar->bgcolor, bar->bgcolor, XCB_EVENT_MASK_EXPOSURE | XCB_EVENT_MASK_SUBSTRUCTURE_REDIRECT | XCB_EVENT_MASK_BUTTON_PRESS, ya.colormap};
+	uint32_t w_val[] = {bar->bgcolor, bar->brcolor, XCB_EVENT_MASK_EXPOSURE | XCB_EVENT_MASK_SUBSTRUCTURE_REDIRECT | XCB_EVENT_MASK_BUTTON_PRESS, ya.colormap};
 	xcb_create_window(ya.c,
 			ya.depth,
 			bar->win,
 			ya.scr->root,
 			x,y,
 			bar->width, bar->height,
-			0,
+			bar->brsize,
 			XCB_WINDOW_CLASS_INPUT_OUTPUT,
 			ya.visualtype->visual_id,
 			w_mask,
