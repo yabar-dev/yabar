@@ -20,7 +20,7 @@ static void ya_exec_redir_once(ya_block_t *blk) {
 		setvbuf(stdout,NULL,_IONBF,0);
 
 		execl(yashell, yashell, "-c", blk->cmd, (char *) NULL);
-		exit(EXIT_SUCCESS);
+		_exit(EXIT_SUCCESS);
 	}
 	else {
 		wait(NULL);
@@ -41,7 +41,7 @@ static void ya_exec_redir_period(ya_block_t *blk) {
 			setvbuf(stdout,NULL,_IONBF,0);
 
 			execl(yashell, yashell, "-c", blk->cmd, (char *) NULL);
-			exit(EXIT_SUCCESS);
+			_exit(EXIT_SUCCESS);
 		}
 		//close(opipe[1]);
 		wait(NULL);
