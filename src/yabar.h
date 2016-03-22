@@ -112,6 +112,7 @@ struct ya_block {
 
 	ya_bar_t *bar;
 	pthread_t thread;
+	int pid;
 
 	uint32_t bgcolor;
 	uint32_t fgcolor;
@@ -190,6 +191,7 @@ void ya_execute();
 //void ya_exec_cmd(char * cmd);
 void ya_exec_cmd(ya_block_t * blk, xcb_button_press_event_t *eb);
 void ya_cleanup_x();
+void ya_cleanup_blocks();
 void ya_create_block(ya_block_t *blk);
 ya_block_t * ya_get_blk_from_event( xcb_button_press_event_t *eb);
 void ya_process_opt(int argc, char *argv[]);
