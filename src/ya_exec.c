@@ -35,7 +35,8 @@ static void ya_exec_redir_period(ya_block_t *blk) {
 	int opipe[2];
 	pipe(opipe);
 	while (1) {
-		if (fork() == 0) {
+		int pid = fork();
+		if (pid == 0) {
 			dup2(opipe[1], STDOUT_FILENO);
 			close(opipe[1]);
 			setvbuf(stdout,NULL,_IONBF,0);
@@ -43,6 +44,7 @@ static void ya_exec_redir_period(ya_block_t *blk) {
 			execl(yashell, yashell, "-c", blk->cmd, (char *) NULL);
 			_exit(EXIT_SUCCESS);
 		}
+		blk->pid = pid;
 		//close(opipe[1]);
 		wait(NULL);
 		if (read(opipe[0], blk->buf, BUFSIZE) != 0) {
@@ -56,7 +58,8 @@ static void ya_exec_redir_period(ya_block_t *blk) {
 static void ya_exec_redir_persist(ya_block_t *blk) {
 	int opipe[2];
 	pipe(opipe);
-	if (fork() == 0) {
+	int pid = fork();
+	if (pid == 0) {
 		dup2(opipe[1], STDOUT_FILENO);
 		close(opipe[1]);
 		setvbuf(stdout,NULL,_IONBF,0);
@@ -64,6 +67,7 @@ static void ya_exec_redir_persist(ya_block_t *blk) {
 		execl(yashell, yashell, "-c", blk->cmd, (char *) NULL);
 		_exit(EXIT_SUCCESS);
 	}
+	blk->pid = pid;
 	close(opipe[1]);
 	while (read(opipe[0], blk->buf, BUFSIZE) != 0) {
 		ya_draw_pango_text(blk);
@@ -100,6 +104,7 @@ void * ya_exec_l (void * _blk) {
 void ya_sighandler(int signum) {
 	printf("\n\nExiting...\n");
 	ya_cleanup_x();
+	ya_cleanup_blocks();
 	exit(EXIT_SUCCESS);
 }
 
@@ -117,6 +122,21 @@ void ya_cleanup_x() {
 	}
 	xcb_flush(ya.c);
 	xcb_disconnect(ya.c);
+}
+
+// Terminates all persistent scripts attached to blocks
+void ya_cleanup_blocks() {
+	ya_bar_t * curbar = ya.curbar;
+	ya_block_t *curblk;
+	for(;curbar; curbar = curbar->next_bar) {
+		for (int align = 0; align < 3; align++) {
+			for (curblk = curbar->curblk[align]; curblk; curblk = curblk->next_blk) {
+				if(curblk->pid > 0) {
+					kill(curblk->pid, SIGTERM);
+				}
+			}
+		}
+	}
 }
 
 void ya_init() {
@@ -298,6 +318,7 @@ void ya_setup_block(config_setting_t * set, uint32_t type_init) {
 	int retcnf, retint;
 	const char *retstr;
 	blk->type = type_init;
+	blk->pid = -1;
 
 	retcnf = config_setting_lookup_string(set, "type", &retstr);
 	if(retcnf == CONFIG_FALSE) {
