@@ -112,7 +112,7 @@ struct ya_block {
 
 	ya_bar_t *bar;
 	pthread_t thread;
-	int pid;
+	pid_t pid;
 
 	uint32_t bgcolor;
 	uint32_t fgcolor;

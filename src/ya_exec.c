@@ -131,7 +131,7 @@ void ya_cleanup_blocks() {
 	for(;curbar; curbar = curbar->next_bar) {
 		for (int align = 0; align < 3; align++) {
 			for (curblk = curbar->curblk[align]; curblk; curblk = curblk->next_blk) {
-				if(curblk->pid > 0) {
+				if(curblk->pid > 0 && ((curblk->type & BLKA_EXTERNAL))  && ((curblk->type & BLKA_PERSIST))) {
 					kill(curblk->pid, SIGTERM);
 				}
 			}
