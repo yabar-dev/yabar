@@ -3,5 +3,5 @@ compiler:
     - gcc
 before_install:
     - sudo apt-get update -qq
-    - sudo apt-get install -y libconfig-dev cairo-dev pango-dev
+    - sudo apt-get install -y libconfig-dev libcairo2-dev libpango1.0-dev
 script: make
