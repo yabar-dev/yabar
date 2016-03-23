@@ -621,6 +621,7 @@ int ya_init_randr() {
 
 	ya_monitor_t *tmpmon;
 	char *tname;
+	int tname_len;
 
 	for (int i=0; i < mon_num; i++) {
 		op_reply = xcb_randr_get_output_info_reply(ya.c,
@@ -635,14 +636,15 @@ int ya_init_randr() {
 		tmpmon->pos = (xcb_rectangle_t){crtc_reply->x, 
 			crtc_reply->y, crtc_reply->width, crtc_reply->height};
 		tname = (char *)xcb_randr_get_output_info_name(op_reply);
-		strncpy(tmpmon->name, tname, CMONLEN);
+		tname_len = xcb_randr_get_output_info_name_length(op_reply);
+		strncpy(tmpmon->name, tname, tname_len);
 		tmpmon->name[CMONLEN-1] = '\0';
 		if (ya.curmon) {
 			ya.curmon->next_mon = tmpmon;
 			tmpmon->prev_mon = ya.curmon;
 		}
 		ya.curmon = tmpmon;
-		//printf("%s %d %d %d %d\n", tmpmon->name, tmpmon->pos.x,
+		//printf("%s %d %d %d %d %d\n", tmpmon->name, tname_len, tmpmon->pos.x,
 		//		tmpmon->pos.y, tmpmon->pos.width, tmpmon->pos.height);
 	}
 	return 0;
