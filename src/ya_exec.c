@@ -356,38 +356,33 @@ void ya_setup_block(config_setting_t * set, uint32_t type_init) {
 	else {
 		int len = strlen(retstr);
 		if (len) {
-			blk->cmd = malloc(len);
-			strcpy(blk->cmd, retstr);
+			blk->cmd = strdup(retstr);
 		}
 		else {
+			fprintf(stderr, "exec is empty for block: %s. Skipping this block...\n", config_setting_name(set));
 			free(blk);
 			return;
 		}
 	}
 	retcnf = config_setting_lookup_string(set, "command-button1", &retstr);
 	if(retcnf == CONFIG_TRUE) {
-		blk->button_cmd[0] = malloc(strlen(retstr));
-		strcpy(blk->button_cmd[0], retstr);
+		blk->button_cmd[0] = strdup(retstr);
 	}
 	retcnf = config_setting_lookup_string(set, "command-button2", &retstr);
 	if(retcnf == CONFIG_TRUE) {
-		blk->button_cmd[1] = malloc(strlen(retstr));
-		strcpy(blk->button_cmd[1], retstr);
+		blk->button_cmd[1] = strdup(retstr);
 	}
 	retcnf = config_setting_lookup_string(set, "command-button3", &retstr);
 	if(retcnf == CONFIG_TRUE) {
-		blk->button_cmd[2] = malloc(strlen(retstr));
-		strcpy(blk->button_cmd[2], retstr);
+		blk->button_cmd[2] = strdup(retstr);
 	}
 	retcnf = config_setting_lookup_string(set, "command-button4", &retstr);
 	if(retcnf == CONFIG_TRUE) {
-		blk->button_cmd[3] = malloc(strlen(retstr));
-		strcpy(blk->button_cmd[3], retstr);
+		blk->button_cmd[3] = strdup(retstr);
 	}
 	retcnf = config_setting_lookup_string(set, "command-button5", &retstr);
 	if(retcnf == CONFIG_TRUE) {
-		blk->button_cmd[4] = malloc(strlen(retstr));
-		strcpy(blk->button_cmd[4], retstr);
+		blk->button_cmd[4] = strdup(retstr);
 	}
 	retcnf = config_setting_lookup_string(set, "align", &retstr);
 	if(retcnf == CONFIG_FALSE) {
@@ -563,10 +558,11 @@ void ya_process_path(char *cpath) {
 	struct stat st;
 	if (stat(cpath, &st)==0) {
 		strncpy(conf_file, cpath, CFILELEN);
+		conf_file[CFILELEN-1]='\0';
 		ya.gen_flag |= GEN_EXT_CONF;
 	}
 	else {
-		printf("Invalid config file path.\nExiting...\n");
+		printf("Invalid config file path. Exiting...\n");
 		exit(EXIT_SUCCESS);
 	}
 }
@@ -622,6 +618,7 @@ int ya_init_randr() {
 			crtc_reply->y, crtc_reply->width, crtc_reply->height};
 		tname = (char *)xcb_randr_get_output_info_name(op_reply);
 		strncpy(tmpmon->name, tname, CMONLEN);
+		tmpmon->name[CMONLEN-1] = '\0';
 		if (ya.curmon) {
 			ya.curmon->next_mon = tmpmon;
 			tmpmon->prev_mon = ya.curmon;
