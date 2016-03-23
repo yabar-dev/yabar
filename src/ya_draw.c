@@ -143,7 +143,7 @@ void ya_draw_pango_text(struct ya_block *blk) {
 		pango_layout_set_text(layout, blk->buf, strlen(blk->buf));
 	else
 		pango_layout_set_markup(layout, blk->buf, strlen(blk->buf));
-	pango_layout_set_alignment(layout, PANGO_ALIGN_CENTER);
+	pango_layout_set_alignment(layout, blk->justify);
 	cairo_set_operator(cr, CAIRO_OPERATOR_SOURCE);
 	pango_layout_set_width(layout, blk->width * PANGO_SCALE);
 	pango_layout_set_wrap(layout, PANGO_WRAP_WORD);

@@ -112,6 +112,10 @@ Each block can have its command/script, background, foreground (i.e. font), unde
 
         align: "right";
 
+* Justify: By default yabars centers the text inside the block size. However, you can optionally justify the text to the left or the right.
+
+		justify: "left";
+
 * Type: The block type can be *periodic* where the command/script is executed within a fixed interval of time, *persistent* where the command/script runs in a persistent way like `xtitle` or *once* where the command/script is executed only once where the intended info should not change like in `whoami`. Examples:
 
 

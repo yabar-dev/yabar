@@ -457,6 +457,24 @@ void ya_setup_block(config_setting_t * set, uint32_t type_init) {
 		blk->olcolor = retint | 0xff000000;
 		blk->type |= BLKA_OVERLINE;
 	}
+	retcnf = config_setting_lookup_string(set, "justify", &retstr);
+	if(retcnf == CONFIG_TRUE) {
+		if(strcmp(retstr, "left")==0) {
+			blk->justify =	PANGO_ALIGN_LEFT;
+		}
+		else if(strcmp(retstr, "center")==0) {
+			blk->justify =	PANGO_ALIGN_CENTER;
+		}
+		else if(strcmp(retstr, "right")==0) {
+			blk->justify =	PANGO_ALIGN_RIGHT;
+		}
+		else {
+			blk->justify = PANGO_ALIGN_CENTER;
+		}
+	}
+	else {
+		blk->justify = PANGO_ALIGN_CENTER;
+	}
 
 	ya_create_block(blk);
 }

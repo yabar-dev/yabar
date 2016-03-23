@@ -102,6 +102,7 @@ struct ya_block {
 	uint32_t sleep;
 	uint32_t type;
 	uint8_t align;
+	uint8_t justify;
 	uint16_t xpos;
 	uint16_t width;
 
