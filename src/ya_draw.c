@@ -61,7 +61,7 @@ void ya_create_block(ya_block_t *blk) {
 	xcb_create_gc(ya.c, blk->gc, blk->pixmap, XCB_GC_FOREGROUND, (const uint32_t[]){gc_col});
 }
 
-int ya_create_bar(ya_bar_t * bar) {
+void ya_create_bar(ya_bar_t * bar) {
 	bar->win = xcb_generate_id(ya.c);
 	int x=0, y=0;
 #ifdef YABAR_RANDR
@@ -110,7 +110,6 @@ int ya_create_bar(ya_bar_t * bar) {
 			w_mask,
 			w_val);
 	ya_setup_ewmh(bar);
-	return 1;
 }
 
 xcb_visualtype_t * ya_get_visualtype() {

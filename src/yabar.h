@@ -179,25 +179,28 @@ typedef struct yabar_gen_info yabar_info_t;
 
 extern yabar_info_t ya;
 extern char conf_file[CFILELEN]; 
-void * ya_exec(void * _blk);
-xcb_visualtype_t * ya_get_visual();
+
 void ya_sighandler(int signum);
 void ya_init();
-xcb_visualtype_t * 	ya_get_visualtype();
-void ya_draw_pango_text(struct ya_block *blk);
-void ya_setup_ewmh (ya_bar_t *bar);
-void ya_config_parse();
-int ya_create_bar(ya_bar_t * bar);
 void ya_execute();
-//void ya_exec_cmd(char * cmd);
+void ya_process_opt(int argc, char *argv[]);
+xcb_visualtype_t * ya_get_visualtype();
+void ya_setup_ewmh(ya_bar_t *bar);
+void ya_config_parse();
+
+void ya_create_bar(ya_bar_t * bar);
+void ya_create_block(ya_block_t *blk);
+
+void ya_draw_pango_text(struct ya_block *blk);
 void ya_exec_cmd(ya_block_t * blk, xcb_button_press_event_t *eb);
+
 void ya_cleanup_x();
 void ya_cleanup_blocks();
-void ya_create_block(ya_block_t *blk);
+
 ya_block_t * ya_get_blk_from_event( xcb_button_press_event_t *eb);
-void ya_process_opt(int argc, char *argv[]);
-int ya_init_randr();
+
 #ifdef YABAR_RANDR
+int ya_init_randr();
 ya_monitor_t * ya_get_monitor_from_name(const char *name);
 #endif //YABAR_RANDR
 #endif /*YABAR_H*/
