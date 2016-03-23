@@ -166,6 +166,120 @@ void ya_init() {
 	ya_config_parse();
 }
 
+ya_bar_t * ya_get_bar_from_name(const char *name) {
+	ya_bar_t *curbar;
+	for(curbar = ya.curbar; curbar->prev_bar; curbar = curbar->prev_bar);
+	for(;curbar; curbar = curbar->next_bar) {
+		if(strcmp(curbar->name, name)==0)
+			return curbar;
+	}
+	return NULL;
+}
+
+ya_block_t * ya_get_blk_from_name (const char *name, ya_bar_t * curbar) {
+	ya_block_t *curblk;
+	for(int align =0; align < 3; align++){
+		if ((curblk = curbar->curblk[align])) {
+			for(; curblk->prev_blk; curblk = curblk->prev_blk);	
+			for(;curblk; curblk = curblk->next_blk) {
+				if(strcmp(curblk->name, name)==0)
+					return curblk;
+			}
+		}
+	}
+	return NULL;
+}
+
+int ya_inherit_bar(ya_bar_t *dstb, const char *srcname) {
+	ya_bar_t *srcb = ya_get_bar_from_name(srcname);
+	if(srcb == NULL) {
+		fprintf(stderr, "No bar has the name %s\n", srcname);
+		return -1;
+	}
+	dstb->hgap = srcb->hgap;
+	dstb->vgap = srcb->vgap;
+	dstb->bgcolor = srcb->bgcolor;
+	dstb->width = srcb->width;
+	dstb->height = srcb->height;
+	dstb->position = srcb->position;
+	dstb->desc = srcb->desc;
+	dstb->ulsize = srcb->ulsize;
+	dstb->olsize = srcb->olsize;
+	dstb->slack = srcb->slack;
+	dstb->brcolor = srcb->brcolor;
+	dstb->brsize = srcb->brsize;
+#ifdef YABAR_RANDR
+	dstb->mon = srcb->mon;
+#endif //YABAR_RANDR
+	dstb->attr |= BARA_INHERIT;
+	return 0;
+}
+
+int ya_inherit_blk(ya_block_t *dstb, const char *name) {
+	char *per = "Please enter a valid string.\n";
+	char *barname, *blkname;
+	int barnamelen=0, blknamelen=0;
+	ya_bar_t *src_bar;
+	ya_block_t *srcb;
+	int nlen = strlen(name);
+	if(nlen < 1) {
+		fprintf(stderr, "No inherit entry. ");
+		fprintf(stderr, per);
+		return -1;
+	}
+	for(int i = 0; i < nlen; i++) {
+		if((name[i]=='.') && (i > 0) && (i < (nlen-1))) {
+			barnamelen = i+1;
+			break;
+		}
+	}
+	if(barnamelen == 0) {
+		fprintf(stderr, per);
+		return -1;
+	}
+
+	blknamelen = nlen - barnamelen + 1;
+
+	barname = calloc(1, barnamelen);
+	blkname = calloc(1, blknamelen);
+
+	strncpy(barname, name, barnamelen-1);
+	name += barnamelen;
+	strncpy(blkname, name, blknamelen);
+
+	src_bar = ya_get_bar_from_name(barname);
+	if(src_bar == NULL) {
+		fprintf(stderr, per);
+		free(barname);
+		free(blkname);
+		return -1;
+	}
+	srcb = ya_get_blk_from_name(blkname, src_bar);
+	if(srcb == NULL) {
+		fprintf(stderr, per);
+		free(barname);
+		free(blkname);
+		return -1;
+	}
+
+	dstb->cmd = srcb->cmd;
+	for(int i=0; i<5; i++)
+		dstb->button_cmd[i] = srcb->button_cmd[i];
+	dstb->sleep = srcb->sleep;
+	dstb->type = srcb->type;
+	dstb->align = srcb->align;
+	dstb->justify = srcb->justify;
+	dstb->width = srcb->width;
+	dstb->bgcolor = srcb->bgcolor;
+	dstb->fgcolor = srcb->fgcolor;
+	dstb->ulcolor = srcb->ulcolor;
+	dstb->olcolor = srcb->olcolor;
+	
+	dstb->type |= BLKA_INHERIT;
+	free(barname);
+	free(blkname);
+	return 0;
+}
 
 void ya_setup_bar(config_setting_t * set) {
 	int retcnf, retint;
@@ -176,9 +290,15 @@ void ya_setup_bar(config_setting_t * set) {
 		ya.curbar->next_bar = bar;
 	}
 	ya.curbar = bar;
+	bar->name = strdup(config_setting_name(set));
+	retcnf = config_setting_lookup_string(set, "inherit", &retstr);
+	if(retcnf == CONFIG_TRUE) {
+		ya_inherit_bar(bar, retstr);
+	}
 	retcnf = config_setting_lookup_string(set, "font", &retstr);
 	if(retcnf == CONFIG_FALSE) {
-		bar->desc = pango_font_description_from_string(YA_DEF_FONT);
+		if(NOT_INHERIT_BAR(bar))
+			bar->desc = pango_font_description_from_string(YA_DEF_FONT);
 	}
 	else {
 		bar->desc = pango_font_description_from_string(retstr);
@@ -186,7 +306,8 @@ void ya_setup_bar(config_setting_t * set) {
 
 	retcnf = config_setting_lookup_string(set, "position", &retstr);
 	if(retcnf == CONFIG_FALSE) {
-		bar->position = YA_TOP;
+		if(NOT_INHERIT_BAR(bar))
+			bar->position = YA_TOP;
 	}
 	else {
 		if(strcmp(retstr, "top")==0) {
@@ -209,7 +330,7 @@ void ya_setup_bar(config_setting_t * set) {
 	retcnf = config_setting_lookup_string(set, "monitor", &retstr);
 	if(retcnf == CONFIG_FALSE) {
 		//If not explicitly specified, fall back to the first active monitor.
-		if((ya.gen_flag & GEN_RANDR)) {
+		if((ya.gen_flag & GEN_RANDR) && NOT_INHERIT_BAR(bar)) {
 			for(bar->mon= ya.curmon; bar->mon->prev_mon; bar->mon = bar->mon->prev_mon);
 		}
 	}
@@ -225,40 +346,37 @@ void ya_setup_bar(config_setting_t * set) {
 
 	bool is_gap_horizontal_defined = false;
 	retcnf = config_setting_lookup_int(set, "gap-horizontal", &retint);
-	if(retcnf == CONFIG_FALSE) {
-		bar->hgap = 0;
-	}
-	else {
+	if(retcnf == CONFIG_TRUE) {
 		bar->hgap = retint;
 		is_gap_horizontal_defined = true;
 	}
 
 	retcnf = config_setting_lookup_int(set, "gap-vertical", &retint);
-	if(retcnf == CONFIG_FALSE) {
-		bar->vgap = 0;
-	}
-	else {
+	if(retcnf == CONFIG_TRUE) {
 		bar->vgap = retint;
 	}
 	retcnf = config_setting_lookup_int(set, "height", &retint);
 	if(retcnf == CONFIG_FALSE) {
-		bar->height = 20;
+		if (NOT_INHERIT_BAR(bar))
+			bar->height = 20;
 	}
 	else {
 		bar->height = retint;
 	}
 	retcnf = config_setting_lookup_int(set, "width", &retint);
 	if(retcnf == CONFIG_FALSE) {
+		if(NOT_INHERIT_BAR(bar)) {
 #ifdef YABAR_RANDR
-		if(bar->mon) {
-			bar->width = bar->mon->pos.width - 2*(bar->hgap);
-		}
-		else {
-			bar->width = ya.scr->width_in_pixels - 2*(bar->hgap);
-		}
+			if(bar->mon) {
+				bar->width = bar->mon->pos.width - 2*(bar->hgap);
+			}
+			else {
+				bar->width = ya.scr->width_in_pixels - 2*(bar->hgap);
+			}
 #else
-		bar->width = ya.scr->width_in_pixels - 2*(bar->hgap);
+			bar->width = ya.scr->width_in_pixels - 2*(bar->hgap);
 #endif //YABAR_RANDR
+		}
 	}
 	else {
 		bar->width = retint;
@@ -285,7 +403,8 @@ void ya_setup_bar(config_setting_t * set) {
 	}
 	retcnf = config_setting_lookup_int(set, "background-color-argb", &retint);
 	if(retcnf == CONFIG_FALSE) {
-		bar->bgcolor = 0xff1d1d1d;
+		if(NOT_INHERIT_BAR(bar))
+			bar->bgcolor = 0xff1d1d1d;
 	}
 	else {
 		bar->bgcolor = retint;
@@ -301,7 +420,6 @@ void ya_setup_bar(config_setting_t * set) {
 	retcnf = config_setting_lookup_int(set, "border-size", &retint);
 	if(retcnf == CONFIG_TRUE) {
 		bar->brsize = retint;
-		//
 		retcnf = config_setting_lookup_int(set, "border-color-rgb", &retint);
 		if(retcnf == CONFIG_TRUE) {
 			bar->brcolor = retint;
@@ -320,11 +438,17 @@ void ya_setup_block(config_setting_t * set, uint32_t type_init) {
 	blk->type = type_init;
 	blk->pid = -1;
 
+	retcnf = config_setting_lookup_string(set, "inherit", &retstr);
+	if(retcnf == CONFIG_TRUE) {
+		ya_inherit_blk(blk, retstr);
+	}
 	retcnf = config_setting_lookup_string(set, "type", &retstr);
 	if(retcnf == CONFIG_FALSE) {
-		fprintf(stderr, "No type is defined for block: %s. Skipping this block...\n", config_setting_name(set));
-		free(blk);
-		return;
+		if(NOT_INHERIT_BLK(blk)) {
+			fprintf(stderr, "No type is defined for block: %s. Skipping this block...\n", config_setting_name(set));
+			free(blk);
+			return;
+		}
 	}
 	else {
 		if(strcmp(retstr, "persist")==0) {
@@ -349,9 +473,11 @@ void ya_setup_block(config_setting_t * set, uint32_t type_init) {
 
 	retcnf = config_setting_lookup_string(set, "exec", &retstr);
 	if(retcnf == CONFIG_FALSE) {
-		fprintf(stderr, "No exec is defined for block: %s. Skipping this block...\n", config_setting_name(set));
-		free(blk);
-		return;
+		if(NOT_INHERIT_BLK(blk)) {
+			fprintf(stderr, "No exec is defined for block: %s. Skipping this block...\n", config_setting_name(set));
+			free(blk);
+			return;
+		}
 	}
 	else {
 		int len = strlen(retstr);
@@ -364,6 +490,7 @@ void ya_setup_block(config_setting_t * set, uint32_t type_init) {
 			return;
 		}
 	}
+	blk->name = strdup(config_setting_name(set));
 	retcnf = config_setting_lookup_string(set, "command-button1", &retstr);
 	if(retcnf == CONFIG_TRUE) {
 		blk->button_cmd[0] = strdup(retstr);
@@ -386,7 +513,8 @@ void ya_setup_block(config_setting_t * set, uint32_t type_init) {
 	}
 	retcnf = config_setting_lookup_string(set, "align", &retstr);
 	if(retcnf == CONFIG_FALSE) {
-		blk->align = A_CENTER;
+		if(NOT_INHERIT_BLK(blk))
+			blk->align = A_CENTER;
 	}
 	else {
 		if(strcmp(retstr, "left")==0) {
@@ -404,7 +532,8 @@ void ya_setup_block(config_setting_t * set, uint32_t type_init) {
 	}
 	retcnf = config_setting_lookup_int(set, "fixed-size", &retint);
 	if(retcnf == CONFIG_FALSE) {
-		blk->width = 80;
+		if(NOT_INHERIT_BLK(blk))
+			blk->width = 80;
 	}
 	else {
 		blk->width = retint;
@@ -473,7 +602,8 @@ void ya_setup_block(config_setting_t * set, uint32_t type_init) {
 		}
 	}
 	else {
-		blk->justify = PANGO_ALIGN_CENTER;
+		if(NOT_INHERIT_BLK(blk))
+			blk->justify = PANGO_ALIGN_CENTER;
 	}
 
 	ya_create_block(blk);

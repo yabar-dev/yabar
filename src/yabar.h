@@ -50,6 +50,10 @@ extern char *strdup(const char *s); //to suppress implicit decleration warning f
 
 
 
+#define CBARLEN 32
+#define CBLKLEN 32
+
+
 enum {
 	A_LEFT =0,
 	A_CENTER=1,
@@ -77,8 +81,17 @@ enum {
 	BLKA_BGCOLOR 		= 1<<10,
 	BLKA_FGCOLOR 		= 1<<11,
 	BLKA_UNDERLINE 		= 1<<12,
-	BLKA_OVERLINE 		= 1<<13
+	BLKA_OVERLINE 		= 1<<13,
+	BLKA_INHERIT		= 1<<14
 };
+
+
+enum {
+	BARA_INHERIT = 1
+};
+
+#define NOT_INHERIT_BAR(bar) (((bar)->attr & BARA_INHERIT)==0)
+#define NOT_INHERIT_BLK(nlk) (((blk)->type & BLKA_INHERIT)==0)
 
 #ifdef YABAR_RANDR
 
@@ -95,6 +108,7 @@ struct ya_monitor {
 
 typedef struct ya_bar ya_bar_t;
 struct ya_block {
+	char *name;
 	char buf [BUFSIZE];
 	char *cmd;
 	char *button_cmd[5];
@@ -125,6 +139,7 @@ struct ya_block {
 typedef struct ya_block ya_block_t;
 
 struct ya_bar {
+	char *name;
 	uint16_t occupied_width[3];
 
 	uint16_t hgap;
@@ -150,6 +165,7 @@ struct ya_bar {
 
 	uint32_t brcolor;
 	uint8_t brsize;
+	uint8_t attr;
 
 #ifdef YABAR_RANDR
 	ya_monitor_t *mon;

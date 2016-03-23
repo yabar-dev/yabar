@@ -99,6 +99,12 @@ Each bar can have its font, position (currently only top and bottom), background
 		border-color-rgb: 0xffffff;
 
 
+* Inheritance: As the config file gets larger because you want to add several bars, you may find yourself adding many identical option values for every added bar. This optional entry is added in order to inherit the options from a precedent bar into your next bar. You can also override the inherited options with new values.
+
+
+		inherit: "bar1";
+
+
 
 ### Block-specific options
 
@@ -150,6 +156,11 @@ Each block can have its command/script, background, foreground (i.e. font), unde
         command-button4: "pactl set-sink-volume 0 +10%";
         command-button5: "pactl set-sink-volume 0 -10%";
 
+
+* Inheritance: As the config gets larger because you want to add many blocks, you may find yourself adding many identical option values for every added block. This optional entry is added in order to inherit the options from a precedent block into your new block. You can also override the inherited options with new values.
+
+
+		inherit: "bar1.block1";
 
 ### Environment variables
 
