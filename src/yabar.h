@@ -86,7 +86,7 @@ enum {
 };
 
 #define NOT_INHERIT_BAR(bar) (((bar)->attr & BARA_INHERIT)==0)
-#define NOT_INHERIT_BLK(nlk) (((blk)->type & BLKA_INHERIT)==0)
+#define NOT_INHERIT_BLK(nlk) (((blk)->attr & BLKA_INHERIT)==0)
 
 //#ifdef YABAR_RANDR
 
@@ -109,10 +109,10 @@ struct ya_block {
 	char *button_cmd[5];
 
 	uint32_t sleep;
-	uint32_t type;
+	uint32_t attr;
 	uint8_t align;
 	uint8_t justify;
-	uint16_t xpos;
+	uint16_t shift;
 	uint16_t width;
 
 	xcb_pixmap_t pixmap;

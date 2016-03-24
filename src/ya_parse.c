@@ -120,7 +120,7 @@ static int ya_inherit_blk(ya_block_t *dstb, const char *name) {
 	for(int i=0; i<5; i++)
 		dstb->button_cmd[i] = srcb->button_cmd[i];
 	dstb->sleep = srcb->sleep;
-	dstb->type = srcb->type;
+	dstb->attr = srcb->attr;
 	dstb->align = srcb->align;
 	dstb->justify = srcb->justify;
 	dstb->width = srcb->width;
@@ -129,7 +129,7 @@ static int ya_inherit_blk(ya_block_t *dstb, const char *name) {
 	dstb->ulcolor = srcb->ulcolor;
 	dstb->olcolor = srcb->olcolor;
 	
-	dstb->type |= BLKA_INHERIT;
+	dstb->attr |= BLKA_INHERIT;
 	free(barname);
 	free(blkname);
 	return 0;
@@ -279,7 +279,7 @@ static void ya_setup_block(config_setting_t * set, uint32_t type_init) {
 	struct ya_block * blk = calloc(1,sizeof(ya_block_t));
 	int retcnf, retint;
 	const char *retstr;
-	blk->type = type_init;
+	blk->attr = type_init;
 	blk->pid = -1;
 
 	retcnf = config_setting_lookup_string(set, "inherit", &retstr);
@@ -296,13 +296,13 @@ static void ya_setup_block(config_setting_t * set, uint32_t type_init) {
 	}
 	else {
 		if(strcmp(retstr, "persist")==0) {
-			blk->type |= BLKA_PERSIST;
+			blk->attr |= BLKA_PERSIST;
 		}
 		else if(strcmp(retstr, "once")==0) {
-			blk->type |= BLKA_ONCE;
+			blk->attr |= BLKA_ONCE;
 		}
 		else if(strcmp(retstr, "periodic")==0) {
-			blk->type |= BLKA_PERIODIC;
+			blk->attr |= BLKA_PERIODIC;
 			retcnf = config_setting_lookup_int(set, "interval", &retint);
 			if(retcnf == CONFIG_FALSE) {
 				blk->sleep = 5;
@@ -384,28 +384,28 @@ static void ya_setup_block(config_setting_t * set, uint32_t type_init) {
 	}
 	retcnf = config_setting_lookup_bool(set, "pango-markup", &retint);
 	if((retcnf == CONFIG_TRUE) && retint) {
-		blk->type |= BLKA_MARKUP_PANGO;
+		blk->attr |= BLKA_MARKUP_PANGO;
 	}
 
 	retcnf = config_setting_lookup_int(set, "background-color-argb", &retint);
 	if(retcnf == CONFIG_TRUE) {
 		blk->bgcolor = (uint32_t) retint;
-		blk->type |= BLKA_BGCOLOR;
+		blk->attr |= BLKA_BGCOLOR;
 	}
 	retcnf = config_setting_lookup_int(set, "background-color-rgb", &retint);
 	if(retcnf == CONFIG_TRUE) {
 		blk->bgcolor = retint | 0xff000000;
-		blk->type |= BLKA_BGCOLOR;
+		blk->attr |= BLKA_BGCOLOR;
 	}
 	retcnf = config_setting_lookup_int(set, "foreground-color-argb", &retint);
 	if(retcnf == CONFIG_TRUE) {
 		blk->fgcolor = retint;
-		blk->type |= BLKA_FGCOLOR;
+		blk->attr |= BLKA_FGCOLOR;
 	}
 	retcnf = config_setting_lookup_int(set, "foreground-color-rgb", &retint);
 	if(retcnf == CONFIG_TRUE) {
 		blk->fgcolor = retint | 0xff000000;
-		blk->type |= BLKA_FGCOLOR;
+		blk->attr |= BLKA_FGCOLOR;
 	}
 	else {
 		blk->fgcolor = 0xffffffff;
@@ -413,22 +413,22 @@ static void ya_setup_block(config_setting_t * set, uint32_t type_init) {
 	retcnf = config_setting_lookup_int(set, "underline-color-argb", &retint);
 	if(retcnf == CONFIG_TRUE) {
 		blk->ulcolor = retint;
-		blk->type |= BLKA_UNDERLINE;
+		blk->attr |= BLKA_UNDERLINE;
 	}
 	retcnf = config_setting_lookup_int(set, "underline-color-rgb", &retint);
 	if(retcnf == CONFIG_TRUE) {
 		blk->ulcolor = retint | 0xff000000;
-		blk->type |= BLKA_UNDERLINE;
+		blk->attr |= BLKA_UNDERLINE;
 	}
 	retcnf = config_setting_lookup_int(set, "overline-color-argb", &retint);
 	if(retcnf == CONFIG_TRUE) {
 		blk->olcolor = retint;
-		blk->type |= BLKA_OVERLINE;
+		blk->attr |= BLKA_OVERLINE;
 	}
 	retcnf = config_setting_lookup_int(set, "overline-color-rgb", &retint);
 	if(retcnf == CONFIG_TRUE) {
 		blk->olcolor = retint | 0xff000000;
-		blk->type |= BLKA_OVERLINE;
+		blk->attr |= BLKA_OVERLINE;
 	}
 	retcnf = config_setting_lookup_string(set, "justify", &retstr);
 	if(retcnf == CONFIG_TRUE) {

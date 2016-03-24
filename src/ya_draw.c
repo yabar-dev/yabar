@@ -18,7 +18,7 @@ void ya_create_block(ya_block_t *blk) {
 	}
 	switch (blk->align) {
 		case A_LEFT:
-			blk->xpos = blk->bar->occupied_width[A_LEFT];
+			blk->shift = blk->bar->occupied_width[A_LEFT];
 			blk->bar->occupied_width[A_LEFT] += blk->width + blk->bar->slack;
 			break;
 		case A_CENTER:
@@ -26,22 +26,22 @@ void ya_create_block(ya_block_t *blk) {
 			tmpblk = blk->bar->curblk[A_CENTER];
 			if(tmpblk) {
 				for(;tmpblk->prev_blk; tmpblk = tmpblk->prev_blk);
-				tmpblk->xpos = (blk->bar->width - blk->bar->occupied_width[A_CENTER])/2;
+				tmpblk->shift = (blk->bar->width - blk->bar->occupied_width[A_CENTER])/2;
 				for(tmpblk = tmpblk->next_blk; tmpblk; tmpblk = tmpblk->next_blk) {
-					tmpblk->xpos = tmpblk->prev_blk->xpos + tmpblk->prev_blk->width + blk->bar->slack;	
+					tmpblk->shift = tmpblk->prev_blk->shift + tmpblk->prev_blk->width + blk->bar->slack;	
 				}
 			}
 			else {
-				blk->xpos = (blk->bar->width - blk->bar->occupied_width[A_CENTER])/2;
+				blk->shift = (blk->bar->width - blk->bar->occupied_width[A_CENTER])/2;
 			}
 			break;
 		case A_RIGHT:
 			tmpblk = blk->bar->curblk[A_RIGHT];
 			blk->bar->occupied_width[A_RIGHT] += (blk->width + blk->bar->slack);
-			blk->xpos = blk->bar->width - blk->width;
+			blk->shift = blk->bar->width - blk->width;
 			if(tmpblk) {
 				for(; tmpblk; tmpblk = tmpblk->prev_blk) {
-					tmpblk->xpos -= (blk->width + blk->bar->slack);
+					tmpblk->shift -= (blk->width + blk->bar->slack);
 				}
 		
 			}
@@ -54,7 +54,7 @@ void ya_create_block(ya_block_t *blk) {
 			blk->pixmap,
 			blk->bar->win, blk->width, blk->bar->height);
 	blk->gc = xcb_generate_id(ya.c);
-	if (blk->type & BLKA_BGCOLOR)
+	if (blk->attr & BLKA_BGCOLOR)
 		gc_col = blk->bgcolor;
 	else
 		gc_col = blk->bar->bgcolor;
@@ -127,7 +127,7 @@ void ya_draw_pango_text(struct ya_block *blk) {
 			GET_GREEN(blk->fgcolor),
 			GET_ALPHA(blk->fgcolor));
 
-	if (!(blk->type & BLKA_MARKUP_PANGO))
+	if (!(blk->attr & BLKA_MARKUP_PANGO))
 		pango_layout_set_text(layout, blk->buf, strlen(blk->buf));
 	else
 		pango_layout_set_markup(layout, blk->buf, strlen(blk->buf));
@@ -147,7 +147,7 @@ void ya_draw_pango_text(struct ya_block *blk) {
 	pango_cairo_show_layout(cr, layout);
 	cairo_move_to(cr, 0, offset);
 
-	if(blk->type & BLKA_OVERLINE) {
+	if(blk->attr & BLKA_OVERLINE) {
 		cairo_set_source_rgba(cr, 
 			GET_RED(blk->olcolor), 
 			GET_BLUE(blk->olcolor),
@@ -156,7 +156,7 @@ void ya_draw_pango_text(struct ya_block *blk) {
 		cairo_rectangle(cr, 0, 0, blk->width, blk->bar->olsize);
 		cairo_fill(cr);
 	}
-	if(blk->type & BLKA_UNDERLINE) {
+	if(blk->attr & BLKA_UNDERLINE) {
 		cairo_set_source_rgba(cr, 
 			GET_RED(blk->ulcolor), 
 			GET_BLUE(blk->ulcolor),
@@ -167,7 +167,7 @@ void ya_draw_pango_text(struct ya_block *blk) {
 	}
 
 	cairo_surface_flush(surface);
-	xcb_copy_area(ya.c, blk->pixmap, blk->bar->win, blk->gc, 0,0,blk->xpos,0, blk->width, blk->bar->height);
+	xcb_copy_area(ya.c, blk->pixmap, blk->bar->win, blk->gc, 0,0,blk->shift, 0, blk->width, blk->bar->height);
 	xcb_flush(ya.c);
 	
 	g_object_unref(layout);
@@ -247,7 +247,7 @@ ya_block_t * ya_get_blk_from_event( xcb_button_press_event_t *eb) {
 		if ( curbar->win == eb->event) {
 			for(int align = 0; align < 3; align++) {
 				for(curblk = curbar->curblk[align]; curblk; curblk = curblk->next_blk) {
-					if ((curblk->xpos <= eb->event_x) && ((curblk->xpos + curblk->width) >= eb->event_x))
+					if ((curblk->shift <= eb->event_x) && ((curblk->shift + curblk->width) >= eb->event_x))
 						return curblk;
 				}
 			}	

@@ -77,21 +77,21 @@ static void ya_exec_redir_persist(ya_block_t *blk) {
 
 static void * ya_exec(void * _blk) {
 	ya_block_t *blk = (ya_block_t *) _blk;
-	if (blk->type & BLKA_EXTERNAL) {
-		if (blk->type & BLKA_PERIODIC) {
+	if (blk->attr & BLKA_EXTERNAL) {
+		if (blk->attr & BLKA_PERIODIC) {
 			ya_exec_redir_period(blk);
 		}
-		else if (blk->type & BLKA_PERSIST) {
+		else if (blk->attr & BLKA_PERSIST) {
 			ya_exec_redir_persist(blk);
 		}
-		else if (blk->type & BLKA_ONCE) {
+		else if (blk->attr & BLKA_ONCE) {
 			ya_exec_redir_once(blk);
 		}
 		/*Shouldn't get here*/
 		else {
 		}
 	}
-	else if (blk->type & BLKA_INTERNAL) {
+	else if (blk->attr & BLKA_INTERNAL) {
 		/*TODO*/
 	}
 	/*Shouldn't get here*/
@@ -123,7 +123,7 @@ static void ya_cleanup_blocks() {
 	for(;curbar; curbar = curbar->next_bar) {
 		for (int align = 0; align < 3; align++) {
 			for (curblk = curbar->curblk[align]; curblk; curblk = curblk->next_blk) {
-				if(curblk->pid > 0 && ((curblk->type & BLKA_EXTERNAL))  && ((curblk->type & BLKA_PERSIST))) {
+				if(curblk->pid > 0 && ((curblk->attr & BLKA_EXTERNAL))  && ((curblk->attr & BLKA_PERSIST))) {
 					kill(curblk->pid, SIGTERM);
 				}
 			}
@@ -266,7 +266,7 @@ void ya_execute() {
 inline void ya_exec_button(ya_block_t * blk, xcb_button_press_event_t *eb) {
 	if (fork() == 0) {
 		char blkx[6], blky[6], blkw[6];
-		snprintf(blkx, 6, "%d", eb->root_x - eb->event_x + blk->xpos);
+		snprintf(blkx, 6, "%d", eb->root_x - eb->event_x + blk->shift);
 		if (blk->bar->position == YA_TOP)
 			snprintf(blky, 6, "%d", blk->bar->height + blk->bar->vgap);
 		else if (blk->bar->position == YA_BOTTOM)
