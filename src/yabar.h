@@ -30,6 +30,8 @@
 
 #include <xcb/randr.h>
 
+//just to suppress gcc syntastic warnings in vim
+//VERSION is obtained from Makefile
 #ifndef VERSION
 #define VERSION ""
 #endif
@@ -62,19 +64,20 @@ enum {
 	YA_RIGHT
 };
 
+//Flags of block attributes; stored in blk->attr
 enum {
-	BLKA_PERIODIC 	= 1<<0,
-	BLKA_PERSIST 	= 1<<1,
-	BLKA_ONCE 		= 1<<2,
-	BLKA_INTERNAL 	= 1<<3,
-	BLKA_EXTERNAL 	= 1<<4,
+	BLKA_PERIODIC		= 1<<0,
+	BLKA_PERSIST		= 1<<1,
+	BLKA_ONCE			= 1<<2,
+	BLKA_INTERNAL		= 1<<3,
+	BLKA_EXTERNAL		= 1<<4,
 	BLKA_MARKUP_PANGO 	= 1<<5,
 	BLKA_FIXED_WIDTH 	= 1<<6,
 	BLKA_ALIGN_LEFT 	= 1<<7,
 	BLKA_ALIGN_CENTER 	= 1<<8,
 	BLKA_ALIGN_RIGHT 	= 1<<9,
 	BLKA_BGCOLOR 		= 1<<10,
-	BLKA_FGCOLOR 		= 1<<11,
+	BLKA_FGCOLOR		= 1<<11,
 	BLKA_UNDERLINE 		= 1<<12,
 	BLKA_OVERLINE 		= 1<<13,
 	BLKA_INHERIT		= 1<<14
@@ -88,8 +91,6 @@ enum {
 #define NOT_INHERIT_BAR(bar) (((bar)->attr & BARA_INHERIT)==0)
 #define NOT_INHERIT_BLK(blk) (((blk)->attr & BLKA_INHERIT)==0)
 
-//#ifdef YABAR_RANDR
-
 #define CMONLEN 16
 
 typedef struct ya_monitor ya_monitor_t;
@@ -99,19 +100,18 @@ struct ya_monitor {
 	struct ya_monitor *prev_mon;
 	struct ya_monitor *next_mon;
 };
-//#endif // YABAR_RANDR
 
 typedef struct ya_bar ya_bar_t;
 struct ya_block {
 	char *name;
 	char buf [BUFSIZE];
 	char *cmd;
-	char *button_cmd[5];
+	char *button_cmd[5]; 
 
 	uint32_t sleep;
-	uint32_t attr;
+	uint32_t attr; //block atributes
 	uint8_t align;
-	uint8_t justify;
+	uint8_t justify; //justify text within block
 	uint16_t shift;
 	uint16_t width;
 
@@ -125,49 +125,49 @@ struct ya_block {
 	pthread_t thread;
 	pid_t pid;
 
-	uint32_t bgcolor;
-	uint32_t fgcolor;
-	uint32_t ulcolor;
-	uint32_t olcolor;
+	uint32_t bgcolor; //background color
+	uint32_t fgcolor; //foreground color
+	uint32_t ulcolor; //underline color
+	uint32_t olcolor; //overline color
 };
 
 typedef struct ya_block ya_block_t;
 
 struct ya_bar {
 	char *name;
-	uint16_t occupied_width[3];
+	uint16_t occupied_width[3]; // occupied for each alignment (left, center and right)
 
-	uint16_t hgap;
-	uint16_t vgap;
+	uint16_t hgap; //horizontal gap
+	uint16_t vgap; //vertical gap
 
-	uint32_t bgcolor;
+	uint32_t bgcolor; //background color
 	uint16_t width;
 	uint16_t height;
 
 	xcb_window_t win;
-	uint8_t position;
+	uint8_t position; //top, bottom, left or right.
 
 	PangoFontDescription *desc;
 
 	ya_block_t *curblk[3];
+	/* curblk[i] should point to the last added block for each alignment. then
+	 * should point to the first block for each alignment after invoking ya_execute()
+	 */
 
 	ya_bar_t *prev_bar;
 	ya_bar_t *next_bar;
 
-	uint8_t ulsize;
-	uint8_t olsize;
-	uint8_t slack;
+	uint8_t ulsize; //underline size
+	uint8_t olsize; //overline size
+	uint8_t slack; //slack size
 
-	uint32_t brcolor;
-	uint8_t brsize;
-	uint8_t attr;
+	uint32_t brcolor; //border color
+	uint8_t brsize; //border size
+	uint8_t attr; //bar attributes
 
-//#ifdef YABAR_RANDR
 	ya_monitor_t *mon;
-//#endif //YABAR_RANDR
 };
 
-//typedef struct ya_bar ya_bar_t;
 
 enum {
 	GEN_EXT_CONF	= 1 << 0,
@@ -183,9 +183,7 @@ struct yabar_gen_info {
 	ya_bar_t *curbar;
 	uint8_t depth;
 	uint8_t gen_flag;
-//#ifdef YABAR_RANDR
 	ya_monitor_t *curmon;
-//#endif //YABAR_RANDR
 };
 typedef struct yabar_gen_info yabar_info_t;
 
