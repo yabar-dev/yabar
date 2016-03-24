@@ -64,35 +64,23 @@ void ya_create_block(ya_block_t *blk) {
 void ya_create_bar(ya_bar_t * bar) {
 	bar->win = xcb_generate_id(ya.c);
 	int x=0, y=0;
-#ifdef YABAR_RANDR
 	if ((ya.gen_flag & GEN_RANDR))
 		x = bar->hgap + bar->mon->pos.x - bar->brsize;
 	else 
 		x = bar->hgap - bar->brsize;
-#else
-	x = bar->hgap - bar->brsize;
-#endif //YABAR_RANDR
 	switch(bar->position){
 		case YA_TOP:{
-#ifdef YABAR_RANDR
 			if ((ya.gen_flag & GEN_RANDR))
 				y = bar->vgap + bar->mon->pos.y;
 			else
 				y = bar->vgap;
-#else
-			y = bar->vgap;
-#endif //YABAR_RANDR
 			break;
 		} 
 		case YA_BOTTOM: {
-#ifdef YABAR_RANDR
 			if ((ya.gen_flag & GEN_RANDR))
 				y = bar->mon->pos.height - bar->vgap - bar->height - 2*bar->brsize;
 			else
 				y = ya.scr->height_in_pixels - bar->vgap - bar->height - 2*bar->brsize;
-#else
-			y = ya.scr->height_in_pixels - bar->vgap - bar->height - 2*bar->brsize;
-#endif //YABAR_RANDR
 			break;
 		}
 	}
@@ -248,7 +236,7 @@ void ya_setup_ewmh(ya_bar_t *bar) {
 	xcb_change_property(ya.c, XCB_PROP_MODE_REPLACE, bar->win, atom_list[NET_WM_DESKTOP], XCB_ATOM_CARDINAL, 32, 1, (const uint32_t []){ -1 } );
 	xcb_change_property(ya.c, XCB_PROP_MODE_REPLACE, bar->win, atom_list[NET_WM_STRUT_PARTIAL], XCB_ATOM_CARDINAL, 32, 12, strut);
 	xcb_change_property(ya.c, XCB_PROP_MODE_REPLACE, bar->win, atom_list[NET_WM_STRUT], XCB_ATOM_CARDINAL, 32, 4, strut);
-	xcb_change_property(ya.c, XCB_PROP_MODE_REPLACE, bar->win, XCB_ATOM_WM_NAME, XCB_ATOM_STRING, 8, strlen("Yabar"), "Yabar");
+	xcb_change_property(ya.c, XCB_PROP_MODE_REPLACE, bar->win, XCB_ATOM_WM_NAME, XCB_ATOM_STRING, 8, strlen("yabar"), "yabar");
 }
 
 

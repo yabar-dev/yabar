@@ -49,11 +49,6 @@ extern char *strdup(const char *s); //to suppress implicit decleration warning f
 #define GET_BLUE(c)		((double)(((c)>>8)  & 0xff)/255.0)
 
 
-
-#define CBARLEN 32
-#define CBLKLEN 32
-
-
 enum {
 	A_LEFT =0,
 	A_CENTER=1,
@@ -93,7 +88,7 @@ enum {
 #define NOT_INHERIT_BAR(bar) (((bar)->attr & BARA_INHERIT)==0)
 #define NOT_INHERIT_BLK(nlk) (((blk)->type & BLKA_INHERIT)==0)
 
-#ifdef YABAR_RANDR
+//#ifdef YABAR_RANDR
 
 #define CMONLEN 16
 
@@ -104,7 +99,7 @@ struct ya_monitor {
 	struct ya_monitor *prev_mon;
 	struct ya_monitor *next_mon;
 };
-#endif // YABAR_RANDR
+//#endif // YABAR_RANDR
 
 typedef struct ya_bar ya_bar_t;
 struct ya_block {
@@ -167,9 +162,9 @@ struct ya_bar {
 	uint8_t brsize;
 	uint8_t attr;
 
-#ifdef YABAR_RANDR
+//#ifdef YABAR_RANDR
 	ya_monitor_t *mon;
-#endif //YABAR_RANDR
+//#endif //YABAR_RANDR
 };
 
 //typedef struct ya_bar ya_bar_t;
@@ -188,16 +183,15 @@ struct yabar_gen_info {
 	ya_bar_t *curbar;
 	uint8_t depth;
 	uint8_t gen_flag;
-#ifdef YABAR_RANDR
+//#ifdef YABAR_RANDR
 	ya_monitor_t *curmon;
-#endif //YABAR_RANDR
+//#endif //YABAR_RANDR
 };
 typedef struct yabar_gen_info yabar_info_t;
 
 extern yabar_info_t ya;
 extern char conf_file[CFILELEN]; 
 
-void ya_sighandler(int signum);
 void ya_init();
 void ya_execute();
 void ya_process_opt(int argc, char *argv[]);
@@ -209,15 +203,9 @@ void ya_create_bar(ya_bar_t * bar);
 void ya_create_block(ya_block_t *blk);
 
 void ya_draw_pango_text(struct ya_block *blk);
-void ya_exec_cmd(ya_block_t * blk, xcb_button_press_event_t *eb);
-
-void ya_cleanup_x();
-void ya_cleanup_blocks();
+void ya_exec_button(ya_block_t * blk, xcb_button_press_event_t *eb);
 
 ya_block_t * ya_get_blk_from_event( xcb_button_press_event_t *eb);
 
-#ifdef YABAR_RANDR
-int ya_init_randr();
-ya_monitor_t * ya_get_monitor_from_name(const char *name);
-#endif //YABAR_RANDR
+//int ya_init_randr();
 #endif /*YABAR_H*/

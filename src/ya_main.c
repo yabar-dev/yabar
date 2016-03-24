@@ -28,8 +28,7 @@ int main (int argc, char * argv[]) {
 			case XCB_BUTTON_PRESS: {
 				eb = (xcb_button_press_event_t *) ev;
 				if ((blkev= ya_get_blk_from_event(eb)) && (blkev->button_cmd[eb->detail-1])) {
-					//ya_exec_cmd(blkev->button_cmd[eb->detail-1]);
-					ya_exec_cmd(blkev, eb);
+					ya_exec_button(blkev, eb);
 				}
 				break;
 			}

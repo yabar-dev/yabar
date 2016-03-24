@@ -9,7 +9,20 @@
 #include "yabar.h"
 
 
-ya_bar_t * ya_get_bar_from_name(const char *name) {
+static ya_monitor_t * ya_get_monitor_from_name(const char *name) {
+	ya_monitor_t *mon = ya.curmon;
+	if (mon == NULL)
+		return NULL;
+	for(mon=ya.curmon; mon->prev_mon; mon = mon->prev_mon);
+	for(; mon; mon = mon->next_mon){
+		if (strcmp(mon->name, name)==0)
+			return mon;
+	}
+	return NULL;
+}
+
+
+static ya_bar_t * ya_get_bar_from_name(const char *name) {
 	ya_bar_t *curbar;
 	for(curbar = ya.curbar; curbar->prev_bar; curbar = curbar->prev_bar);
 	for(;curbar; curbar = curbar->next_bar) {
@@ -19,7 +32,7 @@ ya_bar_t * ya_get_bar_from_name(const char *name) {
 	return NULL;
 }
 
-ya_block_t * ya_get_blk_from_name (const char *name, ya_bar_t * curbar) {
+static ya_block_t * ya_get_blk_from_name (const char *name, ya_bar_t * curbar) {
 	ya_block_t *curblk;
 	for(int align =0; align < 3; align++){
 		if ((curblk = curbar->curblk[align])) {
@@ -33,7 +46,7 @@ ya_block_t * ya_get_blk_from_name (const char *name, ya_bar_t * curbar) {
 	return NULL;
 }
 
-int ya_inherit_bar(ya_bar_t *dstb, const char *srcname) {
+static int ya_inherit_bar(ya_bar_t *dstb, const char *srcname) {
 	ya_bar_t *srcb = ya_get_bar_from_name(srcname);
 	if(srcb == NULL) {
 		fprintf(stderr, "No bar has the name %s\n", srcname);
@@ -51,14 +64,12 @@ int ya_inherit_bar(ya_bar_t *dstb, const char *srcname) {
 	dstb->slack = srcb->slack;
 	dstb->brcolor = srcb->brcolor;
 	dstb->brsize = srcb->brsize;
-#ifdef YABAR_RANDR
 	dstb->mon = srcb->mon;
-#endif //YABAR_RANDR
 	dstb->attr |= BARA_INHERIT;
 	return 0;
 }
 
-int ya_inherit_blk(ya_block_t *dstb, const char *name) {
+static int ya_inherit_blk(ya_block_t *dstb, const char *name) {
 	char *per = "Please enter a valid string.\n";
 	char *barname, *blkname;
 	int barnamelen=0, blknamelen=0;
@@ -124,7 +135,7 @@ int ya_inherit_blk(ya_block_t *dstb, const char *name) {
 	return 0;
 }
 
-void ya_setup_bar(config_setting_t * set) {
+static void ya_setup_bar(config_setting_t * set) {
 	int retcnf, retint;
 	const char *retstr;
 	ya_bar_t *bar = calloc(1, sizeof(ya_bar_t));
@@ -169,7 +180,6 @@ void ya_setup_bar(config_setting_t * set) {
 			bar->position = YA_TOP;
 		}
 	}
-#ifdef YABAR_RANDR
 	retcnf = config_setting_lookup_string(set, "monitor", &retstr);
 	if(retcnf == CONFIG_FALSE) {
 		//If not explicitly specified, fall back to the first active monitor.
@@ -185,7 +195,6 @@ void ya_setup_bar(config_setting_t * set) {
 				for(bar->mon= ya.curmon; bar->mon->prev_mon; bar->mon = bar->mon->prev_mon);
 		}
 	}
-#endif //YABAR_RANDR
 
 	bool is_gap_horizontal_defined = false;
 	retcnf = config_setting_lookup_int(set, "gap-horizontal", &retint);
@@ -209,31 +218,23 @@ void ya_setup_bar(config_setting_t * set) {
 	retcnf = config_setting_lookup_int(set, "width", &retint);
 	if(retcnf == CONFIG_FALSE) {
 		if(NOT_INHERIT_BAR(bar)) {
-#ifdef YABAR_RANDR
 			if(bar->mon) {
 				bar->width = bar->mon->pos.width - 2*(bar->hgap);
 			}
 			else {
 				bar->width = ya.scr->width_in_pixels - 2*(bar->hgap);
 			}
-#else
-			bar->width = ya.scr->width_in_pixels - 2*(bar->hgap);
-#endif //YABAR_RANDR
 		}
 	}
 	else {
 		bar->width = retint;
 		if(!is_gap_horizontal_defined) {
-#ifdef YABAR_RANDR
 			if((ya.gen_flag & GEN_RANDR)) {
 				bar->hgap = (bar->mon->pos.width - bar->width) /2;
 			}
 			else {
 				bar->hgap = (ya.scr->width_in_pixels - bar->width) /2;
 			}
-#else
-			bar->hgap = (ya.scr->width_in_pixels - bar->width) /2;
-#endif //YABAR_RANDR
 		}
 	}
 	retcnf = config_setting_lookup_int(set, "underline-size", &retint);
@@ -274,7 +275,7 @@ void ya_setup_bar(config_setting_t * set) {
 #define YA_RESERVED_NUM 1
 char *ya_reserved_blocks[YA_RESERVED_NUM]={"ya_time"};
 
-void ya_setup_block(config_setting_t * set, uint32_t type_init) {
+static void ya_setup_block(config_setting_t * set, uint32_t type_init) {
 	struct ya_block * blk = calloc(1,sizeof(ya_block_t));
 	int retcnf, retint;
 	const char *retstr;
