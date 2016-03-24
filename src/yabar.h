@@ -196,7 +196,6 @@ void ya_init();
 void ya_execute();
 void ya_process_opt(int argc, char *argv[]);
 xcb_visualtype_t * ya_get_visualtype();
-void ya_setup_ewmh(ya_bar_t *bar);
 void ya_config_parse();
 
 void ya_create_bar(ya_bar_t * bar);
@@ -207,5 +206,4 @@ void ya_exec_button(ya_block_t * blk, xcb_button_press_event_t *eb);
 
 ya_block_t * ya_get_blk_from_event( xcb_button_press_event_t *eb);
 
-//int ya_init_randr();
 #endif /*YABAR_H*/
