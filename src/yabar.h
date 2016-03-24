@@ -86,7 +86,7 @@ enum {
 };
 
 #define NOT_INHERIT_BAR(bar) (((bar)->attr & BARA_INHERIT)==0)
-#define NOT_INHERIT_BLK(nlk) (((blk)->attr & BLKA_INHERIT)==0)
+#define NOT_INHERIT_BLK(blk) (((blk)->attr & BLKA_INHERIT)==0)
 
 //#ifdef YABAR_RANDR
 
