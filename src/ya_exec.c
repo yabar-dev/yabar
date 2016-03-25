@@ -92,7 +92,7 @@ static void * ya_exec(void * _blk) {
 		}
 	}
 	else if (blk->attr & BLKA_INTERNAL) {
-		/*TODO*/
+		ya_reserved_blks[blk->internal->index].function(blk);
 	}
 	/*Shouldn't get here*/
 	else {

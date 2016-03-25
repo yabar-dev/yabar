@@ -92,8 +92,19 @@ enum {
 #define NOT_INHERIT_BLK(blk) (((blk)->attr & BLKA_INHERIT)==0)
 
 #define CMONLEN 16
+#define YA_INTERNAL_LEN 2
 
 typedef struct ya_monitor ya_monitor_t;
+typedef struct ya_bar ya_bar_t;
+typedef struct ya_block ya_block_t;
+typedef struct blk_intern blk_intern_t;
+typedef void(*funcp)(ya_block_t *);
+
+struct reserved_blk {
+	char *name;
+	funcp function;
+};
+
 struct ya_monitor {
 	char name[CMONLEN];
 	xcb_rectangle_t pos;
@@ -101,7 +112,6 @@ struct ya_monitor {
 	struct ya_monitor *next_mon;
 };
 
-typedef struct ya_bar ya_bar_t;
 struct ya_block {
 	char *name;
 	char buf [BUFSIZE];
@@ -129,9 +139,18 @@ struct ya_block {
 	uint32_t fgcolor; //foreground color
 	uint32_t ulcolor; //underline color
 	uint32_t olcolor; //overline color
+
+	blk_intern_t *internal;
 };
 
-typedef struct ya_block ya_block_t;
+
+struct blk_intern {
+	char *prefix;
+	char *suffix;
+	char *option[3];
+	uint8_t index;
+};
+
 
 struct ya_bar {
 	char *name;
@@ -189,6 +208,7 @@ typedef struct yabar_gen_info yabar_info_t;
 
 extern yabar_info_t ya;
 extern char conf_file[CFILELEN]; 
+extern struct reserved_blk ya_reserved_blks[YA_INTERNAL_LEN]; 
 
 void ya_init();
 void ya_execute();

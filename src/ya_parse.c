@@ -272,24 +272,75 @@ static void ya_setup_bar(config_setting_t * set) {
 	ya_create_bar(bar);
 }
 
-#define YA_RESERVED_NUM 1
-char *ya_reserved_blocks[YA_RESERVED_NUM]={"ya_time"};
+//#define YA_INTERNAL_LEN 1
+//char *ya_reserved_blocks[YA_INTERNAL_LEN]={"YA_INT_TIME"};
 
-static void ya_setup_block(config_setting_t * set, uint32_t type_init) {
+inline static void ya_check_blk_internal(ya_block_t *blk, config_setting_t *set, const char *strexec) {
+	const char *retstr;
+	for (int i=0; i < YA_INTERNAL_LEN; i++) {
+		if(strcmp(strexec, ya_reserved_blks[i].name)==0) {
+			blk->internal = calloc(1, sizeof(blk_intern_t));
+			blk->attr |= BLKA_INTERNAL;
+			blk->internal->index = i;
+			if(config_setting_lookup_string(set, "internal-prefix", &retstr) == CONFIG_TRUE)
+				blk->internal->prefix = strdup(retstr);
+			if(config_setting_lookup_string(set, "internal-suffix", &retstr) == CONFIG_TRUE)
+				blk->internal->suffix = strdup(retstr);
+			if(config_setting_lookup_string(set, "internal-option1", &retstr) == CONFIG_TRUE)
+				blk->internal->option[0] = strdup(retstr);
+			if(config_setting_lookup_string(set, "internal-option2", &retstr) == CONFIG_TRUE)
+				blk->internal->option[1] = strdup(retstr);
+			if(config_setting_lookup_string(set, "internal-option3", &retstr) == CONFIG_TRUE)
+				blk->internal->option[2] = strdup(retstr);
+		}
+	}
+	//check if the for-loop never found a matching internal block
+	if ((blk->attr & BLKA_INTERNAL)==0)
+		blk->attr |= BLKA_EXTERNAL;
+}
+
+static void ya_setup_block(config_setting_t * set) {
 	struct ya_block * blk = calloc(1,sizeof(ya_block_t));
 	int retcnf, retint;
 	const char *retstr;
-	blk->attr = type_init;
+
 	blk->pid = -1;
+	blk->name = strdup(config_setting_name(set));
 
 	retcnf = config_setting_lookup_string(set, "inherit", &retstr);
 	if(retcnf == CONFIG_TRUE) {
 		ya_inherit_blk(blk, retstr);
 	}
+
+	retcnf = config_setting_lookup_string(set, "exec", &retstr);
+	if(retcnf == CONFIG_FALSE) {
+		if(NOT_INHERIT_BLK(blk)) {
+			fprintf(stderr, "No exec is defined for block: %s.%s. Skipping this block...\n", blk->bar->name, blk->name);
+			free(blk->name);
+			free(blk);
+			return;
+		}
+	}
+	else if(strlen(retstr) < 1) {
+		fprintf(stderr, "exec entry is empty for block: %s.%s. Skipping this block...\n", blk->bar->name, blk->name);
+		free(blk->name);
+		free(blk);
+		return;
+	
+	}
+	else {
+		ya_check_blk_internal(blk, set, retstr);
+		if (blk->attr & BLKA_EXTERNAL) {
+				blk->cmd = strdup(retstr);
+			}
+	}
+	if (blk->attr & BLKA_INTERNAL)
+		goto skip_type;
 	retcnf = config_setting_lookup_string(set, "type", &retstr);
 	if(retcnf == CONFIG_FALSE) {
 		if(NOT_INHERIT_BLK(blk)) {
 			fprintf(stderr, "No type is defined for block: %s. Skipping this block...\n", config_setting_name(set));
+			free(blk->name);
 			free(blk);
 			return;
 		}
@@ -303,38 +354,20 @@ static void ya_setup_block(config_setting_t * set, uint32_t type_init) {
 		}
 		else if(strcmp(retstr, "periodic")==0) {
 			blk->attr |= BLKA_PERIODIC;
-			retcnf = config_setting_lookup_int(set, "interval", &retint);
-			if(retcnf == CONFIG_FALSE) {
-				blk->sleep = 5;
-			}
-			else {
-				blk->sleep = retint;
-			}
-
-		}
-	}
-
-
-	retcnf = config_setting_lookup_string(set, "exec", &retstr);
-	if(retcnf == CONFIG_FALSE) {
-		if(NOT_INHERIT_BLK(blk)) {
-			fprintf(stderr, "No exec is defined for block: %s. Skipping this block...\n", config_setting_name(set));
-			free(blk);
-			return;
-		}
-	}
-	else {
-		int len = strlen(retstr);
-		if (len) {
-			blk->cmd = strdup(retstr);
 		}
 		else {
-			fprintf(stderr, "exec is empty for block: %s. Skipping this block...\n", config_setting_name(set));
-			free(blk);
-			return;
+			//TODO handle
 		}
 	}
-	blk->name = strdup(config_setting_name(set));
+skip_type:
+	retcnf = config_setting_lookup_int(set, "interval", &retint);
+	if(retcnf == CONFIG_FALSE) {
+		blk->sleep = 5;
+	}
+	else {
+		blk->sleep = retint;
+	}
+
 	retcnf = config_setting_lookup_string(set, "command-button1", &retstr);
 	if(retcnf == CONFIG_TRUE) {
 		blk->button_cmd[0] = strdup(retstr);
@@ -482,18 +515,9 @@ void ya_config_parse() {
 		blknum = config_setting_length(blklist_set);
 
 		for (int i=0; i < blknum; i++) {
-			uint32_t type_init = 0;
 			blkstr = (char *)config_setting_get_string_elem(blklist_set, i);
 			curblk_set = config_setting_lookup(curbar_set, blkstr);
-			for(int i=0; i < YA_RESERVED_NUM; i++) {
-				if(strcmp(blkstr, ya_reserved_blocks[i])==0) {
-					type_init = BLKA_INTERNAL;
-					break;
-				}
-			}
-			if(type_init == 0)
-				type_init = BLKA_EXTERNAL;
-			ya_setup_block(curblk_set, type_init);
+			ya_setup_block(curblk_set);
 		}
 	}
 	config_destroy(&ya_conf);
