@@ -10,6 +10,7 @@
 #define YABAR_H
 
 #include <stdio.h>
+#include <errno.h>
 #define __USE_XOPEN2K //for setenv implicit function decleration warning
 #include <stdlib.h>
 #include <string.h>
