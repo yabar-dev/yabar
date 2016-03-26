@@ -22,11 +22,12 @@ static void ya_exec_redir_once(ya_block_t *blk) {
 		execl(yashell, yashell, "-c", blk->cmd, (char *) NULL);
 		_exit(EXIT_SUCCESS);
 	}
-	else {
-		wait(NULL);
-		if (read(opipe[0], blk->buf, BUFSIZE) != 0) {
-			ya_draw_pango_text(blk);
-		}
+	
+	ssize_t read_ret = read(opipe[0], blk->buf, BUFSIZE);
+	if (read_ret < 0) {
+		fprintf(stderr, "Error with block %s: %s\n", blk->name, strerror(errno));
+	} else if (read_ret > 0) {
+		ya_draw_pango_text(blk);
 	}
 }
 
@@ -47,9 +48,12 @@ static void ya_exec_redir_period(ya_block_t *blk) {
 		blk->pid = pid;
 		//close(opipe[1]);
 		wait(NULL);
-		if (read(opipe[0], blk->buf, BUFSIZE) != 0) {
+		ssize_t read_ret = read(opipe[0], blk->buf, BUFSIZE);
+		if (read_ret < 0) {
+			fprintf(stderr, "Error with block %s: %s\n", blk->name, strerror(errno));
+		} else if (read_ret > 0) {
+			blk->buf[read_ret] = '\0';
 			ya_draw_pango_text(blk);
-			memset(blk->buf, '\0', BUFSIZE);
 		}
 		sleep(blk->sleep);
 	}
@@ -69,9 +73,19 @@ static void ya_exec_redir_persist(ya_block_t *blk) {
 	}
 	blk->pid = pid;
 	close(opipe[1]);
-	while (read(opipe[0], blk->buf, BUFSIZE) != 0) {
-		ya_draw_pango_text(blk);
-		memset(blk->buf, '\0', BUFSIZE);
+
+	ssize_t read_ret;
+	while (1) {
+		read_ret = read(opipe[0], blk->buf, BUFSIZE);
+		if(read_ret == 0) {
+			break;
+		} else if (read_ret < 0) {
+			fprintf(stderr, "Error with block %s: %s\n", blk->name, strerror(errno));
+			continue;
+		} else {
+			blk->buf[read_ret] = '\0';
+			ya_draw_pango_text(blk);
+		}
 	}
 }
 

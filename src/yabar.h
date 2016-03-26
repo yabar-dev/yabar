@@ -10,6 +10,7 @@
 #define YABAR_H
 
 #include <stdio.h>
+#include <errno.h>
 #define __USE_XOPEN2K //for setenv implicit function decleration warning
 #include <stdlib.h>
 #include <string.h>
@@ -39,7 +40,7 @@
 
 extern char *strdup(const char *s); //to suppress implicit decleration warning for strdup
 
-#define BUFSIZE 512
+#define BUFSIZE 4096
 #define CFILELEN 256
 #define YA_DEF_FONT "sans bold 9"
 
