@@ -35,7 +35,7 @@ static void ya_exec_redir_period(ya_block_t *blk) {
 	int opipe[2];
 	pipe(opipe);
 	while (1) {
-		int pid = fork();
+		pid_t pid = fork();
 		if (pid == 0) {
 			dup2(opipe[1], STDOUT_FILENO);
 			close(opipe[1]);
@@ -58,7 +58,7 @@ static void ya_exec_redir_period(ya_block_t *blk) {
 static void ya_exec_redir_persist(ya_block_t *blk) {
 	int opipe[2];
 	pipe(opipe);
-	int pid = fork();
+	pid_t pid = fork();
 	if (pid == 0) {
 		dup2(opipe[1], STDOUT_FILENO);
 		close(opipe[1]);
