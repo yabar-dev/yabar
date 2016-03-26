@@ -40,7 +40,7 @@
 
 extern char *strdup(const char *s); //to suppress implicit decleration warning for strdup
 
-#define BUFSIZE 512
+#define BUFSIZE 4096
 #define CFILELEN 256
 #define YA_DEF_FONT "sans bold 9"
 

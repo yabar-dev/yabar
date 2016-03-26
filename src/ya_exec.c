@@ -52,8 +52,8 @@ static void ya_exec_redir_period(ya_block_t *blk) {
 		if (read_ret < 0) {
 			fprintf(stderr, "Error with block %s: %s\n", blk->name, strerror(errno));
 		} else if (read_ret > 0) {
+			blk->buf[read_ret] = '\0';
 			ya_draw_pango_text(blk);
-			memset(blk->buf, '\0', BUFSIZE);
 		}
 		sleep(blk->sleep);
 	}
@@ -83,8 +83,8 @@ static void ya_exec_redir_persist(ya_block_t *blk) {
 			fprintf(stderr, "Error with block %s: %s\n", blk->name, strerror(errno));
 			continue;
 		} else {
+			blk->buf[read_ret] = '\0';
 			ya_draw_pango_text(blk);
-			memset(blk->buf, '\0', BUFSIZE);
 		}
 	}
 }
