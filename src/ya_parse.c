@@ -329,7 +329,13 @@ static void ya_setup_block(config_setting_t * set) {
 	
 	}
 	else {
+#ifdef YA_INTERNAL
+		//check if internal found, otherwise set external
 		ya_check_blk_internal(blk, set, retstr);
+#else
+		//just set it external
+		blk->attr |= BLKA_EXTERNAL;
+#endif //YA_INTERNAL
 		if (blk->attr & BLKA_EXTERNAL) {
 				blk->cmd = strdup(retstr);
 			}

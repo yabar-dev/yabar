@@ -92,7 +92,7 @@ enum {
 #define NOT_INHERIT_BLK(blk) (((blk)->attr & BLKA_INHERIT)==0)
 
 #define CMONLEN 16
-#define YA_INTERNAL_LEN 2
+#define YA_INTERNAL_LEN 4
 
 typedef struct ya_monitor ya_monitor_t;
 typedef struct ya_bar ya_bar_t;
