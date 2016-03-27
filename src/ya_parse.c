@@ -128,6 +128,10 @@ static int ya_inherit_blk(ya_block_t *dstb, const char *name) {
 	dstb->fgcolor = srcb->fgcolor;
 	dstb->ulcolor = srcb->ulcolor;
 	dstb->olcolor = srcb->olcolor;
+
+
+	dstb->bufsize = srcb->bufsize;
+	dstb->buf = calloc(1, dstb->bufsize);
 	
 	dstb->attr |= BLKA_INHERIT;
 	free(barname);
@@ -488,6 +492,19 @@ skip_type:
 		if(NOT_INHERIT_BLK(blk))
 			blk->justify = PANGO_ALIGN_CENTER;
 	}
+
+
+	if(blk->attr & BLKA_EXTERNAL) {
+		if(blk->attr & BLKA_MARKUP_PANGO)
+			blk->bufsize = BUFSIZE_EXT_PANGO;
+		else
+			blk->bufsize = BUFSIZE_EXT;
+	}
+	else {
+		blk->bufsize = BUFSIZE_INT;
+	}
+
+	blk->buf = calloc(1, blk->bufsize);
 
 	ya_create_block(blk);
 }

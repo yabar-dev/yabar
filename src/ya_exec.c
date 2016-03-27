@@ -23,7 +23,7 @@ static void ya_exec_redir_once(ya_block_t *blk) {
 		_exit(EXIT_SUCCESS);
 	}
 	
-	ssize_t read_ret = read(opipe[0], blk->buf, BUFSIZE);
+	ssize_t read_ret = read(opipe[0], blk->buf, blk->bufsize);
 	if (read_ret < 0) {
 		fprintf(stderr, "Error with block %s: %s\n", blk->name, strerror(errno));
 	} else if (read_ret > 0) {
@@ -48,7 +48,7 @@ static void ya_exec_redir_period(ya_block_t *blk) {
 		blk->pid = pid;
 		//close(opipe[1]);
 		wait(NULL);
-		ssize_t read_ret = read(opipe[0], blk->buf, BUFSIZE);
+		ssize_t read_ret = read(opipe[0], blk->buf, blk->bufsize);
 		if (read_ret < 0) {
 			fprintf(stderr, "Error with block %s: %s\n", blk->name, strerror(errno));
 		} else if (read_ret > 0) {
@@ -76,7 +76,7 @@ static void ya_exec_redir_persist(ya_block_t *blk) {
 
 	ssize_t read_ret;
 	while (1) {
-		read_ret = read(opipe[0], blk->buf, BUFSIZE);
+		read_ret = read(opipe[0], blk->buf, blk->bufsize);
 		if(read_ret == 0) {
 			break;
 		} else if (read_ret < 0) {
