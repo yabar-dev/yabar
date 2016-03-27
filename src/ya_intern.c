@@ -22,7 +22,7 @@ struct reserved_blk ya_reserved_blks[YA_INTERNAL_LEN] = {
 	//{"YA_INT_MEMORY", ya_int_memory}
 }; 
 
-#define YA_INTERNAL
+//#define YA_INTERNAL
 
 #ifdef YA_INTERNAL
 
