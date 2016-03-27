@@ -502,7 +502,7 @@ void ya_config_parse() {
 	config_set_auto_convert(&ya_conf, CONFIG_TRUE);
 	ret=config_read_file(&ya_conf, conf_file);
 	if (ret == CONFIG_FALSE) {
-		printf("Error in the config file at line %d : %s\nExiting...", config_error_line(&ya_conf), config_error_text(&ya_conf));
+		fprintf(stderr, "Error in the config file at line %d : %s\nExiting...\n", config_error_line(&ya_conf), config_error_text(&ya_conf));
 		config_destroy(&ya_conf);
 		exit(EXIT_SUCCESS);
 	}
@@ -510,19 +510,51 @@ void ya_config_parse() {
 	config_setting_t *barlist_set, *blklist_set;
 	config_setting_t *curbar_set, *curblk_set;
 	barlist_set = config_lookup(&ya_conf, "bar-list");
+	if(barlist_set == NULL) {
+		fprintf(stderr, "Please add a `bar-list` entry with at least one bar.\nExiting...\n");
+		config_destroy(&ya_conf);
+		exit(EXIT_SUCCESS);
+	}
 	ya.barnum = config_setting_length(barlist_set);
+	if(ya.barnum < 1) {
+		fprintf(stderr, "Please add at least one bar in the `bar-list` entry.\nExiting...\n");
+		config_destroy(&ya_conf);
+		exit(EXIT_SUCCESS);
+	}
 	int blknum;
 	for(int i=0; i < ya.barnum; i++) {
 		barstr = (char *)config_setting_get_string_elem(barlist_set, i);
 		curbar_set = config_lookup(&ya_conf, barstr);
+		if(curbar_set == NULL) {
+			fprintf(stderr, "No valid bar with the name (%s), skipping this invalid bar.\n", barstr);
+			//If there is only one bar, continue won't work and we get a segfault.
+			//We should exit anyway because we have one && invalid bar name.
+			if(ya.barnum == 1)
+				exit(EXIT_SUCCESS);
+			continue;
+		}
 		ya_setup_bar(curbar_set);
 
 		blklist_set = config_setting_lookup(curbar_set, "block-list");
+		if(blklist_set == NULL) {
+			fprintf(stderr, "Please add a `block-list` entry with at least one block for the bar(%s).\n", barstr);
+			continue;
+		}
+		
 		blknum = config_setting_length(blklist_set);
+		if(blknum < 1) {
+			fprintf(stderr, "Please add at least one block `block-list` entry for the bar(%s).\n", barstr);
+			continue;
+		}
+
 
 		for (int i=0; i < blknum; i++) {
 			blkstr = (char *)config_setting_get_string_elem(blklist_set, i);
 			curblk_set = config_setting_lookup(curbar_set, blkstr);
+			if(curblk_set == NULL) {
+				fprintf(stderr, "No valid block with the name (%s) in the bar (%s), skipping this block\n", blkstr, barstr);
+				continue;
+			}
 			ya_setup_block(curblk_set);
 		}
 	}
