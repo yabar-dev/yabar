@@ -49,7 +49,7 @@ static ya_block_t * ya_get_blk_from_name (const char *name, ya_bar_t * curbar) {
 static int ya_inherit_bar(ya_bar_t *dstb, const char *srcname) {
 	ya_bar_t *srcb = ya_get_bar_from_name(srcname);
 	if(srcb == NULL) {
-		fprintf(stderr, "No bar has the name %s\n", srcname);
+		fprintf(stderr, "The bar (%s) cannot find a bar named (%s) to inherit.\n", dstb->name, srcname);
 		return -1;
 	}
 	dstb->hgap = srcb->hgap;
@@ -103,14 +103,14 @@ static int ya_inherit_blk(ya_block_t *dstb, const char *name) {
 
 	src_bar = ya_get_bar_from_name(barname);
 	if(src_bar == NULL) {
-		fprintf(stderr, per);
+		fprintf(stderr, "Block (%s.%s) cannot process inheritance. No bar has the name (%s).\n", dstb->bar->name, dstb->name, barname);
 		free(barname);
 		free(blkname);
 		return -1;
 	}
 	srcb = ya_get_blk_from_name(blkname, src_bar);
 	if(srcb == NULL) {
-		fprintf(stderr, per);
+		fprintf(stderr, "Block (%s.%s) cannot process inheritance. No block has the name (%s).\n", dstb->bar->name, dstb->name, blkname);
 		free(barname);
 		free(blkname);
 		return -1;
@@ -151,7 +151,12 @@ static void ya_setup_bar(config_setting_t * set) {
 	bar->name = strdup(config_setting_name(set));
 	retcnf = config_setting_lookup_string(set, "inherit", &retstr);
 	if(retcnf == CONFIG_TRUE) {
-		ya_inherit_bar(bar, retstr);
+		if (ya_inherit_bar(bar, retstr) == -1) {
+			fprintf(stderr, "Skipping bar (%s).\n", bar->name);
+			free(bar->name);
+			free(bar);
+			return;
+		}
 	}
 	retcnf = config_setting_lookup_string(set, "font", &retstr);
 	if(retcnf == CONFIG_FALSE) {
@@ -313,7 +318,12 @@ static void ya_setup_block(config_setting_t * set) {
 
 	retcnf = config_setting_lookup_string(set, "inherit", &retstr);
 	if(retcnf == CONFIG_TRUE) {
-		ya_inherit_blk(blk, retstr);
+		if (ya_inherit_blk(blk, retstr) == -1) {
+			fprintf(stderr, "Skipping block (%s.%s)\n", blk->bar->name, blk->name);
+			free(blk->name);
+			free(blk);
+			return;
+		}
 	}
 
 	retcnf = config_setting_lookup_string(set, "exec", &retstr);
