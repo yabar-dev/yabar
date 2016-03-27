@@ -89,7 +89,8 @@ enum {
 
 
 enum {
-	BARA_INHERIT = 1
+	BARA_INHERIT = 1<<0,
+	BARA_INHERIT_ALL = 1<<1
 };
 
 #define NOT_INHERIT_BAR(bar) (((bar)->attr & BARA_INHERIT)==0)

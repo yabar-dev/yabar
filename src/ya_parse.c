@@ -46,12 +46,8 @@ static ya_block_t * ya_get_blk_from_name (const char *name, ya_bar_t * curbar) {
 	return NULL;
 }
 
-static int ya_inherit_bar(ya_bar_t *dstb, const char *srcname) {
-	ya_bar_t *srcb = ya_get_bar_from_name(srcname);
-	if(srcb == NULL) {
-		fprintf(stderr, "The bar (%s) cannot find a bar named (%s) to inherit.\n", dstb->name, srcname);
-		return -1;
-	}
+
+static void ya_copy_bar_members(ya_bar_t *dstb, ya_bar_t *srcb) {
 	dstb->hgap = srcb->hgap;
 	dstb->vgap = srcb->vgap;
 	dstb->bgcolor = srcb->bgcolor;
@@ -65,6 +61,43 @@ static int ya_inherit_bar(ya_bar_t *dstb, const char *srcname) {
 	dstb->brcolor = srcb->brcolor;
 	dstb->brsize = srcb->brsize;
 	dstb->mon = srcb->mon;
+}
+
+static void ya_copy_blk_members(ya_block_t *dstb, ya_block_t *srcb) {
+	dstb->cmd = srcb->cmd;
+	for(int i=0; i<5; i++)
+		dstb->button_cmd[i] = srcb->button_cmd[i];
+	dstb->sleep = srcb->sleep;
+	dstb->attr = srcb->attr;
+	dstb->align = srcb->align;
+	dstb->justify = srcb->justify;
+	dstb->width = srcb->width;
+	dstb->bgcolor = srcb->bgcolor;
+	dstb->fgcolor = srcb->fgcolor;
+	dstb->ulcolor = srcb->ulcolor;
+	dstb->olcolor = srcb->olcolor;
+	dstb->bufsize = srcb->bufsize;
+	if(srcb->attr & BLKA_INTERNAL) {
+		dstb->internal = calloc(1, sizeof(blk_intern_t));
+		dstb->internal->prefix = srcb->internal->prefix;
+		dstb->internal->suffix = srcb->internal->suffix;
+		for(int i=0; i < 3; i++)
+			dstb->internal->option[i] = srcb->internal->option[i];
+		dstb->internal->index = srcb->internal->index;
+	}
+}
+
+static int ya_inherit_bar(ya_bar_t *dstb, const char *srcname, bool inherit_all, ya_bar_t **inherit_bar) {
+	ya_bar_t *srcb = ya_get_bar_from_name(srcname);
+	if(srcb == NULL) {
+		fprintf(stderr, "The bar (%s) cannot find a bar named (%s) to inherit.\n", dstb->name, srcname);
+		return -1;
+	}
+	ya_copy_bar_members(dstb, srcb);
+	if(inherit_all) {
+		dstb->attr = BARA_INHERIT_ALL;
+		*inherit_bar = srcb;
+	}
 	dstb->attr |= BARA_INHERIT;
 	return 0;
 }
@@ -116,23 +149,7 @@ static int ya_inherit_blk(ya_block_t *dstb, const char *name) {
 		return -1;
 	}
 
-	dstb->cmd = srcb->cmd;
-	for(int i=0; i<5; i++)
-		dstb->button_cmd[i] = srcb->button_cmd[i];
-	dstb->sleep = srcb->sleep;
-	dstb->attr = srcb->attr;
-	dstb->align = srcb->align;
-	dstb->justify = srcb->justify;
-	dstb->width = srcb->width;
-	dstb->bgcolor = srcb->bgcolor;
-	dstb->fgcolor = srcb->fgcolor;
-	dstb->ulcolor = srcb->ulcolor;
-	dstb->olcolor = srcb->olcolor;
-
-
-	dstb->bufsize = srcb->bufsize;
-	dstb->buf = calloc(1, dstb->bufsize);
-	
+	ya_copy_blk_members(dstb, srcb);
 	dstb->attr |= BLKA_INHERIT;
 	free(barname);
 	free(blkname);
@@ -142,6 +159,7 @@ static int ya_inherit_blk(ya_block_t *dstb, const char *name) {
 static void ya_setup_bar(config_setting_t * set) {
 	int retcnf, retint;
 	const char *retstr;
+	ya_bar_t *inherit_bar;
 	ya_bar_t *bar = calloc(1, sizeof(ya_bar_t));
 	if (ya.curbar) {
 		bar->prev_bar = ya.curbar;
@@ -151,7 +169,16 @@ static void ya_setup_bar(config_setting_t * set) {
 	bar->name = strdup(config_setting_name(set));
 	retcnf = config_setting_lookup_string(set, "inherit", &retstr);
 	if(retcnf == CONFIG_TRUE) {
-		if (ya_inherit_bar(bar, retstr) == -1) {
+		if (ya_inherit_bar(bar, retstr, false, NULL) == -1) {
+			fprintf(stderr, "Skipping bar (%s).\n", bar->name);
+			free(bar->name);
+			free(bar);
+			return;
+		}
+	}
+	retcnf = config_setting_lookup_string(set, "inherit-all", &retstr);
+	if(retcnf == CONFIG_TRUE) {
+		if (ya_inherit_bar(bar, retstr, true, &inherit_bar) == -1) {
 			fprintf(stderr, "Skipping bar (%s).\n", bar->name);
 			free(bar->name);
 			free(bar);
@@ -279,10 +306,22 @@ static void ya_setup_bar(config_setting_t * set) {
 		}
 	}
 	ya_create_bar(bar);
+	if(bar->attr & BARA_INHERIT_ALL) {
+		ya_block_t * dstblk, *srcblk;
+		for(int i=0; i <3; i++) {
+			if((srcblk = inherit_bar->curblk[i])) {
+				for(;srcblk->prev_blk; srcblk = srcblk->prev_blk);
+				for(;srcblk; srcblk = srcblk->next_blk) {
+					dstblk = calloc(1, sizeof(ya_block_t));
+					ya_copy_blk_members(dstblk, srcblk);
+					dstblk->buf = calloc(1, dstblk->bufsize);
+					ya_create_block(dstblk);
+				}
+			}
+		}
+	}
 }
 
-//#define YA_INTERNAL_LEN 1
-//char *ya_reserved_blocks[YA_INTERNAL_LEN]={"YA_INT_TIME"};
 
 inline static void ya_check_blk_internal(ya_block_t *blk, config_setting_t *set, const char *strexec) {
 	const char *retstr;
@@ -382,7 +421,8 @@ static void ya_setup_block(config_setting_t * set) {
 skip_type:
 	retcnf = config_setting_lookup_int(set, "interval", &retint);
 	if(retcnf == CONFIG_FALSE) {
-		blk->sleep = 5;
+		if(NOT_INHERIT_BLK(blk))
+			blk->sleep = 5;
 	}
 	else {
 		blk->sleep = retint;
@@ -564,13 +604,13 @@ void ya_config_parse() {
 
 		blklist_set = config_setting_lookup(curbar_set, "block-list");
 		if(blklist_set == NULL) {
-			fprintf(stderr, "Please add a `block-list` entry with at least one block for the bar(%s).\n", barstr);
+			fprintf(stderr, "No `block-list` entry found for the bar(%s).\n", barstr);
 			continue;
 		}
 		
 		blknum = config_setting_length(blklist_set);
 		if(blknum < 1) {
-			fprintf(stderr, "Please add at least one block `block-list` entry for the bar(%s).\n", barstr);
+			fprintf(stderr, "No blocks in `block-list` entry for the bar(%s).\n", barstr);
 			continue;
 		}
 
