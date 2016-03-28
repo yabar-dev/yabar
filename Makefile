@@ -11,7 +11,7 @@ OBJS := $(wildcard src/*.c) $(wildcard src/intern_blks/*.c)
 OBJS := $(OBJS:.c=.o)
 
 %.o: %.c %.h
-	$(CC) $(INCLDS) $(CFLAGS) -c -o $@ $<
+	$(CC) $(CFLAGS) -c -o $@ $<
 all: $(PROGRAM)
 $(PROGRAM): $(OBJS)
 	$(CC) -o $@ $^ $(LDLIBS)
