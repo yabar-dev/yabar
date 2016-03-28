@@ -20,8 +20,8 @@ struct reserved_blk ya_reserved_blks[YA_INTERNAL_LEN] = {
 	{"YA_INT_UPTIME", ya_int_uptime},
 	{"YA_INT_THERMAL", ya_int_thermal},
 	{"YA_INT_BRIGHTNESS", ya_int_brightness},
-	{"YA_INT_BANDWIDTH", ya_int_bandwidth}
-	//{"YA_INT_MEMORY", ya_int_memory}
+	{"YA_INT_BANDWIDTH", ya_int_bandwidth},
+	{"YA_INT_MEMORY", ya_int_memory}
 }; 
 
 //#define YA_INTERNAL
@@ -204,4 +204,42 @@ void ya_int_bandwidth(ya_block_t * blk) {
 	}
 	
 }
+
+void ya_int_memory(ya_block_t *blk) {
+	unsigned long total, free, cached, buffered;
+	float used;
+	FILE *tfile;
+	char tline[50];
+	char unit;
+	tfile = fopen("/proc/meminfo", "r");
+	if (tfile == NULL) {
+		//TODO handle and exit thread
+		fprintf(stderr, "Error opening file %s\n", "/proc/meminfo");
+		strncpy(blk->buf, "BLOCK ERROR!", strlen("BLOCK ERROR!"));
+		ya_draw_pango_text(blk);
+		pthread_exit(NULL);
+	}
+	fclose(tfile);
+	while(1) {
+		tfile = fopen("/proc/meminfo", "r");
+		while(fgets(tline, 50, tfile) != NULL) {
+			sscanf(tline, "MemTotal: %lu kB\n", &total);
+			sscanf(tline, "MemFree: %lu kB\n", &free);
+			sscanf(tline, "Buffers: %lu kB\n", &buffered);
+			sscanf(tline, "Cached: %lu kB\n", &cached);
+		}
+		used = (float)(total - free - buffered - cached)/1024.0;
+		unit = 'M';
+		if(((int)used)>1024) {
+			used = used/1024.0;
+			unit = 'G';
+		}
+		snprintf(blk->buf, 12, "%.1f%c", used, unit);
+		ya_draw_pango_text(blk);
+		sleep(blk->sleep);
+		memset(blk->buf, '\0', 12);
+		fclose(tfile);
+	}
+}
+
 #endif //YA_INTERNAL
