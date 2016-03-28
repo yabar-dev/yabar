@@ -1,18 +1,17 @@
 VERSION = $(shell git describe)
 CPPFLAGS += -DVERSION=\"$(VERSION)\" -D_POSIX_C_SOURCE=199309L -DYA_INTERNAL
-CFLAGS += -std=c99 -pedantic -Wall -O2 `pkg-config --cflags pango pangocairo libconfig`
-INCLDS := -I.
+CFLAGS += -std=c99 -Iinclude -pedantic -Wall -O2 `pkg-config --cflags pango pangocairo libconfig`
 LDLIBS := -lxcb -lpthread -lxcb-randr `pkg-config --libs pango pangocairo libconfig`
 PROGRAM := yabar
 PREFIX ?= /usr
 BINPREFIX ?= $(PREFIX)/bin
 MANPREFIX ?= $(PREFIX)/share/man
 
-OBJS := $(wildcard src/*.c)
+OBJS := $(wildcard src/*.c) $(wildcard src/intern_blks/*.c)
 OBJS := $(OBJS:.c=.o)
 
 %.o: %.c %.h
-	$(CC) $(CFLAGS) -c -o $@ $<
+	$(CC) $(INCLDS) $(CFLAGS) -c -o $@ $<
 all: $(PROGRAM)
 $(PROGRAM): $(OBJS)
 	$(CC) -o $@ $^ $(LDLIBS)
