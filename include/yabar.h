@@ -97,7 +97,7 @@ enum {
 #define NOT_INHERIT_BLK(blk) (((blk)->attr & BLKA_INHERIT)==0)
 
 #define CMONLEN 16
-#define YA_INTERNAL_LEN 6
+#define YA_INTERNAL_LEN 7
 
 typedef struct ya_monitor ya_monitor_t;
 typedef struct ya_bar ya_bar_t;
@@ -160,6 +160,7 @@ struct blk_intern {
 
 struct ya_bar {
 	char *name;
+	char *button_cmd[5]; 
 	uint16_t occupied_width[3]; // occupied for each alignment (left, center and right)
 
 	uint16_t hgap; //horizontal gap
@@ -230,4 +231,5 @@ void ya_exec_button(ya_block_t * blk, xcb_button_press_event_t *eb);
 
 ya_block_t * ya_get_blk_from_event( xcb_button_press_event_t *eb);
 
+void ya_handle_button( xcb_button_press_event_t *eb); 
 #endif /*YABAR_H*/

@@ -48,6 +48,8 @@ static ya_block_t * ya_get_blk_from_name (const char *name, ya_bar_t * curbar) {
 
 
 static void ya_copy_bar_members(ya_bar_t *dstb, ya_bar_t *srcb) {
+	for(int i=0; i<5; i++)
+		dstb->button_cmd[i] = srcb->button_cmd[i];
 	dstb->hgap = srcb->hgap;
 	dstb->vgap = srcb->vgap;
 	dstb->bgcolor = srcb->bgcolor;
@@ -305,6 +307,29 @@ static void ya_setup_bar(config_setting_t * set) {
 			bar->brcolor = retint;
 		}
 	}
+
+	retcnf = config_setting_lookup_string(set, "command-button1", &retstr);
+	if(retcnf == CONFIG_TRUE) {
+		bar->button_cmd[0] = strdup(retstr);
+	}
+	retcnf = config_setting_lookup_string(set, "command-button2", &retstr);
+	if(retcnf == CONFIG_TRUE) {
+		bar->button_cmd[1] = strdup(retstr);
+	}
+	retcnf = config_setting_lookup_string(set, "command-button3", &retstr);
+	if(retcnf == CONFIG_TRUE) {
+		bar->button_cmd[2] = strdup(retstr);
+	}
+	retcnf = config_setting_lookup_string(set, "command-button4", &retstr);
+	if(retcnf == CONFIG_TRUE) {
+		bar->button_cmd[3] = strdup(retstr);
+	}
+	retcnf = config_setting_lookup_string(set, "command-button5", &retstr);
+	if(retcnf == CONFIG_TRUE) {
+		bar->button_cmd[4] = strdup(retstr);
+	}
+
+
 	ya_create_bar(bar);
 	if(bar->attr & BARA_INHERIT_ALL) {
 		ya_block_t * dstblk, *srcblk;

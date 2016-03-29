@@ -239,18 +239,33 @@ void ya_draw_pango_text(struct ya_block *blk) {
 }
 
 
-ya_block_t * ya_get_blk_from_event( xcb_button_press_event_t *eb) {
+void ya_handle_button( xcb_button_press_event_t *eb) {
 	ya_bar_t *curbar = ya.curbar;
 	ya_block_t *curblk;
 	for (;curbar; curbar = curbar->next_bar) {
 		if ( curbar->win == eb->event) {
 			for(int align = 0; align < 3; align++) {
 				for(curblk = curbar->curblk[align]; curblk; curblk = curblk->next_blk) {
-					if ((curblk->shift <= eb->event_x) && ((curblk->shift + curblk->width) >= eb->event_x))
-						return curblk;
+					if ((curblk->shift <= eb->event_x) && ((curblk->shift + curblk->width) >= eb->event_x)) {
+						if(curblk->button_cmd[eb->detail-1]) {
+							ya_exec_button(curblk, eb);
+							return;
+						}
+					}
 				}
 			}	
+			//If block button not found or not defined, execute button for bar(if defined).
+			//We reach this path only if function has not yet returned because no blk has been found.
+			if(curbar->button_cmd[eb->detail-1]) {
+				if(fork()==0) {
+					execl("/bin/sh", "/bin/sh", "-c", curbar->button_cmd[eb->detail-1], (char *) NULL);
+					_exit(EXIT_SUCCESS);
+				}
+				else {
+					wait(NULL);
+				}
+			}
+			return;
 		}
 	}
-	return NULL;
 }

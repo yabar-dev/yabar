@@ -14,6 +14,7 @@ void ya_int_memory(ya_block_t * blk);
 void ya_int_thermal(ya_block_t *blk);
 void ya_int_brightness(ya_block_t *blk);
 void ya_int_bandwidth(ya_block_t *blk);
+void ya_int_network(ya_block_t *blk);
 
 struct reserved_blk ya_reserved_blks[YA_INTERNAL_LEN] = { 
 	{"YA_INT_TIME", ya_int_time},
@@ -21,7 +22,8 @@ struct reserved_blk ya_reserved_blks[YA_INTERNAL_LEN] = {
 	{"YA_INT_THERMAL", ya_int_thermal},
 	{"YA_INT_BRIGHTNESS", ya_int_brightness},
 	{"YA_INT_BANDWIDTH", ya_int_bandwidth},
-	{"YA_INT_MEMORY", ya_int_memory}
+	{"YA_INT_MEMORY", ya_int_memory},
+	{"YA_INT_NETWORK", ya_int_network}
 }; 
 
 //#define YA_INTERNAL
@@ -242,4 +244,42 @@ void ya_int_memory(ya_block_t *blk) {
 	}
 }
 
+#define _GNU_SOURCE
+#include <sys/socket.h>
+#include <ifaddrs.h>
+#include <linux/if_link.h>
+#include <arpa/inet.h>
+#include <netdb.h>
+
+void ya_int_network(ya_block_t *blk) {
+	pthread_exit(NULL);
+	/*
+	struct ifaddrs *ifaddr, *ifa;
+	int family, s, n;
+	char host[1025];
+	if(getifaddrs(&ifaddr) == -1) {
+		fprintf(stderr, "error in getifaddrs\n");
+		pthread_exit(NULL);
+	}
+	for(ifa = ifaddr; ifa; ifa = ifa->ifa_next, n++) {
+		if(ifa == NULL)
+			continue;
+		family = ifa->ifa_addr->sa_family;
+		//printf("%s\n", ifa->ifa_name);
+		if (family == AF_INET || family == AF_INET6) { 
+			s = getnameinfo(ifa->ifa_addr, 
+					(family == AF_INET) ? sizeof(struct sockaddr_in) :
+					sizeof(struct sockaddr_in6), host, 1025,
+					NULL, 0, NI_NUMERICHOST);
+			printf("%s %s\n", ifa->ifa_name, host);
+		}
+	}
+	while(1) {
+
+		ya_draw_pango_text(blk);
+		sleep(blk->sleep);
+		memset(blk->buf, '\0', 12);
+	}
+	*/
+}
 #endif //YA_INTERNAL
