@@ -99,10 +99,19 @@ Each bar can have its font, position (currently only top and bottom), background
 		border-color-rgb: 0xffffff;
 
 
-* Inheritance: As the config file gets larger because you want to add several bars, you may find yourself adding many identical option values for every added bar. This optional entry is added in order to inherit the options from a precedent bar into your next bar. You can also override the inherited options with new values.
+* Inheritance: (thanks to a proposed idea by @Lindenk) As the config file gets larger because you want to add several bars, you may find yourself adding many identical option values for every added bar. This optional entry is added in order to inherit the options from a precedent bar into your next bar. You can also override the inherited options with new values.
 
 
 		inherit: "bar1";
+
+	You can also inherit a bar with not only its bar-specific options, but also with its blocks and their block-specific options as well using the `inherit-all` bar-specific option. Example:
+		
+		inherit-all: "bar1";
+	
+* Button commands: Yabar already supports mouse button commands for each block (See [block-specific options](https://github.com/geommer/yabar#block-specific-options)). Moreover, yabar seeks to make the entire bar clickable even if the pressed area does not belong to any block or the corresponding button command for that block is not defined. Example: 
+
+		command-button4: "xbacklight -inc 1";
+		command-button5: "xbacklight -dec 1";
 
 
 
@@ -150,7 +159,7 @@ Each block can have its command/script, background, foreground (i.e. font), unde
 
     Note that the values are integers and not double-quoted strings.
 
-* Pointer commands: This option is used to invoke a command/script upon a mouse button press. You have 5 buttons that usually represent left click, right click, middle click, scroll up and scroll down respectively but this may not be the case for everyone. Examples:
+* Button commands: This option is used to invoke a command/script upon a mouse button press. You have 5 buttons that usually represent left click, right click, middle click, scroll up and scroll down respectively but this may not be the case for everyone. Examples:
 
         command-button1: "pavucontrol";
         command-button4: "pactl set-sink-volume 0 +10%";
