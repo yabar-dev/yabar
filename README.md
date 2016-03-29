@@ -12,10 +12,12 @@ A modern and lightweight status bar for X window managers.
 
 Yabar is a modern and lightweight status bar that is intended to be used along with minimal X window managers like `bspwm` and `i3`. Yabar has the following features:
 
-* Simple configuration using a single config file based on libconfig syntax.
-* Pango font rendering with support of pango markup language (Xft may be supported in the future).
+* Extremely configurable with easy configuration system using a single config file.
+* Pango font rendering with support of pango markup language.
 * Support for transparency.
-* Multi-monitor support using RandR (experimental).
+* Multi-monitor support using RandR.
+* Entirely clickable.
+* Support for several environment variables to help button commands.
 * Multiple bars within the same session.
 
 **Warning**: Yabar is still in its infancy and far from being mature. Feel free to contribute or report bugs!
