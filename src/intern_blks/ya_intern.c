@@ -14,6 +14,8 @@ void ya_int_memory(ya_block_t * blk);
 void ya_int_thermal(ya_block_t *blk);
 void ya_int_brightness(ya_block_t *blk);
 void ya_int_bandwidth(ya_block_t *blk);
+void ya_int_cpu(ya_block_t *blk);
+void ya_int_diskio(ya_block_t *blk);
 void ya_int_network(ya_block_t *blk);
 
 struct reserved_blk ya_reserved_blks[YA_INTERNAL_LEN] = { 
@@ -23,6 +25,8 @@ struct reserved_blk ya_reserved_blks[YA_INTERNAL_LEN] = {
 	{"YA_INT_BRIGHTNESS", ya_int_brightness},
 	{"YA_INT_BANDWIDTH", ya_int_bandwidth},
 	{"YA_INT_MEMORY", ya_int_memory},
+	{"YA_INT_CPU", ya_int_cpu},
+	{"YA_INT_DISKIO", ya_int_diskio},
 	{"YA_INT_NETWORK", ya_int_network}
 }; 
 
@@ -285,6 +289,92 @@ void ya_int_memory(ya_block_t *blk) {
 		fclose(tfile);
 		sleep(blk->sleep);
 	}
+}
+
+
+void ya_int_cpu(ya_block_t *blk) {
+	FILE *tfile;
+	long double old[4], cur[4], ya_avg=0.0;
+	char *startstr = blk->buf;
+	size_t prflen=0,suflen=0;
+	char cpustr[20];
+	ya_setup_prefix_suffix(blk, &prflen, &suflen, &startstr);
+	tfile = fopen("/proc/stat", "r");
+	if (tfile == NULL) {
+		fprintf(stderr, "Error opening file %s\n", "/proc/stat");
+		strncpy(blk->buf, "BLOCK ERROR!", strlen("BLOCK ERROR!"));
+		ya_draw_pango_text(blk);
+		pthread_exit(NULL);
+	}
+	else {
+		fscanf(tfile,"%s %Lf %Lf %Lf %Lf",cpustr, &old[0],&old[1],&old[2],&old[3]);
+	}
+	fclose(tfile);
+	while(1) {
+		tfile = fopen("/proc/stat", "r");
+		fscanf(tfile,"%s %Lf %Lf %Lf %Lf", cpustr, &cur[0],&cur[1],&cur[2],&cur[3]);
+		ya_avg = ((cur[0]+cur[1]+cur[2]) - (old[0]+old[1]+old[2])) / ((cur[0]+cur[1]+cur[2]+cur[3]) - (old[0]+old[1]+old[2]+old[3]));
+		for(int i=0; i<4;i++)
+			old[i]=cur[i];
+		ya_avg *= 100.0;
+		sprintf(startstr, "%.1Lf", ya_avg);
+		if(suflen)
+			strcat(blk->buf, blk->internal->suffix);
+		ya_draw_pango_text(blk);
+		fclose(tfile);
+		sleep(blk->sleep);
+	}
+
+}
+
+
+void ya_int_diskio(ya_block_t *blk) {
+	unsigned long tdo[11], tdc[11];
+	unsigned long drd=0, dwr=0;
+	char crd, cwr;
+	FILE *tfile;
+	char tpath[100];
+	char *startstr = blk->buf;
+	size_t prflen=0,suflen=0;
+	ya_setup_prefix_suffix(blk, &prflen, &suflen, &startstr);
+	snprintf(tpath, 100, "/sys/class/block/%s/stat", blk->internal->option[0]);
+	tfile = fopen(tpath, "r");
+	if (tfile == NULL) {
+		fprintf(stderr, "Error opening file %s\n", "/proc/stat");
+		strncpy(blk->buf, "BLOCK ERROR!", strlen("BLOCK ERROR!"));
+		ya_draw_pango_text(blk);
+		pthread_detach(blk->thread);
+		pthread_exit(NULL);
+	}
+	else {
+		fscanf(tfile,"%lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu", &tdo[0], &tdo[1], &tdo[2], &tdo[3], &tdo[4], &tdo[5], &tdo[6], &tdo[7], &tdo[8], &tdo[9], &tdo[10]);
+	}
+	fclose(tfile);
+	while(1) {
+		tfile = fopen(tpath, "r");
+		fscanf(tfile,"%lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu", &tdc[0], &tdc[1], &tdc[2], &tdc[3], &tdc[4], &tdc[5], &tdc[6], &tdc[7], &tdc[8], &tdc[9], &tdc[10]);
+		drd = (unsigned long)(((float)(tdc[2] - tdo[2])*0.5)/((float)(blk->sleep)));
+		dwr = (unsigned long)(((float)(tdc[6] - tdo[6])*0.5)/((float)(blk->sleep)));
+		crd = cwr = 'K';
+		if(drd >1024) {
+			drd /= 1024;
+			crd = 'M';
+		}
+		if(dwr >1024) {
+			dwr /= 1024;
+			cwr = 'M';
+		}
+		sprintf(startstr, "%lu%c %lu%c", drd, crd, dwr, cwr);
+		for(int i=0; i<11;i++)
+			tdo[i] = tdc[i];
+		if(suflen)
+			strcat(blk->buf, blk->internal->suffix);
+
+		ya_draw_pango_text(blk);
+		fclose(tfile);
+		sleep(blk->sleep);
+	}
+
 }
 
 #define _GNU_SOURCE
