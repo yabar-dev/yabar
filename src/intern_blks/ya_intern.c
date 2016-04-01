@@ -8,7 +8,7 @@
 
 #include "yabar.h"
 
-void ya_int_time(ya_block_t * blk);
+void ya_int_date(ya_block_t * blk);
 void ya_int_uptime(ya_block_t * blk);
 void ya_int_memory(ya_block_t * blk);
 void ya_int_thermal(ya_block_t *blk);
@@ -17,7 +17,7 @@ void ya_int_bandwidth(ya_block_t *blk);
 void ya_int_network(ya_block_t *blk);
 
 struct reserved_blk ya_reserved_blks[YA_INTERNAL_LEN] = { 
-	{"YA_INT_TIME", ya_int_time},
+	{"YA_INT_DATE", ya_int_date},
 	{"YA_INT_UPTIME", ya_int_uptime},
 	{"YA_INT_THERMAL", ya_int_thermal},
 	{"YA_INT_BRIGHTNESS", ya_int_brightness},
@@ -30,14 +30,33 @@ struct reserved_blk ya_reserved_blks[YA_INTERNAL_LEN] = {
 
 #ifdef YA_INTERNAL
 
+inline void ya_setup_prefix_suffix(ya_block_t *blk, size_t * prflen, size_t *suflen, char **startstr) {
+	if(blk->internal->prefix) {
+		*prflen = strlen(blk->internal->prefix);
+		if(*prflen) {
+			strcpy(blk->buf, blk->internal->prefix);
+			*startstr += *prflen;
+		}
+	}
+	if(blk->internal->suffix) {
+		*suflen = strlen(blk->internal->suffix);
+	}
+}
+
+
 #include <time.h>
-void ya_int_time(ya_block_t * blk) {
+void ya_int_date(ya_block_t * blk) {
 	time_t rawtime;
 	struct tm * ya_tm;
+	char *startstr = blk->buf;
+	size_t prflen=0,suflen=0;
+	ya_setup_prefix_suffix(blk, &prflen, &suflen, &startstr);
 	while(1) {
 		time(&rawtime);
 		ya_tm = localtime(&rawtime);
-		strftime(blk->buf, 512, blk->internal->option[0], ya_tm);
+		strftime(startstr, 100, blk->internal->option[0], ya_tm);
+		if(suflen)
+			strcat(blk->buf, blk->internal->suffix);
 		ya_draw_pango_text(blk);
 		sleep(blk->sleep);
 	}
@@ -49,6 +68,9 @@ void ya_int_uptime(ya_block_t *blk) {
 	struct sysinfo ya_sysinfo;
 	long hr, tmp;
 	uint8_t min;
+	char *startstr = blk->buf;
+	size_t prflen=0,suflen=0;
+	ya_setup_prefix_suffix(blk, &prflen, &suflen, &startstr);
 	while(1) {
 		sysinfo(&ya_sysinfo);
 		tmp = ya_sysinfo.uptime;
@@ -56,7 +78,9 @@ void ya_int_uptime(ya_block_t *blk) {
 		tmp %= 3600;
 		min = tmp/60;
 		tmp %= 60;
-		snprintf(blk->buf, 512, "%ld:%02d:%02ld", hr, min, tmp);
+		snprintf(startstr, 20, "%ld:%02d:%02ld", hr, min, tmp);
+		if(suflen)
+			strcat(blk->buf, blk->internal->suffix);
 		ya_draw_pango_text(blk);
 		sleep(blk->sleep);
 	}
@@ -69,6 +93,9 @@ void ya_int_thermal(ya_block_t *blk) {
 	uint32_t oldbg, oldfg;
 	uint32_t wrnbg, wrnfg; //warning colors
 	uint32_t crtbg, crtfg; //critical colors
+	char *startstr = blk->buf;
+	size_t prflen=0,suflen=0;
+	ya_setup_prefix_suffix(blk, &prflen, &suflen, &startstr);
 	if(blk->attr & BLKA_BGCOLOR)
 		oldbg = blk->bgcolor;
 	else
@@ -91,10 +118,10 @@ void ya_int_thermal(ya_block_t *blk) {
 	}
 	tfile = fopen(fpath, "r");
 	if (tfile == NULL) {
-		//TODO handle and exit thread
 		fprintf(stderr, "Error opening file %s\n", fpath);
 		strncpy(blk->buf, "BLOCK ERROR!", strlen("BLOCK ERROR!"));
 		ya_draw_pango_text(blk);
+		pthread_detach(blk->thread);
 		pthread_exit(NULL);
 	}
 	fclose(tfile);
@@ -116,36 +143,41 @@ void ya_int_thermal(ya_block_t *blk) {
 			blk->fgcolor = oldfg;
 		}
 
-		snprintf(blk->buf, 4, "%d", temp);
+		sprintf(startstr, "%d", temp);
+		if(suflen)
+			strcat(blk->buf, blk->internal->suffix);
 		ya_draw_pango_text(blk);
-		sleep(blk->sleep);
-		memset(blk->buf, '\0', 4);
 		fclose(tfile);
+		sleep(blk->sleep);
 	}
 
 }
 
 void ya_int_brightness(ya_block_t *blk) {
 	int bright;
+	char *startstr = blk->buf;
+	size_t prflen=0,suflen=0;
+	ya_setup_prefix_suffix(blk, &prflen, &suflen, &startstr);
 	FILE *tfile;
 	char fpath[128];
 	snprintf(fpath, 128, "/sys/class/backlight/%s/brightness", blk->internal->option[0]);
 	tfile = fopen(fpath, "r");
 	if (tfile == NULL) {
-		//TODO handle and exit thread
 		fprintf(stderr, "Error opening file %s\n", fpath);
 		strncpy(blk->buf, "BLOCK ERROR!", strlen("BLOCK ERROR!"));
 		ya_draw_pango_text(blk);
+		pthread_detach(blk->thread);
 		pthread_exit(NULL);
 	}
 	while(1) {
 		tfile = fopen(fpath, "r");
 		fscanf(tfile, "%d", &bright);
-		snprintf(blk->buf, 12, "%d", bright);
+		sprintf(startstr, "%d", bright);
+		if(suflen)
+			strcat(blk->buf, blk->internal->suffix);
 		ya_draw_pango_text(blk);
-		sleep(blk->sleep);
-		memset(blk->buf, '\0', 12);
 		fclose(tfile);
+		sleep(blk->sleep);
 	}
 }
 
@@ -156,15 +188,22 @@ void ya_int_bandwidth(ya_block_t * blk) {
 	char rxpath[128];
 	char txpath[128];
 	char rxc, txc;
+	char *startstr = blk->buf;
+	size_t prflen=0,suflen=0;
+	char dnstr[20], upstr[20];
+	ya_setup_prefix_suffix(blk, &prflen, &suflen, &startstr);
 	snprintf(rxpath, 128, "/sys/class/net/%s/statistics/rx_bytes", blk->internal->option[0]);
 	snprintf(txpath, 128, "/sys/class/net/%s/statistics/tx_bytes", blk->internal->option[0]);
+	if(blk->internal->option[1]) {
+		sscanf(blk->internal->option[1], "%s %s", dnstr, upstr);
+	}
 	rxfile = fopen(rxpath, "r");
 	txfile = fopen(txpath, "r");
 	if (rxfile == NULL || txfile == NULL) {
-		//TODO handle and exit thread
 		fprintf(stderr, "Error opening file %s or %s\n", rxpath, txpath);
-		strncpy(blk->buf, "BLOCK \nERROR!", strlen("BLOCK \nERROR!"));
+		strncpy(blk->buf, "BLOCK ERROR!", strlen("BLOCK ERROR!"));
 		ya_draw_pango_text(blk);
+		pthread_detach(blk->thread);
 		pthread_exit(NULL);
 	}
 	else {
@@ -197,11 +236,12 @@ void ya_int_bandwidth(ya_block_t * blk) {
 		orx = rx;
 		otx = tx;
 
-		snprintf(blk->buf, 40, "%4u%c %4u%c", rxrate, rxc, txrate, txc);
+		sprintf(startstr, "%s%u%c %s%u%c", dnstr, rxrate, rxc, upstr, txrate, txc);
+		if(suflen)
+			strcat(blk->buf, blk->internal->suffix);
 		ya_draw_pango_text(blk);
 		fclose(rxfile);
 		fclose(txfile);
-		memset(blk->buf, '\0', 40);
 		sleep(blk->sleep);
 	}
 	
@@ -213,9 +253,11 @@ void ya_int_memory(ya_block_t *blk) {
 	FILE *tfile;
 	char tline[50];
 	char unit;
+	char *startstr = blk->buf;
+	size_t prflen=0,suflen=0;
+	ya_setup_prefix_suffix(blk, &prflen, &suflen, &startstr);
 	tfile = fopen("/proc/meminfo", "r");
 	if (tfile == NULL) {
-		//TODO handle and exit thread
 		fprintf(stderr, "Error opening file %s\n", "/proc/meminfo");
 		strncpy(blk->buf, "BLOCK ERROR!", strlen("BLOCK ERROR!"));
 		ya_draw_pango_text(blk);
@@ -236,11 +278,12 @@ void ya_int_memory(ya_block_t *blk) {
 			used = used/1024.0;
 			unit = 'G';
 		}
-		snprintf(blk->buf, 12, "%.1f%c", used, unit);
+		sprintf(startstr, "%.1f%c", used, unit);
+		if(suflen)
+			strcat(blk->buf, blk->internal->suffix);
 		ya_draw_pango_text(blk);
-		sleep(blk->sleep);
-		memset(blk->buf, '\0', 12);
 		fclose(tfile);
+		sleep(blk->sleep);
 	}
 }
 
