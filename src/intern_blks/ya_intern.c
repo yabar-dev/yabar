@@ -336,7 +336,11 @@ void ya_int_diskio(ya_block_t *blk) {
 	char tpath[100];
 	char *startstr = blk->buf;
 	size_t prflen=0,suflen=0;
+	char dnstr[20], upstr[20];
 	ya_setup_prefix_suffix(blk, &prflen, &suflen, &startstr);
+	if(blk->internal->option[1]) {
+		sscanf(blk->internal->option[1], "%s %s", dnstr, upstr);
+	}
 	snprintf(tpath, 100, "/sys/class/block/%s/stat", blk->internal->option[0]);
 	tfile = fopen(tpath, "r");
 	if (tfile == NULL) {
@@ -364,7 +368,7 @@ void ya_int_diskio(ya_block_t *blk) {
 			dwr /= 1024;
 			cwr = 'M';
 		}
-		sprintf(startstr, "%lu%c %lu%c", drd, crd, dwr, cwr);
+		sprintf(startstr, "%s%lu%c %s%lu%c", dnstr, drd, crd, upstr, dwr, cwr);
 		for(int i=0; i<11;i++)
 			tdo[i] = tdc[i];
 		if(suflen)
