@@ -81,8 +81,8 @@ void ya_int_uptime(ya_block_t *blk) {
 		hr = tmp/3600;
 		tmp %= 3600;
 		min = tmp/60;
-		tmp %= 60;
-		snprintf(startstr, 20, "%ld:%02d:%02ld", hr, min, tmp);
+		//tmp %= 60;
+		sprintf(startstr, "%ld:%02d", hr, min);
 		if(suflen)
 			strcat(blk->buf, blk->internal->suffix);
 		ya_draw_pango_text(blk);
