@@ -588,7 +588,7 @@ void ya_config_parse() {
 	int ret;
 	const char * const envhome = getenv("HOME");
 	if ((ya.gen_flag & GEN_EXT_CONF) == 0)
-	    snprintf(conf_file, 128, "%s/.config/yabar/yabar.conf", envhome);
+	    snprintf(conf_file, CFILELEN, "%s/.config/yabar/yabar.conf", envhome);
 	config_t ya_conf;
 	config_init(&ya_conf);
 	config_set_auto_convert(&ya_conf, CONFIG_TRUE);
