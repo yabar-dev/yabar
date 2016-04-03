@@ -1,6 +1,7 @@
 # Yabar
 
 A modern and lightweight status bar for X window managers.
+[![Build Status](https://travis-ci.org/geommer/yabar.svg?branch=master)](https://travis-ci.org/geommer/yabar)
 
 ## Screenshots
 
