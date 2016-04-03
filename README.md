@@ -129,7 +129,7 @@ Each block can have its command/script, background, foreground (i.e. font), unde
 
         align: "right";
 
-* Justify: By default yabars centers the text inside the block size. However, you can optionally justify the text to the left or the right.
+* Justify: By default yabar centers the text inside the block size. However, you can optionally justify the text to the left or the right.
 
 		justify: "left";
 
