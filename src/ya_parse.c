@@ -628,7 +628,7 @@ void ya_config_parse() {
 		ya_setup_bar(curbar_set);
 
 #ifdef OLD_LIBCONFIG
-		blklist_set = config_setting_lookup_from(curbar_set, "block-list");
+		blklist_set = config_lookup_from(curbar_set, "block-list");
 #else
 		blklist_set = config_setting_lookup(curbar_set, "block-list");
 #endif
@@ -647,7 +647,7 @@ void ya_config_parse() {
 		for (int i=0; i < blknum; i++) {
 			blkstr = (char *)config_setting_get_string_elem(blklist_set, i);
 #ifdef OLD_LIBCONFIG
-			curblk_set = config_setting_lookup_from(curbar_set, blkstr);
+			curblk_set = config_lookup_from(curbar_set, blkstr);
 #else
 			curblk_set = config_setting_lookup(curbar_set, blkstr);
 #endif
