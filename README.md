@@ -176,6 +176,19 @@ Each block can have its command/script, background, foreground (i.e. font), unde
 
 		inherit: "bar1.block1";
 
+### Dynamic colors for blocks
+
+You can change block colors(background, foreground, underline and overline) within runtime. Along with pango markup format, you can fully control how a block looks throughout yabar's session. 
+
+If you wish to change one or more of the 4 color types, you must begin your string-to-be-drawn (i.e. the string of your shell script) with `!Y FORMAT Y!`. the `FORMAT` statement should contain contain the color type (`BG` or `bg` for background, `FG` or `fg` for foreground, `U` or `u` for underline and `O` or `o` for overline). The color must be in hex AARRGGBB (So if you want to add an rgb color just make it `FFxxxxxx`). Examples:
+
+		"!Y BG 0xFFFF0000 fg0xFF00ff00 U0xFFFAC739 Y!"
+		"!Ybg0xff00ff00Y!"
+
+The spaces are just skipped automatically. Keep in mind that You can always dynamically change your foreground color using pango markup.
+
+
+
 ### Environment variables
 
 Yabar sets a handful of environment variables before executing your commands/scripts that are defined in the `command-button{1-5}` entry. Such env variables can be useful when drawing your window on the corresponding button press. Current env variables are:
