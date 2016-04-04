@@ -1,5 +1,5 @@
 VERSION = $(shell git describe)
-CPPFLAGS += -DVERSION=\"$(VERSION)\" -D_POSIX_C_SOURCE=199309L -DYA_INTERNAL
+CPPFLAGS += -DVERSION=\"$(VERSION)\" -D_POSIX_C_SOURCE=199309L -DYA_INTERNAL -DYA_DYN_COL
 CFLAGS += -std=c99 -Iinclude -pedantic -Wall -Os `pkg-config --cflags pango pangocairo libconfig`
 LDLIBS := -lxcb -lpthread -lxcb-randr `pkg-config --libs pango pangocairo libconfig`
 PROGRAM := yabar
