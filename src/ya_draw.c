@@ -189,10 +189,17 @@ void ya_draw_pango_text(struct ya_block *blk) {
 			GET_GREEN(blk->fgcolor),
 			GET_ALPHA(blk->fgcolor));
 
+#ifdef YA_DYN_COL
+	if (!(blk->attr & BLKA_MARKUP_PANGO))
+		pango_layout_set_text(layout, blk->strbuf, strlen(blk->strbuf));
+	else
+		pango_layout_set_markup(layout, blk->strbuf, strlen(blk->strbuf));
+#else
 	if (!(blk->attr & BLKA_MARKUP_PANGO))
 		pango_layout_set_text(layout, blk->buf, strlen(blk->buf));
 	else
 		pango_layout_set_markup(layout, blk->buf, strlen(blk->buf));
+#endif
 	pango_layout_set_alignment(layout, blk->justify);
 	cairo_set_operator(cr, CAIRO_OPERATOR_SOURCE);
 	pango_layout_set_width(layout, blk->width * PANGO_SCALE);
@@ -269,3 +276,55 @@ void ya_handle_button( xcb_button_press_event_t *eb) {
 		}
 	}
 }
+
+#ifdef YA_DYN_COL
+void ya_buf_color_parse(ya_block_t *blk) {
+	char *cur = blk->buf;
+	char *end;
+	int offset = 0;
+	if(cur[0] != '!' && cur[1] != 'Y') {
+		blk->strbuf = cur;
+		blk->bgcolor = blk->bgcolor_old;
+		xcb_change_gc(ya.c, blk->gc, XCB_GC_FOREGROUND, (const uint32_t[]){blk->bgcolor});
+		blk->fgcolor = blk->fgcolor_old;
+		blk->ulcolor = blk->ulcolor_old;
+		blk->olcolor = blk->olcolor_old;
+		return;
+	}
+	cur+=2;
+	offset+=2;
+	for(; *cur != 'Y'; cur++) {
+		if((cur[0]=='B' && cur[1]=='G') || (cur[0]=='b' && cur[1]=='g')) {
+			cur+=2;
+			offset+=2;
+			blk->bgcolor = strtoul(cur, &end, 16);
+			xcb_change_gc(ya.c, blk->gc, XCB_GC_FOREGROUND, (const uint32_t[]){blk->bgcolor});
+			offset+=(end-cur);
+		}
+		if((cur[0]=='F' && cur[1]=='G') || (cur[0]=='f' && cur[1]=='g')) {
+			cur+=2;
+			offset+=2;
+			blk->fgcolor = strtoul(cur, &end, 16);
+			offset+=(end-cur);
+		}
+		else if ((cur[0]=='U') || (cur[0]=='u')) {
+			cur++;
+			offset++;
+			blk->ulcolor = strtoul(cur, &end, 16);
+			offset+=(end-cur);
+		}
+		else if ((cur[0]=='O') || (cur[0]=='o')) {
+			cur++;
+			offset++;
+			blk->olcolor = strtoul(cur, &end, 16);
+			offset+=(end-cur);
+		}
+		else if (*cur == ' '){
+			offset++;
+		}
+	}
+	if(cur[0]=='Y' && cur[1]=='!') {
+		blk->strbuf =  blk->buf+offset+2;
+	}
+}
+#endif //YA_DYN_COL

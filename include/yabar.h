@@ -93,6 +93,7 @@ enum {
 	BARA_INHERIT_ALL = 1<<1
 };
 
+
 #define NOT_INHERIT_BAR(bar) (((bar)->attr & BARA_INHERIT)==0)
 #define NOT_INHERIT_BLK(blk) (((blk)->attr & BLKA_INHERIT)==0)
 
@@ -147,6 +148,14 @@ struct ya_block {
 	uint32_t olcolor; //overline color
 
 	blk_intern_t *internal;
+	
+#ifdef YA_DYN_COL
+	char *strbuf;
+	uint32_t bgcolor_old; //initial background color
+	uint32_t fgcolor_old; //initial foreground color
+	uint32_t ulcolor_old; //initial underline color
+	uint32_t olcolor_old; //initial overline color
+#endif
 };
 
 
@@ -226,6 +235,7 @@ void ya_config_parse();
 void ya_create_bar(ya_bar_t * bar);
 void ya_create_block(ya_block_t *blk);
 
+void ya_buf_color_parse(ya_block_t *blk);
 void ya_draw_pango_text(struct ya_block *blk);
 void ya_exec_button(ya_block_t * blk, xcb_button_press_event_t *eb);
 

@@ -581,6 +581,14 @@ skip_type:
 
 	blk->buf = calloc(1, blk->bufsize);
 
+#ifdef YA_DYN_COL
+	blk->bgcolor_old = blk->bgcolor;
+	blk->fgcolor_old = blk->fgcolor;
+	blk->ulcolor_old = blk->ulcolor;
+	blk->olcolor_old = blk->olcolor;
+	blk->strbuf = blk->buf;
+#endif
+
 	ya_create_block(blk);
 }
 

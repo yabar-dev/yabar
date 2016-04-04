@@ -27,6 +27,9 @@ static void ya_exec_redir_once(ya_block_t *blk) {
 	if (read_ret < 0) {
 		fprintf(stderr, "Error with block %s: %s\n", blk->name, strerror(errno));
 	} else if (read_ret > 0) {
+#ifdef YA_DYN_COL
+		ya_buf_color_parse(blk);
+#endif
 		ya_draw_pango_text(blk);
 	}
 }
@@ -53,6 +56,9 @@ static void ya_exec_redir_period(ya_block_t *blk) {
 			fprintf(stderr, "Error with block %s: %s\n", blk->name, strerror(errno));
 		} else if (read_ret > 0) {
 			blk->buf[read_ret] = '\0';
+#ifdef YA_DYN_COL
+			ya_buf_color_parse(blk);
+#endif
 			ya_draw_pango_text(blk);
 		}
 		sleep(blk->sleep);
@@ -84,6 +90,9 @@ static void ya_exec_redir_persist(ya_block_t *blk) {
 			continue;
 		} else {
 			blk->buf[read_ret] = '\0';
+#ifdef YA_DYN_COL
+			ya_buf_color_parse(blk);
+#endif
 			ya_draw_pango_text(blk);
 		}
 	}
@@ -264,7 +273,6 @@ void ya_execute() {
 	for(curbar = ya.curbar; curbar->prev_bar; curbar = curbar->prev_bar);
 	ya.curbar = curbar;
 	for(; curbar; curbar = curbar->next_bar) {
-		
 		for(int align =0; align < 3; align++){
 			if ((curblk = curbar->curblk[align])) {
 				for(; curblk->prev_blk; curblk = curblk->prev_blk);	
