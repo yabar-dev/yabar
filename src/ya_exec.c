@@ -287,6 +287,7 @@ void ya_execute() {
 
 inline void ya_exec_button(ya_block_t * blk, xcb_button_press_event_t *eb) {
 	if (fork() == 0) {
+#ifdef YA_ENV_VARS
 		char blkx[6], blky[6], blkw[6];
 		snprintf(blkx, 6, "%d", eb->root_x - eb->event_x + blk->shift);
 		if (blk->bar->position == YA_TOP)
@@ -300,6 +301,7 @@ inline void ya_exec_button(ya_block_t * blk, xcb_button_press_event_t *eb) {
 		setenv("YABAR_BLOCK_X", blkx, 1);
 		setenv("YABAR_BLOCK_Y", blky, 1);
 		setenv("YABAR_BLOCK_WIDTH", blkw, 1);
+#endif
 		execl(yashell, yashell, "-c", blk->button_cmd[eb->detail-1], (char *) NULL);
 		_exit(EXIT_SUCCESS);
 	}
