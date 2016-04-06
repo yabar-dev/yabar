@@ -618,6 +618,17 @@ void ya_config_parse() {
 	const char * const envhome = getenv("HOME");
 	if ((ya.gen_flag & GEN_EXT_CONF) == 0)
 	    snprintf(conf_file, CFILELEN, "%s/.config/yabar/yabar.conf", envhome);
+	struct stat st;
+	if(stat(conf_file, &st) == -1) {
+		fprintf(stderr, "Error opening file (%s). Please make sure that this file really exists or use the command `yabar -c [CONFIG_FILE_PATH]`. Exiting...\n", conf_file);
+#ifdef YA_INTERNAL_EWMH
+		xcb_ewmh_connection_wipe(ya.ewmh);
+#endif //YA_INTERNAL_EWMH
+		xcb_flush(ya.c);
+		xcb_disconnect(ya.c);
+		exit(EXIT_FAILURE);
+	}
+	
 	config_t ya_conf;
 	config_init(&ya_conf);
 	config_set_auto_convert(&ya_conf, CONFIG_TRUE);
@@ -625,7 +636,12 @@ void ya_config_parse() {
 	if (ret == CONFIG_FALSE) {
 		fprintf(stderr, "Error in the config file at line %d : %s\nExiting...\n", config_error_line(&ya_conf), config_error_text(&ya_conf));
 		config_destroy(&ya_conf);
-		exit(EXIT_SUCCESS);
+#ifdef YA_INTERNAL_EWMH
+		xcb_ewmh_connection_wipe(ya.ewmh);
+#endif //YA_INTERNAL_EWMH
+		xcb_flush(ya.c);
+		xcb_disconnect(ya.c);
+		exit(EXIT_FAILURE);
 	}
 	char *barstr, *blkstr;
 	config_setting_t *barlist_set, *blklist_set;
