@@ -11,6 +11,27 @@
 char conf_file[CFILELEN]; 
 static const char * const yashell = "/bin/sh";
 
+#ifdef YA_INTERNAL_EWMH
+inline static void ya_exec_intern_ewmh_blk(ya_block_t *blk) {
+	switch(blk->internal->index) {
+		case YA_INT_TITLE: {
+			ya_get_cur_window_title(blk);
+			ya_draw_pango_text(blk);
+			break;
+		}
+		case YA_INT_WORKSPACE: {
+			uint32_t current_desktop;
+			xcb_get_property_cookie_t ck = xcb_ewmh_get_current_desktop(ya.ewmh, 0);
+			xcb_ewmh_get_current_desktop_reply(ya.ewmh, ck, &current_desktop, NULL);
+			sprintf(blk->buf, "%u", current_desktop);
+			ya_draw_pango_text(blk);
+			break;
+		}
+	}
+
+}
+#endif //YA_INTERNAL_EWMH
+
 static void ya_exec_redir_once(ya_block_t *blk) {
 	int opipe[2];
 	pipe(opipe);
@@ -135,6 +156,9 @@ static void ya_cleanup_x() {
 		}
 		xcb_destroy_window(ya.c, curbar->win);
 	}
+#ifdef YA_INTERNAL_EWMH
+	xcb_ewmh_connection_wipe(ya.ewmh);
+#endif //YA_INTERNAL_EWMH
 	xcb_flush(ya.c);
 	xcb_disconnect(ya.c);
 }
@@ -259,6 +283,23 @@ void ya_init() {
 		ya.gen_flag |= GEN_RANDR;
 		ya_init_randr();
 	}
+
+#ifdef YA_INTERNAL_EWMH
+	ya.ewmh = malloc(sizeof(xcb_ewmh_connection_t));
+	if (xcb_ewmh_init_atoms_replies(ya.ewmh, xcb_ewmh_init_atoms(ya.c, ya.ewmh), NULL)==0) {
+		fprintf(stderr, "Cannot use EWMH\n");
+		//Should exit program or not?
+		//To be decided.
+	}
+
+	ya.lstwin = XCB_NONE;
+	uint32_t evm = XCB_EVENT_MASK_PROPERTY_CHANGE;
+	xcb_get_property_cookie_t prop_ck = xcb_ewmh_get_active_window(ya.ewmh, 0);
+	xcb_ewmh_get_active_window_reply(ya.ewmh, prop_ck, &ya.curwin, NULL);
+	xcb_change_window_attributes(ya.c, ya.curwin, XCB_CW_EVENT_MASK, &evm);
+	xcb_change_window_attributes(ya.c, ya.scr->root, XCB_CW_EVENT_MASK, &evm);
+#endif //YA_INTERNAL_EWMH
+
 	ya_config_parse();
 }
 
@@ -266,6 +307,14 @@ void ya_execute() {
 	ya_bar_t *curbar;
 	ya_block_t *curblk;
 	curbar = ya.curbar;
+#ifdef YA_INTERNAL_EWMH
+	if(ya.ewmh_blk) {
+		for(;ya.ewmh_blk->prev_ewblk; ya.ewmh_blk = ya.ewmh_blk->prev_ewblk);
+		//ya_ewmh_blk *ewmh_blk = ya.ewmh_blk;
+		//for(;ewmh_blk; ewmh_blk = ewmh_blk->next_ewblk)
+		//	ya_exec_intern_ewmh_blk(ewmh_blk->blk);
+	}
+#endif //YA_INTERNAL_EWMH
 	for(; curbar->prev_bar; curbar = curbar->prev_bar);
 	for(; curbar; curbar = curbar->next_bar)
 		xcb_map_window(ya.c, curbar->win);
@@ -278,7 +327,12 @@ void ya_execute() {
 				for(; curblk->prev_blk; curblk = curblk->prev_blk);	
 				curbar->curblk[align] = curblk;
 				for(;curblk; curblk = curblk->next_blk) {
+#ifdef YA_INTERNAL_EWMH
+					if(!(curblk->attr & BLKA_INTERN_X_EV))
+						pthread_create(&curblk->thread, NULL, ya_exec, (void *) curblk);
+#else
 					pthread_create(&curblk->thread, NULL, ya_exec, (void *) curblk);
+#endif 
 				}
 			}
 		}
@@ -309,3 +363,33 @@ inline void ya_exec_button(ya_block_t * blk, xcb_button_press_event_t *eb) {
 		wait(NULL);
 }
 
+#ifdef YA_INTERNAL_EWMH
+void ya_handle_prop_notify(xcb_property_notify_event_t *ep) {
+	uint32_t no_ev_val = XCB_EVENT_MASK_NO_EVENT;
+	uint32_t pr_ev_val = XCB_EVENT_MASK_PROPERTY_CHANGE;
+	ya_ewmh_blk *ewblk;
+	if(ep->atom == ya.ewmh->_NET_ACTIVE_WINDOW) {
+		xcb_get_property_cookie_t prop_ck = xcb_ewmh_get_active_window(ya.ewmh, 0);
+		xcb_ewmh_get_active_window_reply(ya.ewmh, prop_ck, &ya.curwin, NULL);
+		if (ya.curwin != ya.lstwin) {
+			xcb_change_window_attributes(ya.c, ya.lstwin, XCB_CW_EVENT_MASK, &no_ev_val);
+			xcb_change_window_attributes(ya.c, ya.curwin, XCB_CW_EVENT_MASK, &pr_ev_val);
+		}
+		else if(ya.curwin==XCB_NONE && ya.lstwin==XCB_NONE) {
+			//Don't exit, used when switch between two empty workspaces
+		}
+		else {
+			return;
+		}
+	}
+	else if ((ep->atom == ya.ewmh->_NET_WM_NAME) || (ep->atom == ya.ewmh->_NET_WM_VISIBLE_NAME)) {
+	}
+	else {
+		return;
+	}
+	for(ewblk = ya.ewmh_blk; ewblk; ewblk=ewblk->next_ewblk) {
+		ya_exec_intern_ewmh_blk(ewblk->blk);
+	}
+	ya.lstwin = ya.curwin;
+}
+#endif //YA_INTERNAL_EWMH

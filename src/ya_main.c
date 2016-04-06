@@ -20,6 +20,12 @@ int main (int argc, char * argv[]) {
 	xcb_generic_event_t *ev;
 	while((ev = xcb_wait_for_event(ya.c))) {
 		switch(ev->response_type & ~0x80) {
+#ifdef YA_INTERNAL_EWMH
+			case XCB_PROPERTY_NOTIFY: {
+				ya_handle_prop_notify((xcb_property_notify_event_t *) ev);
+				break;
+			}
+#endif //YA_INTERNAL_EWMH
 			case XCB_BUTTON_PRESS: {
 				ya_handle_button((xcb_button_press_event_t *) ev);
 				break;

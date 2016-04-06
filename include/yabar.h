@@ -30,6 +30,7 @@
 #include <libconfig.h>
 
 #include <xcb/randr.h>
+#include <xcb/xcb_ewmh.h>
 
 //just to suppress gcc syntastic warnings in vim
 //VERSION is obtained from Makefile
@@ -84,7 +85,8 @@ enum {
 	BLKA_FGCOLOR		= 1<<11,
 	BLKA_UNDERLINE 		= 1<<12,
 	BLKA_OVERLINE 		= 1<<13,
-	BLKA_INHERIT		= 1<<14
+	BLKA_INHERIT		= 1<<14,
+	BLKA_INTERN_X_EV	= 1<<15
 };
 
 
@@ -93,22 +95,46 @@ enum {
 	BARA_INHERIT_ALL = 1<<1
 };
 
+#ifdef YA_INTERNAL_EWMH
+#define YA_INTERNAL_LEN 11
+#else
+#define YA_INTERNAL_LEN 9
+#endif
+enum {
+	YA_INT_DATE = 0,
+	YA_INT_UPTIME,
+	YA_INT_THERMAL,
+	YA_INT_BRIGHTNESS,
+	YA_INT_BANDWIDTH,
+	YA_INT_MEMORY,
+	YA_INT_CPU,
+	YA_INT_DISKIO,
+	YA_INT_NETWORK,
+	YA_INT_TITLE,
+	YA_INT_WORKSPACE
+};
 
 #define NOT_INHERIT_BAR(bar) (((bar)->attr & BARA_INHERIT)==0)
 #define NOT_INHERIT_BLK(blk) (((blk)->attr & BLKA_INHERIT)==0)
 
 #define CMONLEN 16
-#define YA_INTERNAL_LEN 9
 
 typedef struct ya_monitor ya_monitor_t;
 typedef struct ya_bar ya_bar_t;
 typedef struct ya_block ya_block_t;
 typedef struct blk_intern blk_intern_t;
+typedef struct intern_ewmh_blk ya_ewmh_blk;
 typedef void(*funcp)(ya_block_t *);
 
 struct reserved_blk {
 	char *name;
 	funcp function;
+};
+
+struct intern_ewmh_blk {
+	ya_block_t * blk;
+	struct intern_ewmh_blk *prev_ewblk;
+	struct intern_ewmh_blk *next_ewblk;
 };
 
 struct ya_monitor {
@@ -206,7 +232,8 @@ struct ya_bar {
 
 enum {
 	GEN_EXT_CONF	= 1 << 0,
-	GEN_RANDR		= 1 << 1
+	GEN_RANDR		= 1 << 1,
+	GEN_EWMH		= 1 << 2
 };
 
 struct yabar_gen_info {
@@ -219,8 +246,15 @@ struct yabar_gen_info {
 	uint8_t depth;
 	uint8_t gen_flag;
 	ya_monitor_t *curmon;
+#ifdef YA_INTERNAL_EWMH
+	xcb_ewmh_connection_t *ewmh;
+	xcb_window_t curwin;
+	xcb_window_t lstwin;
+	ya_ewmh_blk *ewmh_blk;
+#endif //YA_INTERNAL_EWMH
 };
 typedef struct yabar_gen_info yabar_info_t;
+
 
 extern yabar_info_t ya;
 extern char conf_file[CFILELEN]; 
@@ -241,5 +275,7 @@ void ya_exec_button(ya_block_t * blk, xcb_button_press_event_t *eb);
 
 ya_block_t * ya_get_blk_from_event( xcb_button_press_event_t *eb);
 
+void ya_get_cur_window_title(ya_block_t * blk);
 void ya_handle_button( xcb_button_press_event_t *eb); 
+void ya_handle_prop_notify(xcb_property_notify_event_t *ep);
 #endif /*YABAR_H*/

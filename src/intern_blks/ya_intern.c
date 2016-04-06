@@ -27,7 +27,11 @@ struct reserved_blk ya_reserved_blks[YA_INTERNAL_LEN] = {
 	{"YA_INT_MEMORY", ya_int_memory},
 	{"YA_INT_CPU", ya_int_cpu},
 	{"YA_INT_DISKIO", ya_int_diskio},
-	{"YA_INT_NETWORK", ya_int_network}
+	{"YA_INT_NETWORK", ya_int_network},
+#ifdef YA_INTERNAL_EWMH
+	{"YA_INT_TITLE", NULL},
+	{"YA_INT_WORKSPACE", NULL}
+#endif
 }; 
 
 //#define YA_INTERNAL
@@ -389,6 +393,7 @@ void ya_int_diskio(ya_block_t *blk) {
 #include <netdb.h>
 
 void ya_int_network(ya_block_t *blk) {
+	pthread_detach(blk->thread);
 	pthread_exit(NULL);
 	/*
 	struct ifaddrs *ifaddr, *ifa;

@@ -347,6 +347,24 @@ static void ya_setup_bar(config_setting_t * set) {
 	}
 }
 
+#ifdef YA_INTERNAL_EWMH
+inline static void ya_setup_ewmh_intern_blk(ya_block_t *blk) {
+	ya_ewmh_blk *cur=NULL;
+	switch(blk->internal->index) {
+		case YA_INT_WORKSPACE:
+		case YA_INT_TITLE:
+			blk->attr |= BLKA_INTERN_X_EV;
+			break;
+	}
+	cur = calloc(1, sizeof(ya_ewmh_blk));
+	cur->blk = blk;
+	if (ya.ewmh_blk) {
+		ya.ewmh_blk->next_ewblk = cur;
+		cur->prev_ewblk = ya.ewmh_blk;
+	}
+	ya.ewmh_blk = cur;
+}
+#endif //YA_INTERNAL_EWMH
 
 inline static void ya_check_blk_internal(ya_block_t *blk, config_setting_t *set, const char *strexec) {
 	const char *retstr;
@@ -355,6 +373,9 @@ inline static void ya_check_blk_internal(ya_block_t *blk, config_setting_t *set,
 			blk->internal = calloc(1, sizeof(blk_intern_t));
 			blk->attr |= BLKA_INTERNAL;
 			blk->internal->index = i;
+#ifdef YA_INTERNAL_EWMH
+			ya_setup_ewmh_intern_blk(blk);
+#endif //YA_INTERNAL_EWMH
 			if(config_setting_lookup_string(set, "internal-prefix", &retstr) == CONFIG_TRUE)
 				blk->internal->prefix = strdup(retstr);
 			if(config_setting_lookup_string(set, "internal-suffix", &retstr) == CONFIG_TRUE)
