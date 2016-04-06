@@ -34,7 +34,11 @@ inline static void ya_exec_intern_ewmh_blk(ya_block_t *blk) {
 
 static void ya_exec_redir_once(ya_block_t *blk) {
 	int opipe[2];
-	pipe(opipe);
+	if(pipe(opipe)==-1) {
+		fprintf(stderr, "Error opening pipe for block %s.%s. Terminating block's thread...\n", blk->bar->name, blk->name);
+		pthread_detach(blk->thread);
+		pthread_exit(NULL);
+	}
 	if (fork() == 0) {
 		dup2(opipe[1], STDOUT_FILENO);
 		close(opipe[1]);
@@ -58,7 +62,11 @@ static void ya_exec_redir_once(ya_block_t *blk) {
 
 static void ya_exec_redir_period(ya_block_t *blk) {
 	int opipe[2];
-	pipe(opipe);
+	if(pipe(opipe)==-1) {
+		fprintf(stderr, "Error opening pipe for block %s.%s. Terminating block's thread...\n", blk->bar->name, blk->name);
+		pthread_detach(blk->thread);
+		pthread_exit(NULL);
+	}
 	while (1) {
 		pid_t pid = fork();
 		if (pid == 0) {
@@ -88,7 +96,11 @@ static void ya_exec_redir_period(ya_block_t *blk) {
 
 static void ya_exec_redir_persist(ya_block_t *blk) {
 	int opipe[2];
-	pipe(opipe);
+	if(pipe(opipe)==-1) {
+		fprintf(stderr, "Error opening pipe for block %s.%s. Terminating block's thread...\n", blk->bar->name, blk->name);
+		pthread_detach(blk->thread);
+		pthread_exit(NULL);
+	}
 	pid_t pid = fork();
 	if (pid == 0) {
 		dup2(opipe[1], STDOUT_FILENO);
