@@ -135,7 +135,9 @@ void ya_int_thermal(ya_block_t *blk) {
 	fclose(tfile);
 	while (1) {
 		tfile = fopen(fpath, "r");
-		fscanf(tfile, "%d", &temp);
+		if(fscanf(tfile, "%d", &temp) != 1) {
+			fprintf(stderr, "Error getting values from file (%s)\n", fpath);
+		}
 		temp/=1000;
 
 		if(temp > crttemp) {
@@ -179,7 +181,8 @@ void ya_int_brightness(ya_block_t *blk) {
 	}
 	while(1) {
 		tfile = fopen(fpath, "r");
-		fscanf(tfile, "%d", &bright);
+		if(fscanf(tfile, "%d", &bright) != 1)
+			fprintf(stderr, "Error getting values from file (%s)\n", fpath);
 		sprintf(startstr, "%d", bright);
 		if(suflen)
 			strcat(blk->buf, blk->internal->suffix);
@@ -215,8 +218,10 @@ void ya_int_bandwidth(ya_block_t * blk) {
 		pthread_exit(NULL);
 	}
 	else {
-		fscanf(rxfile, "%lu", &orx);
-		fscanf(txfile, "%lu", &otx);
+		if(fscanf(rxfile, "%lu", &orx)!=1)
+			fprintf(stderr, "Error getting values from file (%s)\n", rxpath);
+		if(fscanf(txfile, "%lu", &otx)!=1)
+			fprintf(stderr, "Error getting values from file (%s)\n", txpath);
 	}
 	fclose(rxfile);
 	fclose(txfile);
@@ -225,8 +230,10 @@ void ya_int_bandwidth(ya_block_t * blk) {
 		rxfile = fopen(rxpath, "r");
 		txfile = fopen(txpath, "r");
 
-		fscanf(rxfile, "%lu", &rx);
-		fscanf(txfile, "%lu", &tx);
+		if(fscanf(rxfile, "%lu", &rx)!=1)
+			fprintf(stderr, "Error getting values from file (%s)\n", rxpath);
+		if(fscanf(txfile, "%lu", &tx)!=1)
+			fprintf(stderr, "Error getting values from file (%s)\n", txpath);
 
 		rxrate = (rx - orx)/((blk->sleep)*1024);
 		txrate = (tx - otx)/((blk->sleep)*1024);
@@ -297,26 +304,30 @@ void ya_int_memory(ya_block_t *blk) {
 
 
 void ya_int_cpu(ya_block_t *blk) {
+	char fpath[] = "/proc/stat";
 	FILE *tfile;
 	long double old[4], cur[4], ya_avg=0.0;
 	char *startstr = blk->buf;
 	size_t prflen=0,suflen=0;
 	char cpustr[20];
 	ya_setup_prefix_suffix(blk, &prflen, &suflen, &startstr);
-	tfile = fopen("/proc/stat", "r");
+	tfile = fopen(fpath, "r");
 	if (tfile == NULL) {
-		fprintf(stderr, "Error opening file %s\n", "/proc/stat");
+		fprintf(stderr, "Error opening file (%s)\n", fpath);
 		strncpy(blk->buf, "BLOCK ERROR!", strlen("BLOCK ERROR!"));
 		ya_draw_pango_text(blk);
 		pthread_exit(NULL);
 	}
 	else {
-		fscanf(tfile,"%s %Lf %Lf %Lf %Lf",cpustr, &old[0],&old[1],&old[2],&old[3]);
+		if(fscanf(tfile,"%s %Lf %Lf %Lf %Lf",cpustr, &old[0],&old[1],&old[2],&old[3])!=5)
+			fprintf(stderr, "Error getting values from file (%s)\n", fpath);
+
 	}
 	fclose(tfile);
 	while(1) {
-		tfile = fopen("/proc/stat", "r");
-		fscanf(tfile,"%s %Lf %Lf %Lf %Lf", cpustr, &cur[0],&cur[1],&cur[2],&cur[3]);
+		tfile = fopen(fpath, "r");
+		if(fscanf(tfile,"%s %Lf %Lf %Lf %Lf", cpustr, &cur[0],&cur[1],&cur[2],&cur[3])!=5)
+			fprintf(stderr, "Error getting values from file (%s)\n", fpath);
 		ya_avg = ((cur[0]+cur[1]+cur[2]) - (old[0]+old[1]+old[2])) / ((cur[0]+cur[1]+cur[2]+cur[3]) - (old[0]+old[1]+old[2]+old[3]));
 		for(int i=0; i<4;i++)
 			old[i]=cur[i];
@@ -348,19 +359,21 @@ void ya_int_diskio(ya_block_t *blk) {
 	snprintf(tpath, 100, "/sys/class/block/%s/stat", blk->internal->option[0]);
 	tfile = fopen(tpath, "r");
 	if (tfile == NULL) {
-		fprintf(stderr, "Error opening file %s\n", "/proc/stat");
+		fprintf(stderr, "Error opening file %s\n", tpath);
 		strncpy(blk->buf, "BLOCK ERROR!", strlen("BLOCK ERROR!"));
 		ya_draw_pango_text(blk);
 		pthread_detach(blk->thread);
 		pthread_exit(NULL);
 	}
 	else {
-		fscanf(tfile,"%lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu", &tdo[0], &tdo[1], &tdo[2], &tdo[3], &tdo[4], &tdo[5], &tdo[6], &tdo[7], &tdo[8], &tdo[9], &tdo[10]);
+		if(fscanf(tfile,"%lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu", &tdo[0], &tdo[1], &tdo[2], &tdo[3], &tdo[4], &tdo[5], &tdo[6], &tdo[7], &tdo[8], &tdo[9], &tdo[10])!=11)
+			fprintf(stderr, "Error getting values from file (%s)\n", tpath);
 	}
 	fclose(tfile);
 	while(1) {
 		tfile = fopen(tpath, "r");
-		fscanf(tfile,"%lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu", &tdc[0], &tdc[1], &tdc[2], &tdc[3], &tdc[4], &tdc[5], &tdc[6], &tdc[7], &tdc[8], &tdc[9], &tdc[10]);
+		if(fscanf(tfile,"%lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu", &tdc[0], &tdc[1], &tdc[2], &tdc[3], &tdc[4], &tdc[5], &tdc[6], &tdc[7], &tdc[8], &tdc[9], &tdc[10])!=11)
+			fprintf(stderr, "Error getting values from file (%s)\n", tpath);
 		drd = (unsigned long)(((float)(tdc[2] - tdo[2])*0.5)/((float)(blk->sleep)));
 		dwr = (unsigned long)(((float)(tdc[6] - tdo[6])*0.5)/((float)(blk->sleep)));
 		crd = cwr = 'K';
