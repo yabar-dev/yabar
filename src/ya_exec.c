@@ -12,6 +12,31 @@ char conf_file[CFILELEN];
 static const char * const yashell = "/bin/sh";
 
 #ifdef YA_INTERNAL_EWMH
+inline static void ya_copy_buf_from_index(ya_block_t *blk, uint32_t cur_desktop) {
+	char *cur = blk->internal->option[0];
+	uint32_t index =0;
+	for(;*cur!= '\0' && *cur == ' ';cur++);
+	for(;*cur != '\0'; cur++) {
+		int offset = 0;
+		if(*cur==' ')
+			continue;
+		if(index==cur_desktop) {
+			for(;*cur != '\0' && *cur != ' '; cur++, offset++) {
+				blk->buf[offset] = *cur;
+			}
+			blk->buf[offset] = '\0';
+			return;
+		}
+		else {
+			for(;*cur != '\0' && *cur != ' '; cur++);
+			index++;
+		}
+	}
+	//Corresponding string not found, must be a higher desktop number
+	//than number of available strings. So print current desktop number.
+	sprintf(blk->buf, "%u", cur_desktop+1);
+}
+
 inline static void ya_exec_intern_ewmh_blk(ya_block_t *blk) {
 	switch(blk->internal->index) {
 		case YA_INT_TITLE: {
@@ -23,7 +48,11 @@ inline static void ya_exec_intern_ewmh_blk(ya_block_t *blk) {
 			uint32_t current_desktop;
 			xcb_get_property_cookie_t ck = xcb_ewmh_get_current_desktop(ya.ewmh, 0);
 			xcb_ewmh_get_current_desktop_reply(ya.ewmh, ck, &current_desktop, NULL);
-			sprintf(blk->buf, "%u", current_desktop);
+			if(blk->internal->option[0]==NULL)
+				sprintf(blk->buf, "%u", current_desktop+1);
+			else {
+				ya_copy_buf_from_index(blk, current_desktop);
+			}
 			ya_draw_pango_text(blk);
 			break;
 		}
