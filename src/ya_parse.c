@@ -430,7 +430,11 @@ static void ya_setup_block(config_setting_t * set) {
 	else {
 #ifdef YA_INTERNAL
 		//check if internal found, otherwise set external
-		ya_check_blk_internal(blk, set, retstr);
+		//Fast check: if first char is not Y, don't even call ya_check_blk_internal()
+		if(retstr[0] != 'Y')
+			blk->attr |= BLKA_EXTERNAL;
+		else 
+			ya_check_blk_internal(blk, set, retstr);
 #else
 		//just set it external
 		blk->attr |= BLKA_EXTERNAL;

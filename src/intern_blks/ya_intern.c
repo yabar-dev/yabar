@@ -19,18 +19,18 @@ void ya_int_diskio(ya_block_t *blk);
 void ya_int_network(ya_block_t *blk);
 
 struct reserved_blk ya_reserved_blks[YA_INTERNAL_LEN] = { 
-	{"YA_INT_DATE", ya_int_date},
-	{"YA_INT_UPTIME", ya_int_uptime},
-	{"YA_INT_THERMAL", ya_int_thermal},
-	{"YA_INT_BRIGHTNESS", ya_int_brightness},
-	{"YA_INT_BANDWIDTH", ya_int_bandwidth},
-	{"YA_INT_MEMORY", ya_int_memory},
-	{"YA_INT_CPU", ya_int_cpu},
-	{"YA_INT_DISKIO", ya_int_diskio},
-	{"YA_INT_NETWORK", ya_int_network},
+	{"YABAR_DATE", ya_int_date},
+	{"YABAR_UPTIME", ya_int_uptime},
+	{"YABAR_THERMAL", ya_int_thermal},
+	{"YABAR_BRIGHTNESS", ya_int_brightness},
+	{"YABAR_BANDWIDTH", ya_int_bandwidth},
+	{"YABAR_MEMORY", ya_int_memory},
+	{"YABAR_CPU", ya_int_cpu},
+	{"YABAR_DISKIO", ya_int_diskio},
+	{"YABAR_NETWORK", ya_int_network},
 #ifdef YA_INTERNAL_EWMH
-	{"YA_INT_TITLE", NULL},
-	{"YA_INT_WORKSPACE", NULL}
+	{"YABAR_TITLE", NULL},
+	{"YABAR_WORKSPACE", NULL}
 #endif
 }; 
 
