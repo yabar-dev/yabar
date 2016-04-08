@@ -265,10 +265,12 @@ Yabar has a growing set of useful blocks. You can try out the sampe config locat
 		internal-suffix: "%";
 
 * Disk IO activity: It checks out the file `/sys/class/block/NAME/stat` and then computes the read and write rates. Example:
+		
 		exec: "YABAR_DISKIO";
 		internal-option1: "sda"; #i.e. Replace NAME with your corresponding name
 		internal-option2: " "; #Two Strings (usually 2 font icons) to be injected before down/up values
 		interval: 1;
+
 
 ## License
 
