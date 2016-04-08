@@ -14,6 +14,7 @@ A modern and lightweight status bar for X window managers.
 Yabar is a modern and lightweight status bar that is intended to be used along with minimal X window managers like `bspwm` and `i3`. Yabar has the following features:
 
 * Extremely configurable with easy configuration system using a single config file.
+* A growing set of ready-to-use internal blocks developed in plain c.
 * Pango font rendering with support of pango markup language.
 * Support for transparency.
 * Multi-monitor support using RandR.
@@ -28,14 +29,14 @@ Yabar is a modern and lightweight status bar that is intended to be used along w
 A Yabar session should contain one or more *bars* within the same session. Each bar should contain one or more *blocks*. Each block should display some useful info to the user (free memory, CPU temperature, etc...).
 
 ## Installation
-Yabar requires libconfig, cairo, and pango. These dependencies can be installed through your distribution's package manager, such as `dnf install libconfig-devel cairo-devel pango-devel` on Fedora or `sudo apt-get install libcairo2-dev libpango1.0-dev libconfig-dev libxcb-randr0-dev` on Ubuntu.
+Yabar requires libconfig, cairo, and pango. These dependencies can be installed through your distribution's package manager, such as `dnf install libconfig-devel cairo-devel pango-devel` on Fedora or `sudo apt-get install libcairo2-dev libpango1.0-dev libconfig-dev libxcb-randr0-dev libxcb-ewmh-dev` on Ubuntu.
 
 You can install yabar as follows:
 
-		git clone https://github.com/geommer/yabar
-		cd yabar
-		make
-		sudo make install
+		$ git clone https://github.com/geommer/yabar
+		$ cd yabar
+		$ make
+		$ sudo make install
 
 If you use libconfig 1.4.x (still used in Ubuntu 14.04 and Debian), please type `export CPPFLAGS=-DOLD_LIBCONFIG` then build using `make` as usual. 
 
@@ -46,13 +47,13 @@ Yabar currently by default accepts configuration from the config file `~/.config
     bar-list: ["bar1", "bar2", ...];
     
     bar1: {
-        \\bar specific options\\
+        //bar-specific options//
         block-list: ["block1", "block2", ...];
         block1: {
-            \\block specific options\\
+            //block-specific options//
         }
         block2: {
-            \\block specific options\\
+            //block-specific options//
         }
     }
 
@@ -193,13 +194,82 @@ The spaces are just skipped automatically. Keep in mind that You can always dyna
 
 Yabar sets a handful of environment variables before executing your commands/scripts that are defined in the `command-button{1-5}` entry. Such env variables can be useful when drawing your window on the corresponding button press. Current env variables are:
 
-		YABAR_BLOCK_X
-		YABAR_BLOCK_Y
-		YABAR_BLOCK_WIDTH
+		${YABAR_BLOCK_X} #The begining x axis for the block
+		${YABAR_BLOCK_Y} #It returns just the bottom y value of the block in case of topbar or just the top y value of the block in case of bottombar
+		${YABAR_BLOCK_WIDTH} #Block width
 
-## TODO
+## Internal blocks
 
-There is a lot to do, but among the most important things:
-* Automatic size of blocks.
-* Internal blocks.
+Yabar has several internal blocks developed in plain c. This feature is optional and can be disabled before building the code using the compilation conditional flag `-DYA_INTERNAL` in `Makefile`. Yabar scans the string value in the `exec` entry to check whether it is a reserved internal block or a normal command/script. 
+Internal blocks have 5 additional block-specific options:
 
+		internal-prefix  # Inject a string (usually a font icon) before the output string
+		internal-suffix  # Inject a string (usually a font icon) after the output string
+		internal-option1 # block-specific  
+		internal-option2 # block-specific
+		internal-option3 # block-specific
+
+Yabar has a growing set of useful blocks. You can try out the sampe config located in `examples/internal1.config`. The current blocks are:
+
+* Date & time: Maybe the most essential block. You can control the output format using the [standard c library format](https://www.gnu.org/software/libc/manual/html_node/Formatting-Calendar-Time.html). Example:
+
+		exec: "YABAR_DATE";
+		internal-option1: "%a %d %b, %I:%M"; #Format
+		internal-prefix: " ";
+		interval: 2;
+
+* Current window title: It uses EWMH to show the current window title. Example:
+
+		exec: "YABAR_TITLE";
+		fixed-size: 300;
+
+* Current workspace: It uses EWMH to show the current workspace/desktop. Example:
+
+		exec: "YABAR_WORKSPACE";
+		internal-option1: "        "; #Type all your workspace names (usually font icons) separated by a space between one another.
+
+* Uptime: shows the system uptime. Currently it shows using a `hours:minutes` format.
+
+		exec: "YABAR_UPTIME";
+		interval: 5;
+
+* Thermal: It checks out the thermal value in the file `/sys/class/NAME/temp`. Example:
+
+		exec: "YABAR_THERMAL";
+		internal-option1: "thermal_zone0"; #i.e. Replace `NAME` with your corresponding name
+		interval: 1;
+
+* Brightness: It checks out the brightness value in the file `/sys/class/backlight/NAME/brightness`. Example:
+
+		exec: "YABAR_BRIGHTNESS";
+		internal-option1: "intel_backlight"; #i.e. Replace `NAME` with your corresponding name
+		interval: 1;
+
+* Network bandwidth: It checks out the total transmitted and received bytes in the files `/sys/class/net/NAME/statistics/tx_bytes` and `/sys/class/net/NAME/statistics/rx_bytes` and convert them to rates. Example:
+
+		exec: "YABAR_BANDWIDTH";
+		internal-option1: "enp2s0"; #i.e. Replace NAME with your corresponding name
+		internal-option2: " "; #Two Strings (usually 2 font icons) to be injected before down/up values
+		interval: 2;
+
+* Used RAM: It checks out the file `/proc/meminfo` and then computes the total used memory. Example:
+
+		exec: "YABAR_MEMORY";
+		interval: 1;
+
+* CPU total load: It checks out the file `/proc/stat` and then computes the total load percentage: Example: 
+
+		exec: "YABAR_CPU";
+		interval: 2;
+		internal-prefix: " ";
+		internal-suffix: "%";
+
+* Disk IO activity: It checks out the file `/sys/class/block/NAME/stat` and then computes the read and write rates. Example:
+		exec: "YABAR_DISKIO";
+		internal-option1: "sda"; #i.e. Replace NAME with your corresponding name
+		internal-option2: " "; #Two Strings (usually 2 font icons) to be injected before down/up values
+		interval: 1;
+
+## License
+
+Yabar is licensed under the MIT license. For more info check out the file `LICENSE`.
