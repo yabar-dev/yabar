@@ -8,26 +8,31 @@ yabar [-c CONFIG_FILE] [-v] [-h]
 
 .SH DESCRIPTION
 .PP
-Yabar is a modern and lightweight status bar that is intended to be used along with minimal X window managers like \fB\fCbspwm\fR and \fB\fCi3\fR\&. Yabar has the following features:
+Yabar is a modern and lightweight status bar that is intended to be used along with minimal X window managers like bspwm and i3. Yabar has the following features:
 .IP \(bu 2
-Simple configuration using a single config file based on libconfig syntax.
+Extremely configurable with easy configuration system using a single config file.
 .IP \(bu 2
-Pango font rendering with support of pango markup language (Xft may be supported in the future).
+A growing set of ready\-to\-use internal blocks developed in plain c.
 .IP \(bu 2
-Support for transparency (Yabar currently uses a hard\-coded depth of 32).
+Pango font rendering with support of pango markup language.
+.IP \(bu 2
+Support for transparency.
+.IP \(bu 2
+Multi\-monitor support using RandR.
+.IP \(bu 2
+Entirely clickable.
+.IP \(bu 2
+Support for several environment variables to help button commands.
 .IP \(bu 2
 Multiple bars within the same session.
 
-.PP
-\fBWarning\fP: Yabar is still in its infancy and far from being mature. Feel free to contribute or report bugs!
-
 .SH TERMINOLOGY
 .PP
-A Yabar session should contain one or more \fIbars\fP within the same session. Each bar should contain one or more \fIblocks\fP\&. Each block should display some useful info to the user (free memory, CPU temperature, etc...).
+A Yabar session should contain one or more bars within the same session. Each bar should contain one or more blocks. Each block should display some useful info to the user (free memory, CPU temperature, etc...).
 
 .SH CONFIGURATION
 .PP
-Yabar currently by default accepts configuration from the config file \fB\fC\~/.config/yabar/yabar.conf\fR or using \fB\fCyabar \-c [CONFIG\_FILE]\fR\&. The config file should like something like this:
+Yabar currently by default accepts configuration from the config file ~/.config/yabar/yabar.conf or using yabar \-c [CONFIG\_FILE]. The config file should like something like this:
 
 .PP
 .RS
@@ -36,13 +41,13 @@ Yabar currently by default accepts configuration from the config file \fB\fC\~/.
 bar\-list: ["bar1", "bar2", ...];
 
 bar1: {
-    \\\\bar specific options\\\\
+    //bar\-specific options//
     block\-list: ["block1", "block2", ...];
     block1: {
-        \\\\block specific options\\\\
+        //block\-specific options//
     }
     block2: {
-        \\\\block specific options\\\\
+        //block\-specific options//
     }
 }
 
@@ -54,7 +59,7 @@ A bar or a block can be named to whatever name (preferably a short and meaningfu
 
 .SS BAR\-SPECIFIC OPTIONS
 .PP
-Each bar can have its font, position (currently only top and bottom), background color, height, width, horizontal and vertical gaps, and other options.
+Each bar can have its font, position (currently only top and bottom), background color, height, horizontal and vertical gaps, and other options.
 .IP \(bu 2
 Font: Yabar currently accepts a string that contains a font or a list of fonts (similar to i3). Example:
 .PP
@@ -97,7 +102,7 @@ height: 25;
 .fi
 .RE
 .IP \(bu 2
-Width: Default is screen size - 2 * horizontal gap. Example:
+Width: The default bar width is \fB\fCscreen size \- 2 * horizontal gap\fR\&. However, if this option is used, the bar starts at \fB\fChorizontal gap\fR and ends at \fB\fChorizontal gap + width\fR\&. Example:
 .PP
 .RS
 
@@ -107,8 +112,18 @@ width: 800;
 .fi
 .RE
 .IP \(bu 2
-Underline and overline sizes: This option defines the thickness
-of underlines and overlines. Default is 0. Example:
+Monitor: This option is used to specify the monitor using randr extension for the bar to be drawn on. You can find the name of your monitors using \fB\fCxrandr \-q\fR command. The default value is the first active monitor. Example:
+.PP
+.RS
+
+.nf
+monitor: "LVDS1";
+monitor: "VGA1";
+
+.fi
+.RE
+.IP \(bu 2
+Underline and overline sizes: This option defines the thickness of underlines and overlines. Default is 0. Example:
 .PP
 .RS
 
@@ -124,7 +139,51 @@ Slack: You can define the size of the slack (i.e. the unused space between block
 .RS
 
 .nf
-slack: 2;
+slack\-size: 2;
+
+.fi
+.RE
+.IP \(bu 2
+Borders: You can optionally define a size and a color for a border surrounding the bar. Default is no borders. Example:
+.PP
+.RS
+
+.nf
+border\-size: 2;
+border\-color\-rgb: 0xffffff;
+
+.fi
+.RE
+.IP \(bu 2
+Inheritance: As the config file gets larger because you want to add several bars, you may find yourself adding many identical option values for every added bar. This optional entry is added in order to inherit the options from a precedent bar into your next bar. You can also override the inherited options with new values.
+.PP
+.RS
+
+.nf
+inherit: "bar1";
+
+.fi
+.RE
+
+.PP
+You can also inherit a bar with not only its bar\-specific options, but also with its blocks and their block\-specific options as well using the \fB\fCinherit\-all\fR bar\-specific option. Example:
+
+.PP
+.RS
+
+.nf
+inherit\-all: "bar1";
+
+.fi
+.RE
+.IP \(bu 2
+Button commands: Yabar already supports mouse button commands for each block. Moreover, yabar seeks to make the entire bar clickable even if the pressed area does not belong to any block or the corresponding button command for that block is not defined. Example:
+.PP
+.RS
+
+.nf
+command\-button4: "xbacklight \-inc 1";
+command\-button5: "xbacklight \-dec 1";
 
 .fi
 .RE
@@ -133,7 +192,7 @@ slack: 2;
 .PP
 Each block can have its command/script, background, foreground (i.e. font), underline and overline colors, alignment and other options.
 .IP \(bu 2
-Execution: the path to the command/script to be executed. Yabar consumes the output of the command/script's stdout and shows it on the bar. Example:
+Execution: The path to the command/script to be executed. Yabar consumes the output of the command/script's stdout and shows it on the bar. Example:
 .PP
 .RS
 
@@ -153,6 +212,16 @@ align: "right";
 .fi
 .RE
 .IP \(bu 2
+Justify: By default yabar centers the text inside the block size. However, you can optionally justify the text to the left or the right.
+.PP
+.RS
+
+.nf
+justify: "left";
+
+.fi
+.RE
+.IP \(bu 2
 Type: The block type can be \fIperiodic\fP where the command/script is executed within a fixed interval of time, \fIpersistent\fP where the command/script runs in a persistent way like \fB\fCxtitle\fR or \fIonce\fP where the command/script is executed only once where the intended info should not change like in \fB\fCwhoami\fR\&. Examples:
 .PP
 .RS
@@ -165,7 +234,7 @@ type: "once";
 .fi
 .RE
 .IP \(bu 2
-Interval: In seconds. This is only useful when the type is periodic. Example:
+Interval: In seconds. This is only useful when the  block type is periodic. Example:
 .PP
 .RS
 
@@ -175,12 +244,12 @@ interval: 3;
 .fi
 .RE
 .IP \(bu 2
-Fixed size: You should define the fixed width size of the block. Yabar currently only supports fixed widths (this will be improved soon). You can know the relevant width using trial and error.
+Fixed size: You should define the fixed width size of the block. Yabar currently only supports fixed widths (this will be improved soon). You can deduce the appropriate width using trial and error. The current default value is 80 but you are encouraged to override it to a more appropriate value. Example:
 .PP
 .RS
 
 .nf
-fixed\-size: 80;
+fixed\-size: 90;
 
 .fi
 .RE
@@ -211,7 +280,7 @@ overline\-color\-argb     : 0xf0642356;
 .PP
 Note that the values are integers and not double\-quoted strings.
 .IP \(bu 2
-Pointer commands: invoke a command/script upon a mouse button pressing. You have 5 buttons that are usually represent left click, right click, middle click, scroll up and scroll down respectively but this may not be the case for everyone. Examples:
+Button commands: This option is used to invoke a command/script upon a mouse button press. You have 5 buttons that usually represent left click, right click, middle click, scroll up and scroll down respectively but this may not be the case for everyone. Examples:
 .PP
 .RS
 
@@ -222,16 +291,197 @@ command\-button5: "pactl set\-sink\-volume 0 \-10%";
 
 .fi
 .RE
-
-.SH TODO
+.IP \(bu 2
+Inheritance: As the config gets larger because you want to add many blocks, you may find yourself adding many identical option values for every added block. This optional entry is added in order to inherit the options from a precedent block into your new block. You can also override the inherited options with new values.
 .PP
-There is a lot to do, but among the most important things:
+.RS
+
+.nf
+inherit: "bar1.block1";
+
+.fi
+.RE
+
+.SS DYNAMIC COLORS FOR BLOCKS
+.PP
+You can change block colors(background, foreground, underline and overline) within runtime. Along with pango markup format, you can fully control how a block looks throughout yabar's session.
+
+.PP
+If you wish to change one or more of the 4 color types, you must begin your string\-to\-be\-drawn (i.e. the output string to stdout by your shell script) with \fB\fC!Y FORMAT Y!\fR\&. the \fB\fCFORMAT\fR statement should contain contain the color type (\fB\fCBG\fR or \fB\fCbg\fR for background, \fB\fCFG\fR or \fB\fCfg\fR for foreground, \fB\fCU\fR or \fB\fCu\fR for underline and \fB\fCO\fR or \fB\fCo\fR for overline). The color must be in hex AARRGGBB (So if you want to add an rgb color just make it \fB\fCFFxxxxxx\fR). Examples:
+
+.PP
+.RS
+
+.nf
+    "!Y BG 0xFFFF0000 fg0xFF00ff00 U0xFFFAC739 Y!"
+    "!Ybg0xff00ff00Y!"
+
+.fi
+.RE
+
+.PP
+The spaces are just skipped automatically. Keep in mind that You can always dynamically change your foreground color using pango markup too.
+
+.SS ENVIRONMENT VARIABLES
+.PP
+Yabar sets a handful of environment variables before executing your commands/scripts that are defined in the \fB\fCcommand\-button{1\-5}\fR entry. Such env variables can be useful when drawing your window on the corresponding button press. Current env variables are:
+
+.PP
+.RS
+
+.nf
+    ${YABAR\_BLOCK\_X} #The begining x axis for the block
+    ${YABAR\_BLOCK\_Y} #It returns just the bottom y value of the block in case of topbar or just the top y value of the block in case of bottombar
+    ${YABAR\_BLOCK\_WIDTH} #Block width
+
+.fi
+.RE
+
+.SH INTERNAL BLOCKS
+.PP
+Yabar has several internal blocks developed in plain c. This feature is optional and can be disabled before building the code using the compilation conditional flag \fB\fC\-DYA\_INTERNAL\fR in \fB\fCMakefile\fR\&. Yabar scans the string value in the \fB\fCexec\fR entry to check whether it is a reserved internal block or a normal command/script.
+Internal blocks have 5 additional block\-specific options:
+
+.PP
+.RS
+
+.nf
+    internal\-prefix  # Inject a string (usually a font icon) before the output string
+    internal\-suffix  # Inject a string (usually a font icon) after the output string
+    internal\-option1 # block\-specific  
+    internal\-option2 # block\-specific
+    internal\-option3 # block\-specific
+
+.fi
+.RE
+
+.PP
+Yabar has a growing set of useful blocks. The current blocks are:
 .IP \(bu 2
-RandR support.
+Date and time: Maybe the most essential block. You can control the output format using the 
+standard c libary format in time.h. Example:
+.PP
+.RS
+
+.nf
+exec: "YABAR\_DATE";
+internal\-option1: "%a %d %b, %I:%M"; #Format
+internal\-prefix: " ";
+interval: 2;
+
+.fi
+.RE
 .IP \(bu 2
-Automatic size of blocks.
+Current window title: It uses EWMH to show the current window title. Example:
+.PP
+.RS
+
+.nf
+exec: "YABAR\_TITLE";
+fixed\-size: 300;
+
+.fi
+.RE
 .IP \(bu 2
-Internal blocks.
+Current workspace: It uses EWMH to show the current workspace/desktop. Example:
+.PP
+.RS
+
+.nf
+exec: "YABAR\_WORKSPACE";
+internal\-option1: "        "; #Type all your workspace names (usually font icons) separated by a space between one another.
+
+.fi
+.RE
+.IP \(bu 2
+Uptime: shows the system uptime. Currently it shows using a \fB\fChours:minutes\fR format.
+.PP
+.RS
+
+.nf
+exec: "YABAR\_UPTIME";
+interval: 5;
+
+.fi
+.RE
+.IP \(bu 2
+Thermal: It checks out the thermal value in the file \fB\fC/sys/class/NAME/temp\fR\&. Example:
+.PP
+.RS
+
+.nf
+exec: "YABAR\_THERMAL";
+internal\-option1: "thermal\_zone0"; #i.e. Replace `NAME` with your corresponding name
+interval: 1;
+
+.fi
+.RE
+.IP \(bu 2
+Brightness: It checks out the brightness value in the file \fB\fC/sys/class/backlight/NAME/brightness\fR\&. Example:
+.PP
+.RS
+
+.nf
+exec: "YABAR\_BRIGHTNESS";
+internal\-option1: "intel\_backlight"; #i.e. Replace `NAME` with your corresponding name
+interval: 1;
+
+.fi
+.RE
+.IP \(bu 2
+Network bandwidth: It checks out the total transmitted and received bytes in the files \fB\fC/sys/class/net/NAME/statistics/tx\_bytes\fR and \fB\fC/sys/class/net/NAME/statistics/rx\_bytes\fR and convert them to rates. Example:
+.PP
+.RS
+
+.nf
+exec: "YABAR\_BANDWIDTH";
+internal\-option1: "enp2s0"; #i.e. Replace NAME with your corresponding name
+internal\-option2: " "; #Two Strings (usually 2 font icons) to be injected before down/up values
+interval: 2;
+
+.fi
+.RE
+.IP \(bu 2
+Used RAM: It checks out the file \fB\fC/proc/meminfo\fR and then computes the total used memory. Example:
+.PP
+.RS
+
+.nf
+exec: "YABAR\_MEMORY";
+interval: 1;
+
+.fi
+.RE
+.IP \(bu 2
+CPU total load: It checks out the file \fB\fC/proc/stat\fR and then computes the total load percentage: Example:
+.PP
+.RS
+
+.nf
+exec: "YABAR\_CPU";
+interval: 2;
+internal\-prefix: " ";
+internal\-suffix: "%";
+
+.fi
+.RE
+.IP \(bu 2
+Disk IO activity: It checks out the file \fB\fC/sys/class/block/NAME/stat\fR and then computes the read and write rates. Example:
+.PP
+.RS
+
+.nf
+exec: "YABAR\_DISKIO";
+internal\-option1: "sda"; #i.e. Replace NAME with your corresponding name
+internal\-option2: " "; #Two Strings (usually 2 font icons) to be injected before down/up values
+interval: 1;
+
+.fi
+.RE
+
+.SH LICENSE
+.PP
+Yabar is licensed under the MIT license. For more info check out the file \fB\fCLICENSE\fR\&.
 
 .SH AUTHOR
 .PP
