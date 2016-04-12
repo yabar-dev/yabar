@@ -302,6 +302,20 @@ inherit: "bar1.block1";
 .fi
 .RE
 
+.IP \(bu 2
+Icons and images: Yabar supports drawing icons and images inside blocks using gdk-pixbuf and cairo. The images are drawn before drawing text so they may act as backgrounds if desired. You can control the horizontal and vertical shift and the width and height scale for the image/icon. Example:
+.PP
+.RS
+
+.nf
+image: "/usr/share/icons/Numix/16/apps/google.svg";
+image-shift-x: 2; #integer value
+image-shift-y: 1; #integer value 
+image-scale-width: 0.4; #float value
+image-scale-height: 0.4; #float value
+.fi
+.RE
+
 .SS DYNAMIC COLORS FOR BLOCKS
 .PP
 You can change block colors(background, foreground, underline and overline) within runtime. Along with pango markup format, you can fully control how a block looks throughout yabar's session.
