@@ -498,6 +498,32 @@ skip_type:
 	if(retcnf == CONFIG_TRUE) {
 		blk->button_cmd[4] = strdup(retstr);
 	}
+#ifdef YA_ICON
+	retcnf = config_setting_lookup_string(set, "image", &retstr);
+	if(retcnf == CONFIG_TRUE) {
+		blk->icon_path = strdup(retstr);
+		blk->attr |= BLKA_ICON;
+		double retflt;
+		if(config_setting_lookup_float(set, "image-scale-width", &retflt)==CONFIG_TRUE) {
+			blk->ic_scale_w = retflt;
+		}
+		else {
+			blk->ic_scale_w = 1.0;
+		}
+		if(config_setting_lookup_float(set, "image-scale-height", &retflt)==CONFIG_TRUE) {
+			blk->ic_scale_h = retflt;
+		}
+		else {
+			blk->ic_scale_h = 1.0;
+		}
+		if(config_setting_lookup_int(set, "image-shift-x", &retint)==CONFIG_TRUE) {
+			blk->ic_x = retint;
+		}
+		if(config_setting_lookup_int(set, "image-shift-y", &retint)==CONFIG_TRUE) {
+			blk->ic_y = retint;
+		}
+	}
+#endif //YA_ICON
 	retcnf = config_setting_lookup_string(set, "align", &retstr);
 	if(retcnf == CONFIG_FALSE) {
 		if(NOT_INHERIT_BLK(blk))

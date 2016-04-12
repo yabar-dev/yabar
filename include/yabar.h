@@ -32,6 +32,8 @@
 #include <xcb/randr.h>
 #include <xcb/xcb_ewmh.h>
 
+#include <gdk-pixbuf/gdk-pixbuf.h>
+
 //just to suppress gcc syntastic warnings in vim
 //VERSION is obtained from Makefile
 #ifndef VERSION
@@ -86,7 +88,8 @@ enum {
 	BLKA_UNDERLINE 		= 1<<12,
 	BLKA_OVERLINE 		= 1<<13,
 	BLKA_INHERIT		= 1<<14,
-	BLKA_INTERN_X_EV	= 1<<15
+	BLKA_INTERN_X_EV	= 1<<15,
+	BLKA_ICON			= 1<<16
 };
 
 
@@ -182,6 +185,14 @@ struct ya_block {
 	uint32_t ulcolor_old; //initial underline color
 	uint32_t olcolor_old; //initial overline color
 #endif
+
+#ifdef YA_ICON
+	char *icon_path;
+	uint16_t ic_x;
+	uint16_t ic_y;
+	double ic_scale_w;
+	double ic_scale_h;
+#endif //YA_ICON
 };
 
 
@@ -278,4 +289,6 @@ ya_block_t * ya_get_blk_from_event( xcb_button_press_event_t *eb);
 void ya_get_cur_window_title(ya_block_t * blk);
 void ya_handle_button( xcb_button_press_event_t *eb); 
 void ya_handle_prop_notify(xcb_property_notify_event_t *ep);
+
+cairo_surface_t * ya_draw_graphics(ya_block_t *blk);
 #endif /*YABAR_H*/

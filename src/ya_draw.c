@@ -179,6 +179,20 @@ void ya_draw_pango_text(struct ya_block *blk) {
 	xcb_poly_fill_rectangle(ya.c, blk->pixmap, blk->gc, 1, (const xcb_rectangle_t[]) { {0,0,blk->width, blk->bar->height} });
 	cairo_surface_t *surface = cairo_xcb_surface_create(ya.c, blk->pixmap, ya.visualtype, blk->width, blk->bar->height);
 	cairo_t *cr = cairo_create(surface);
+#ifdef YA_ICON
+	if((blk->attr & BLKA_ICON)) {
+		cairo_surface_t *iconsrf = ya_draw_graphics(blk);
+		if (iconsrf) {
+			cairo_scale(cr, blk->ic_scale_w, blk->ic_scale_h);
+			cairo_set_source_surface(cr, iconsrf,
+					(double)(blk->ic_x)/(blk->ic_scale_w),
+					(double)(blk->ic_y)/(blk->ic_scale_h));
+			cairo_paint(cr);
+			cairo_surface_destroy(iconsrf);
+			cairo_scale(cr, 1.0/(blk->ic_scale_w), 1.0/(blk->ic_scale_h));
+		}
+	}
+#endif //YA_ICON
 	PangoContext *context = pango_cairo_create_context(cr);
 	PangoLayout *layout = pango_layout_new(context);
 	pango_layout_set_font_description(layout, blk->bar->desc);
@@ -347,3 +361,71 @@ inline void ya_get_cur_window_title(ya_block_t * blk) {
 
 }
 #endif //YA_INTERNAL_EWMH
+
+#ifdef YA_ICON
+//This function is obtained from Awesome WM code.
+//I actually did not know how to copy pixbuf to surface.
+static cairo_surface_t * ya_draw_surface_from_pixbuf(GdkPixbuf *buf) {
+    int width = gdk_pixbuf_get_width(buf);
+    int height = gdk_pixbuf_get_height(buf);
+    int pix_stride = gdk_pixbuf_get_rowstride(buf);
+    guchar *pixels = gdk_pixbuf_get_pixels(buf);
+    int channels = gdk_pixbuf_get_n_channels(buf);
+    cairo_surface_t *surface;
+    int cairo_stride;
+    unsigned char *cairo_pixels;
+
+
+    cairo_format_t format = CAIRO_FORMAT_ARGB32;
+    if (channels == 3)
+        format = CAIRO_FORMAT_RGB24;
+
+    surface = cairo_image_surface_create(format, width, height);
+    cairo_surface_flush(surface);
+    cairo_stride = cairo_image_surface_get_stride(surface);
+    cairo_pixels = cairo_image_surface_get_data(surface);
+
+    for (int y = 0; y < height; y++) {
+        guchar *row = pixels;
+        uint32_t *cairo = (uint32_t *) cairo_pixels;
+        for (int x = 0; x < width; x++) {
+            if (channels == 3) {
+                uint8_t r = *row++;
+                uint8_t g = *row++;
+                uint8_t b = *row++;
+                *cairo++ = (r << 16) | (g << 8) | b;
+            }
+            else {
+                uint8_t r = *row++;
+                uint8_t g = *row++;
+                uint8_t b = *row++;
+                uint8_t a = *row++;
+                double alpha = a / 255.0;
+                r = r * alpha;
+                g = g * alpha;
+                b = b * alpha;
+                *cairo++ = (a << 24) | (r << 16) | (g << 8) | b;
+            }
+        }
+        pixels += pix_stride;
+        cairo_pixels += cairo_stride;
+    }
+
+    cairo_surface_mark_dirty(surface);
+    return surface;
+}
+
+
+cairo_surface_t * ya_draw_graphics(ya_block_t *blk) {
+	GError *gerr =NULL;
+	cairo_surface_t *ret = NULL;
+	GdkPixbuf *gbuf = gdk_pixbuf_new_from_file(blk->icon_path, &gerr);
+	if(gbuf == NULL) {
+		fprintf(stderr, "Cannot allocate pixbuf for block (%s.%s)\n. %s\n", blk->bar->name, blk->name, gerr->message);
+		return NULL;
+	}
+	ret = ya_draw_surface_from_pixbuf(gbuf);
+	g_object_unref(gbuf);
+	return ret;
+}
+#endif //YA_ICON
