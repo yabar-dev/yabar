@@ -16,6 +16,7 @@ Yabar is a modern and lightweight status bar that is intended to be used along w
 * Extremely configurable with easy configuration system using a single config file.
 * A growing set of ready-to-use internal blocks developed in plain c.
 * Pango font rendering with support of pango markup language.
+* Support for icons and images.
 * Support for transparency.
 * Multi-monitor support using RandR.
 * Entirely clickable.
@@ -29,7 +30,7 @@ Yabar is a modern and lightweight status bar that is intended to be used along w
 A Yabar session should contain one or more *bars* within the same session. Each bar should contain one or more *blocks*. Each block should display some useful info to the user (free memory, CPU temperature, etc...).
 
 ## Installation
-Yabar requires libconfig, cairo, xcb-ewmh (or xcb-util-wm in some distros) and pango. These dependencies can be installed through your distribution's package manager, such as `dnf install libconfig-devel cairo-devel pango-devel` on Fedora or `sudo apt-get install libcairo2-dev libpango1.0-dev libconfig-dev libxcb-randr0-dev libxcb-ewmh-dev` on Ubuntu.
+Yabar initially requires libconfig, cairo and pango. The feature `DYA_INTERNAL_EWMH` in `Makefile` additionaly xcb-ewmh (or xcb-util-wm in some distros) and the feature `-DYA_ICON` requires gdk-pixbuf. These dependencies can be installed through your distribution's package manager, such as `dnf install libconfig-devel cairo-devel pango-devel` on Fedora or `sudo apt-get install libcairo2-dev libpango1.0-dev libconfig-dev libxcb-randr0-dev libxcb-ewmh-dev` on Ubuntu.
 
 You can install yabar as follows:
 
@@ -176,6 +177,14 @@ Each block can have its command/script, background, foreground (i.e. font), unde
 
 
 		inherit: "bar1.block1";
+
+* Icons and images: Yabar supports drawing icons and images inside blocks using gdk-pixbuf and cairo. The images are drawn before drawing text so they may act as backgrounds if desired. You can control the horizontal and vertical shift and the width and height scale for the image/icon. Example:
+
+		image: "/usr/share/icons/Numix/16/apps/google.svg";
+		image-shift-x: 2; #integer value
+		image-shift-y: 1; #integer value 
+		image-scale-width: 0.4; #float value
+		image-scale-height: 0.4; #float value
 
 ### Dynamic colors for blocks
 
