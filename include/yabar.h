@@ -152,7 +152,7 @@ struct ya_block {
 	char *buf;
 	size_t bufsize;
 	char *cmd;
-	char *button_cmd[5]; 
+	char *button_cmd[5];
 
 	uint32_t sleep;
 	uint32_t attr; //block atributes
@@ -177,7 +177,7 @@ struct ya_block {
 	uint32_t olcolor; //overline color
 
 	blk_intern_t *internal;
-	
+
 #ifdef YA_DYN_COL
 	char *strbuf;
 	uint32_t bgcolor_old; //initial background color
@@ -206,7 +206,7 @@ struct blk_intern {
 
 struct ya_bar {
 	char *name;
-	char *button_cmd[5]; 
+	char *button_cmd[5];
 	uint16_t occupied_width[3]; // occupied for each alignment (left, center and right)
 
 	uint16_t hgap; //horizontal gap
@@ -219,6 +219,7 @@ struct ya_bar {
 	xcb_window_t win;
 	uint8_t position; //top, bottom, left or right.
 
+	bool spacing;
 	PangoFontDescription *desc;
 
 	ya_block_t *curblk[3];
@@ -268,8 +269,8 @@ typedef struct yabar_gen_info yabar_info_t;
 
 
 extern yabar_info_t ya;
-extern char conf_file[CFILELEN]; 
-extern struct reserved_blk ya_reserved_blks[YA_INTERNAL_LEN]; 
+extern char conf_file[CFILELEN];
+extern struct reserved_blk ya_reserved_blks[YA_INTERNAL_LEN];
 
 void ya_init();
 void ya_execute();
@@ -287,7 +288,7 @@ void ya_exec_button(ya_block_t * blk, xcb_button_press_event_t *eb);
 ya_block_t * ya_get_blk_from_event( xcb_button_press_event_t *eb);
 
 void ya_get_cur_window_title(ya_block_t * blk);
-void ya_handle_button( xcb_button_press_event_t *eb); 
+void ya_handle_button( xcb_button_press_event_t *eb);
 void ya_handle_prop_notify(xcb_property_notify_event_t *ep);
 
 cairo_surface_t * ya_draw_graphics(ya_block_t *blk);
