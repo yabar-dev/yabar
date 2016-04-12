@@ -353,7 +353,10 @@ inline void ya_get_cur_window_title(ya_block_t * blk) {
 		wm_ck = xcb_ewmh_get_wm_name(ya.ewmh, ya.curwin);
 		wmvis_ck = xcb_ewmh_get_wm_visible_name(ya.ewmh, ya.curwin);
 		if (xcb_ewmh_get_wm_name_reply(ya.ewmh, wm_ck, &reply, NULL) == 1 || xcb_ewmh_get_wm_visible_name_reply(ya.ewmh, wmvis_ck, &reply, NULL) == 1) {
-			strncpy(blk->buf, reply.strings, reply.strings_len);
+			if(reply.strings_len < blk->bufsize)
+				strncpy(blk->buf, reply.strings, reply.strings_len);
+			else 
+				strncpy(blk->buf, reply.strings, blk->bufsize);
 			blk->buf[reply.strings_len]='\0';
 		}
 		xcb_ewmh_get_utf8_strings_reply_wipe(&reply);
