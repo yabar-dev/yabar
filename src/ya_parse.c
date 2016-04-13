@@ -403,6 +403,7 @@ static void ya_setup_block(config_setting_t * set) {
 	const char *retstr;
 
 	blk->pid = -1;
+	blk->bar = ya.curbar;
 	blk->name = strdup(config_setting_name(set));
 
 	retcnf = config_setting_lookup_string(set, "inherit", &retstr);
@@ -570,6 +571,9 @@ skip_type:
 		blk->bgcolor = retint | 0xff000000;
 		blk->attr |= BLKA_BGCOLOR;
 	}
+	//If not background rgb or argb not defined, inherit bar bgcolor
+	if(!(blk->attr & BLKA_BGCOLOR))
+		blk->bgcolor = blk->bar->bgcolor;
 	retcnf = config_setting_lookup_int(set, "foreground-color-argb", &retint);
 	if(retcnf == CONFIG_TRUE) {
 		blk->fgcolor = retint;

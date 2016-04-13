@@ -71,9 +71,7 @@ static void ya_setup_ewmh(ya_bar_t *bar) {
 }
 
 void ya_create_block(ya_block_t *blk) {
-	uint32_t gc_col;
 	ya_block_t *tmpblk;
-	blk->bar = ya.curbar;
 	if (blk->bar->curblk[blk->align]) {
 		blk->bar->curblk[blk->align]->next_blk = blk;	
 		blk->prev_blk = blk->bar->curblk[blk->align];
@@ -116,11 +114,7 @@ void ya_create_block(ya_block_t *blk) {
 			blk->pixmap,
 			blk->bar->win, blk->width, blk->bar->height);
 	blk->gc = xcb_generate_id(ya.c);
-	if (blk->attr & BLKA_BGCOLOR)
-		gc_col = blk->bgcolor;
-	else
-		gc_col = blk->bar->bgcolor;
-	xcb_create_gc(ya.c, blk->gc, blk->pixmap, XCB_GC_FOREGROUND, (const uint32_t[]){gc_col});
+	xcb_create_gc(ya.c, blk->gc, blk->pixmap, XCB_GC_FOREGROUND, (const uint32_t[]){blk->bgcolor});
 }
 
 void ya_create_bar(ya_bar_t * bar) {
