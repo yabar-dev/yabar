@@ -329,14 +329,6 @@ static void ya_setup_bar(config_setting_t * set) {
 		bar->button_cmd[4] = strdup(retstr);
 	}
 
-	retcnf = config_setting_lookup_bool(set, "spacing", &retint);
-	if(retcnf == CONFIG_TRUE) {
-		bar->spacing = retint;
-	}
-	else {
-		bar->spacing = false;
-	}
-
 	ya_create_bar(bar);
 	if(bar->attr & BARA_INHERIT_ALL) {
 		ya_block_t * dstblk, *srcblk;
@@ -374,6 +366,7 @@ inline static void ya_setup_ewmh_intern_blk(ya_block_t *blk) {
 #endif //YA_INTERNAL_EWMH
 
 inline static void ya_check_blk_internal(ya_block_t *blk, config_setting_t *set, const char *strexec) {
+	int retint;
 	const char *retstr;
 	for (int i=0; i < YA_INTERNAL_LEN; i++) {
 		if(strcmp(strexec, ya_reserved_blks[i].name)==0) {
@@ -393,6 +386,10 @@ inline static void ya_check_blk_internal(ya_block_t *blk, config_setting_t *set,
 				blk->internal->option[1] = strdup(retstr);
 			if(config_setting_lookup_string(set, "internal-option3", &retstr) == CONFIG_TRUE)
 				blk->internal->option[2] = strdup(retstr);
+			if(config_setting_lookup_bool(set, "internal-spacing", &retint) == CONFIG_TRUE)
+				blk->internal->spacing = retint;
+			else
+				blk->internal->spacing = false;
 		}
 	}
 	//check if the for-loop never found a matching internal block

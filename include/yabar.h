@@ -201,6 +201,7 @@ struct blk_intern {
 	char *suffix;
 	char *option[3];
 	uint8_t index;
+	bool spacing;
 };
 
 
@@ -219,7 +220,6 @@ struct ya_bar {
 	xcb_window_t win;
 	uint8_t position; //top, bottom, left or right.
 
-	bool spacing;
 	PangoFontDescription *desc;
 
 	ya_block_t *curblk[3];

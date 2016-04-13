@@ -109,7 +109,7 @@ void ya_int_thermal(ya_block_t *blk) {
 	else
 		oldbg = blk->bar->bgcolor;
 	oldfg = blk->fgcolor;
-	if(blk->bar->spacing)
+	if(blk->internal->spacing)
 		space = 3;
 	else
 		space = 0;
@@ -173,7 +173,7 @@ void ya_int_brightness(ya_block_t *blk) {
 	size_t prflen=0,suflen=0;
 	ya_setup_prefix_suffix(blk, &prflen, &suflen, &startstr);
 	FILE *tfile;
-	if(blk->bar->spacing)
+	if(blk->internal->spacing)
 		space = 3;
 	else
 		space = 0;
@@ -212,7 +212,7 @@ void ya_int_bandwidth(ya_block_t * blk) {
 	size_t prflen=0,suflen=0;
 	char dnstr[20], upstr[20];
 	ya_setup_prefix_suffix(blk, &prflen, &suflen, &startstr);
-	if(blk->bar->spacing)
+	if(blk->internal->spacing)
 		space = 4;
 	else
 		space = 0;
@@ -285,8 +285,8 @@ void ya_int_memory(ya_block_t *blk) {
 	char *startstr = blk->buf;
 	size_t prflen=0,suflen=0;
 	ya_setup_prefix_suffix(blk, &prflen, &suflen, &startstr);
-	if(blk->bar->spacing)
-		space = 4;
+	if(blk->internal->spacing)
+		space = 6;
 	else
 		space = 0;
 	tfile = fopen("/proc/meminfo", "r");
@@ -330,8 +330,8 @@ void ya_int_cpu(ya_block_t *blk) {
 	size_t prflen=0,suflen=0;
 	char cpustr[20];
 	ya_setup_prefix_suffix(blk, &prflen, &suflen, &startstr);
-	if(blk->bar->spacing)
-		space = 3;
+	if(blk->internal->spacing)
+		space = 5;
 	else
 		space = 0;
 	tfile = fopen(fpath, "r");
@@ -377,7 +377,7 @@ void ya_int_diskio(ya_block_t *blk) {
 	size_t prflen=0,suflen=0;
 	char dnstr[20], upstr[20];
 	ya_setup_prefix_suffix(blk, &prflen, &suflen, &startstr);
-	if(blk->bar->spacing)
+	if(blk->internal->spacing)
 		space = 4;
 	else
 		space = 0;
