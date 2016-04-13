@@ -18,7 +18,7 @@ void ya_int_cpu(ya_block_t *blk);
 void ya_int_diskio(ya_block_t *blk);
 void ya_int_network(ya_block_t *blk);
 
-struct reserved_blk ya_reserved_blks[YA_INTERNAL_LEN] = { 
+struct reserved_blk ya_reserved_blks[YA_INTERNAL_LEN] = {
 	{"YABAR_DATE", ya_int_date},
 	{"YABAR_UPTIME", ya_int_uptime},
 	{"YABAR_THERMAL", ya_int_thermal},
@@ -32,7 +32,7 @@ struct reserved_blk ya_reserved_blks[YA_INTERNAL_LEN] = {
 	{"YABAR_TITLE", NULL},
 	{"YABAR_WORKSPACE", NULL}
 #endif
-}; 
+};
 
 //#define YA_INTERNAL
 
@@ -97,7 +97,7 @@ void ya_int_uptime(ya_block_t *blk) {
 
 void ya_int_thermal(ya_block_t *blk) {
 	FILE *tfile;
-	int temp, wrntemp, crttemp;
+	int temp, wrntemp, crttemp, space;
 	uint32_t oldbg, oldfg;
 	uint32_t wrnbg, wrnfg; //warning colors
 	uint32_t crtbg, crtfg; //critical colors
@@ -109,6 +109,10 @@ void ya_int_thermal(ya_block_t *blk) {
 	else
 		oldbg = blk->bar->bgcolor;
 	oldfg = blk->fgcolor;
+	if(blk->internal->spacing)
+		space = 3;
+	else
+		space = 0;
 	char fpath[128];
 	snprintf(fpath, 128, "/sys/class/thermal/%s/temp", blk->internal->option[0]);
 
@@ -153,7 +157,7 @@ void ya_int_thermal(ya_block_t *blk) {
 			blk->fgcolor = oldfg;
 		}
 
-		sprintf(startstr, "%d", temp);
+		sprintf(startstr, "%*d", space, temp);
 		if(suflen)
 			strcat(blk->buf, blk->internal->suffix);
 		ya_draw_pango_text(blk);
@@ -164,11 +168,15 @@ void ya_int_thermal(ya_block_t *blk) {
 }
 
 void ya_int_brightness(ya_block_t *blk) {
-	int bright;
+	int bright, space;
 	char *startstr = blk->buf;
 	size_t prflen=0,suflen=0;
 	ya_setup_prefix_suffix(blk, &prflen, &suflen, &startstr);
 	FILE *tfile;
+	if(blk->internal->spacing)
+		space = 3;
+	else
+		space = 0;
 	char fpath[128];
 	snprintf(fpath, 128, "/sys/class/backlight/%s/brightness", blk->internal->option[0]);
 	tfile = fopen(fpath, "r");
@@ -183,7 +191,7 @@ void ya_int_brightness(ya_block_t *blk) {
 		tfile = fopen(fpath, "r");
 		if(fscanf(tfile, "%d", &bright) != 1)
 			fprintf(stderr, "Error getting values from file (%s)\n", fpath);
-		sprintf(startstr, "%d", bright);
+		sprintf(startstr, "%*d", space, bright);
 		if(suflen)
 			strcat(blk->buf, blk->internal->suffix);
 		ya_draw_pango_text(blk);
@@ -193,8 +201,9 @@ void ya_int_brightness(ya_block_t *blk) {
 }
 
 void ya_int_bandwidth(ya_block_t * blk) {
+	int space;
 	unsigned long rx, tx, orx, otx;
-	unsigned int rxrate, txrate; 
+	unsigned int rxrate, txrate;
 	FILE *rxfile, *txfile;
 	char rxpath[128];
 	char txpath[128];
@@ -203,6 +212,10 @@ void ya_int_bandwidth(ya_block_t * blk) {
 	size_t prflen=0,suflen=0;
 	char dnstr[20], upstr[20];
 	ya_setup_prefix_suffix(blk, &prflen, &suflen, &startstr);
+	if(blk->internal->spacing)
+		space = 4;
+	else
+		space = 0;
 	snprintf(rxpath, 128, "/sys/class/net/%s/statistics/rx_bytes", blk->internal->option[0]);
 	snprintf(txpath, 128, "/sys/class/net/%s/statistics/tx_bytes", blk->internal->option[0]);
 	if(blk->internal->option[1]) {
@@ -251,7 +264,7 @@ void ya_int_bandwidth(ya_block_t * blk) {
 		orx = rx;
 		otx = tx;
 
-		sprintf(startstr, "%s%u%c %s%u%c", dnstr, rxrate, rxc, upstr, txrate, txc);
+		sprintf(startstr, "%s%*u%c %s%*u%c", dnstr, space, rxrate, rxc, upstr, space, txrate, txc);
 		if(suflen)
 			strcat(blk->buf, blk->internal->suffix);
 		ya_draw_pango_text(blk);
@@ -259,10 +272,11 @@ void ya_int_bandwidth(ya_block_t * blk) {
 		fclose(txfile);
 		sleep(blk->sleep);
 	}
-	
+
 }
 
 void ya_int_memory(ya_block_t *blk) {
+	int space;
 	unsigned long total, free, cached, buffered;
 	float used;
 	FILE *tfile;
@@ -271,6 +285,10 @@ void ya_int_memory(ya_block_t *blk) {
 	char *startstr = blk->buf;
 	size_t prflen=0,suflen=0;
 	ya_setup_prefix_suffix(blk, &prflen, &suflen, &startstr);
+	if(blk->internal->spacing)
+		space = 6;
+	else
+		space = 0;
 	tfile = fopen("/proc/meminfo", "r");
 	if (tfile == NULL) {
 		fprintf(stderr, "Error opening file %s\n", "/proc/meminfo");
@@ -293,7 +311,7 @@ void ya_int_memory(ya_block_t *blk) {
 			used = used/1024.0;
 			unit = 'G';
 		}
-		sprintf(startstr, "%.1f%c", used, unit);
+		sprintf(startstr, "%*.1f%c", space, used, unit);
 		if(suflen)
 			strcat(blk->buf, blk->internal->suffix);
 		ya_draw_pango_text(blk);
@@ -304,6 +322,7 @@ void ya_int_memory(ya_block_t *blk) {
 
 
 void ya_int_cpu(ya_block_t *blk) {
+	int space;
 	char fpath[] = "/proc/stat";
 	FILE *tfile;
 	long double old[4], cur[4], ya_avg=0.0;
@@ -311,6 +330,10 @@ void ya_int_cpu(ya_block_t *blk) {
 	size_t prflen=0,suflen=0;
 	char cpustr[20];
 	ya_setup_prefix_suffix(blk, &prflen, &suflen, &startstr);
+	if(blk->internal->spacing)
+		space = 5;
+	else
+		space = 0;
 	tfile = fopen(fpath, "r");
 	if (tfile == NULL) {
 		fprintf(stderr, "Error opening file (%s)\n", fpath);
@@ -332,7 +355,7 @@ void ya_int_cpu(ya_block_t *blk) {
 		for(int i=0; i<4;i++)
 			old[i]=cur[i];
 		ya_avg *= 100.0;
-		sprintf(startstr, "%.1Lf", ya_avg);
+		sprintf(startstr, "%*.1Lf", space, ya_avg);
 		if(suflen)
 			strcat(blk->buf, blk->internal->suffix);
 		ya_draw_pango_text(blk);
@@ -344,6 +367,7 @@ void ya_int_cpu(ya_block_t *blk) {
 
 
 void ya_int_diskio(ya_block_t *blk) {
+	int space;
 	unsigned long tdo[11], tdc[11];
 	unsigned long drd=0, dwr=0;
 	char crd, cwr;
@@ -353,6 +377,10 @@ void ya_int_diskio(ya_block_t *blk) {
 	size_t prflen=0,suflen=0;
 	char dnstr[20], upstr[20];
 	ya_setup_prefix_suffix(blk, &prflen, &suflen, &startstr);
+	if(blk->internal->spacing)
+		space = 4;
+	else
+		space = 0;
 	if(blk->internal->option[1]) {
 		sscanf(blk->internal->option[1], "%s %s", dnstr, upstr);
 	}
@@ -385,7 +413,7 @@ void ya_int_diskio(ya_block_t *blk) {
 			dwr /= 1024;
 			cwr = 'M';
 		}
-		sprintf(startstr, "%s%lu%c %s%lu%c", dnstr, drd, crd, upstr, dwr, cwr);
+		sprintf(startstr, "%s%*lu%c %s%*lu%c", dnstr, space, drd, crd, upstr, space, dwr, cwr);
 		for(int i=0; i<11;i++)
 			tdo[i] = tdc[i];
 		if(suflen)
@@ -421,8 +449,8 @@ void ya_int_network(ya_block_t *blk) {
 			continue;
 		family = ifa->ifa_addr->sa_family;
 		//printf("%s\n", ifa->ifa_name);
-		if (family == AF_INET || family == AF_INET6) { 
-			s = getnameinfo(ifa->ifa_addr, 
+		if (family == AF_INET || family == AF_INET6) {
+			s = getnameinfo(ifa->ifa_addr,
 					(family == AF_INET) ? sizeof(struct sockaddr_in) :
 					sizeof(struct sockaddr_in6), host, 1025,
 					NULL, 0, NI_NUMERICHOST);

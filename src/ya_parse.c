@@ -36,7 +36,7 @@ static ya_block_t * ya_get_blk_from_name (const char *name, ya_bar_t * curbar) {
 	ya_block_t *curblk;
 	for(int align =0; align < 3; align++){
 		if ((curblk = curbar->curblk[align])) {
-			for(; curblk->prev_blk; curblk = curblk->prev_blk);	
+			for(; curblk->prev_blk; curblk = curblk->prev_blk);
 			for(;curblk; curblk = curblk->next_blk) {
 				if(strcmp(curblk->name, name)==0)
 					return curblk;
@@ -329,7 +329,6 @@ static void ya_setup_bar(config_setting_t * set) {
 		bar->button_cmd[4] = strdup(retstr);
 	}
 
-
 	ya_create_bar(bar);
 	if(bar->attr & BARA_INHERIT_ALL) {
 		ya_block_t * dstblk, *srcblk;
@@ -367,6 +366,7 @@ inline static void ya_setup_ewmh_intern_blk(ya_block_t *blk) {
 #endif //YA_INTERNAL_EWMH
 
 inline static void ya_check_blk_internal(ya_block_t *blk, config_setting_t *set, const char *strexec) {
+	int retint;
 	const char *retstr;
 	for (int i=0; i < YA_INTERNAL_LEN; i++) {
 		if(strcmp(strexec, ya_reserved_blks[i].name)==0) {
@@ -386,6 +386,10 @@ inline static void ya_check_blk_internal(ya_block_t *blk, config_setting_t *set,
 				blk->internal->option[1] = strdup(retstr);
 			if(config_setting_lookup_string(set, "internal-option3", &retstr) == CONFIG_TRUE)
 				blk->internal->option[2] = strdup(retstr);
+			if(config_setting_lookup_bool(set, "internal-spacing", &retint) == CONFIG_TRUE)
+				blk->internal->spacing = retint;
+			else
+				blk->internal->spacing = false;
 		}
 	}
 	//check if the for-loop never found a matching internal block
@@ -425,7 +429,7 @@ static void ya_setup_block(config_setting_t * set) {
 		free(blk->name);
 		free(blk);
 		return;
-	
+
 	}
 	else {
 #ifdef YA_INTERNAL
@@ -433,7 +437,7 @@ static void ya_setup_block(config_setting_t * set) {
 		//Fast check: if first char is not Y, don't even call ya_check_blk_internal()
 		if(retstr[0] != 'Y')
 			blk->attr |= BLKA_EXTERNAL;
-		else 
+		else
 			ya_check_blk_internal(blk, set, retstr);
 #else
 		//just set it external
@@ -658,7 +662,7 @@ void ya_config_parse() {
 		xcb_disconnect(ya.c);
 		exit(EXIT_FAILURE);
 	}
-	
+
 	config_t ya_conf;
 	config_init(&ya_conf);
 	config_set_auto_convert(&ya_conf, CONFIG_TRUE);
@@ -711,7 +715,7 @@ void ya_config_parse() {
 			fprintf(stderr, "No `block-list` entry found for the bar(%s).\n", barstr);
 			continue;
 		}
-		
+
 		blknum = config_setting_length(blklist_set);
 		if(blknum < 1) {
 			fprintf(stderr, "No blocks in `block-list` entry for the bar(%s).\n", barstr);
