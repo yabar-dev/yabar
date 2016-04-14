@@ -41,7 +41,9 @@ inline static void ya_exec_intern_ewmh_blk(ya_block_t *blk) {
 	switch(blk->internal->index) {
 		case YA_INT_TITLE: {
 			ya_get_cur_window_title(blk);
+			//pthread_mutex_lock(&blk->mutex);
 			ya_draw_pango_text(blk);
+			//pthread_mutex_unlock(&blk->mutex);
 			break;
 		}
 		case YA_INT_WORKSPACE: {
@@ -53,7 +55,9 @@ inline static void ya_exec_intern_ewmh_blk(ya_block_t *blk) {
 			else {
 				ya_copy_buf_from_index(blk, current_desktop);
 			}
+			//pthread_mutex_lock(&blk->mutex);
 			ya_draw_pango_text(blk);
+			//pthread_mutex_unlock(&blk->mutex);
 			break;
 		}
 	}
@@ -84,7 +88,9 @@ static void ya_exec_redir_once(ya_block_t *blk) {
 #ifdef YA_DYN_COL
 		ya_buf_color_parse(blk);
 #endif
+		//pthread_mutex_lock(&blk->mutex);
 		ya_draw_pango_text(blk);
+		//pthread_mutex_unlock(&blk->mutex);
 	}
 }
 
@@ -117,7 +123,9 @@ static void ya_exec_redir_period(ya_block_t *blk) {
 #ifdef YA_DYN_COL
 			ya_buf_color_parse(blk);
 #endif
+			//pthread_mutex_lock(&blk->mutex);
 			ya_draw_pango_text(blk);
+			//pthread_mutex_unlock(&blk->mutex);
 		}
 		sleep(blk->sleep);
 	}
@@ -155,7 +163,9 @@ static void ya_exec_redir_persist(ya_block_t *blk) {
 #ifdef YA_DYN_COL
 			ya_buf_color_parse(blk);
 #endif
+			//pthread_mutex_lock(&blk->mutex);
 			ya_draw_pango_text(blk);
+			//pthread_mutex_unlock(&blk->mutex);
 		}
 	}
 }
@@ -415,6 +425,15 @@ void ya_handle_prop_notify(xcb_property_notify_event_t *ep) {
 		if (ya.curwin != ya.lstwin) {
 			xcb_change_window_attributes(ya.c, ya.lstwin, XCB_CW_EVENT_MASK, &no_ev_val);
 			xcb_change_window_attributes(ya.c, ya.curwin, XCB_CW_EVENT_MASK, &pr_ev_val);
+#ifdef YA_NOWIN_COL
+			if(((ya.curwin == XCB_NONE) && (ya.lstwin != XCB_NONE)) || ((ya.curwin != XCB_NONE) && (ya.lstwin == XCB_NONE))) {
+				ya_bar_t *bar = ya.curbar;
+				for(;bar; bar= bar->next_bar) {
+					if((bar->attr & BARA_DYN_COL))
+						ya_redraw_bar(bar);
+				}
+			}
+#endif //YA_NOWIN_COL
 		}
 		else if(ya.curwin==XCB_NONE && ya.lstwin==XCB_NONE) {
 			//Don't exit, used when switch between two empty workspaces

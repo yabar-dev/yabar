@@ -153,6 +153,10 @@ void ya_create_bar(ya_bar_t * bar) {
 			ya.visualtype->visual_id,
 			w_mask,
 			w_val);
+#ifdef YA_NOWIN_COL
+	bar->gc = xcb_generate_id(ya.c);
+	xcb_create_gc(ya.c, bar->gc, bar->win, XCB_GC_FOREGROUND, (const uint32_t[]){bar->bgcolor});
+#endif //YA_NOWIN_COL
 	ya_setup_ewmh(bar);
 }
 
@@ -170,6 +174,7 @@ xcb_visualtype_t * ya_get_visualtype() {
 }
 
 void ya_draw_pango_text(struct ya_block *blk) {
+	//ya_redraw_bar(blk->bar);
 	xcb_poly_fill_rectangle(ya.c, blk->pixmap, blk->gc, 1, (const xcb_rectangle_t[]) { {0,0,blk->width, blk->bar->height} });
 	cairo_surface_t *surface = cairo_xcb_surface_create(ya.c, blk->pixmap, ya.visualtype, blk->width, blk->bar->height);
 	cairo_t *cr = cairo_create(surface);
@@ -292,8 +297,11 @@ void ya_buf_color_parse(ya_block_t *blk) {
 	int offset = 0;
 	if(cur[0] != '!' && cur[1] != 'Y') {
 		blk->strbuf = cur;
+		//pthread_mutex_lock(&blk->mutex);
+		blk->attr &= ~BLKA_DIRTY_COL;
 		blk->bgcolor = blk->bgcolor_old;
 		xcb_change_gc(ya.c, blk->gc, XCB_GC_FOREGROUND, (const uint32_t[]){blk->bgcolor});
+		//pthread_mutex_unlock(&blk->mutex);
 		blk->fgcolor = blk->fgcolor_old;
 		blk->ulcolor = blk->ulcolor_old;
 		blk->olcolor = blk->olcolor_old;
@@ -307,6 +315,7 @@ void ya_buf_color_parse(ya_block_t *blk) {
 			offset+=2;
 			blk->bgcolor = strtoul(cur, &end, 16);
 			xcb_change_gc(ya.c, blk->gc, XCB_GC_FOREGROUND, (const uint32_t[]){blk->bgcolor});
+			blk->attr |= BLKA_DIRTY_COL;
 			offset+=(end-cur);
 		}
 		if((cur[0]=='F' && cur[1]=='G') || (cur[0]=='f' && cur[1]=='g')) {
@@ -426,3 +435,43 @@ cairo_surface_t * ya_draw_graphics(ya_block_t *blk) {
 	return ret;
 }
 #endif //YA_ICON
+
+#ifdef YA_NOWIN_COL
+void ya_redraw_bar(ya_bar_t *bar) {
+	uint32_t col = 0x0;
+	ya_block_t *blk;
+	if(ya.curwin == XCB_NONE)
+		col = bar->bgcolor_none;
+	else
+		col = bar->bgcolor;
+	xcb_change_gc(ya.c, bar->gc, XCB_GC_FOREGROUND, (const uint32_t[]){col});
+	xcb_poly_fill_rectangle(ya.c, bar->win, bar->gc, 1, (const xcb_rectangle_t[]) { {0,0,bar->width, bar->height} });
+	xcb_flush(ya.c);
+	for(int i=0; i<3; i++) {
+		if((blk = bar->curblk[i])) {
+			for(;blk;blk = blk->next_blk) {
+				//pthread_mutex_lock(&blk->mutex);
+#ifdef YA_DYN_COL
+				if(!(blk->attr & BLKA_BGCOLOR)) {
+					if((!(blk->attr & BLKA_DIRTY_COL))) {
+						blk->bgcolor = col;
+						blk->bgcolor_old = col;
+						xcb_change_gc(ya.c, blk->gc, XCB_GC_FOREGROUND, (const uint32_t[]){col});
+					}
+					else {
+						blk->bgcolor_old = col;
+					}
+				}
+#else 
+				if(!(blk->attr & BLKA_BGCOLOR)) {
+					blk->bgcolor = col;
+					xcb_change_gc(ya.c, blk->gc, XCB_GC_FOREGROUND, (const uint32_t[]){col});
+				}
+#endif //YA_DYN_COL
+				ya_draw_pango_text(blk);
+				//pthread_mutex_unlock(&blk->mutex);
+			}
+		}
+	}
+}
+#endif //YA_NOWIN_COL

@@ -295,6 +295,13 @@ static void ya_setup_bar(config_setting_t * set) {
 	if(retcnf == CONFIG_TRUE) {
 		bar->bgcolor = retint | 0xff000000;
 	}
+#ifdef YA_NOWIN_COL
+	retcnf = config_setting_lookup_int(set, "background-color-nowindow-argb", &retint);
+	if(retcnf == CONFIG_TRUE) {
+		bar->bgcolor_none = retint;
+		bar->attr |= BARA_DYN_COL;
+	}
+#endif //YA_NOWIN_COL
 	retcnf = config_setting_lookup_int(set, "slack-size", &retint);
 	if(retcnf == CONFIG_TRUE) {
 		bar->slack = retint;
@@ -329,6 +336,7 @@ static void ya_setup_bar(config_setting_t * set) {
 		bar->button_cmd[4] = strdup(retstr);
 	}
 
+	//pthread_mutex_init(&bar->mutex, NULL);
 	ya_create_bar(bar);
 	if(bar->attr & BARA_INHERIT_ALL) {
 		ya_block_t * dstblk, *srcblk;
@@ -648,6 +656,7 @@ skip_type:
 	blk->strbuf = blk->buf;
 #endif
 
+	//pthread_mutex_init(&blk->mutex, NULL);
 	ya_create_block(blk);
 }
 

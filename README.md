@@ -105,6 +105,10 @@ Each bar can have its font, position (currently only top and bottom), background
 		border-size: 2;
 		border-color-rgb: 0xffffff;
 
+* No-window color: This is optional and beautiful feature is intended to change the color of the bar when there is no active window in the current desktop/workspace. Just add the ARGB color and notice how the background color of the bar switches to this color when all windows in the current desktop are closed or when you switch to an empty desktop. Example:
+
+		background-color-nowindow-argb: 0xff430343;
+
 
 * Inheritance: (thanks to a proposed idea by @Lindenk) As the config file gets larger because you want to add several bars, you may find yourself adding many identical option values for every added bar. This optional entry is added in order to inherit the options from a precedent bar into your next bar. You can also override the inherited options with new values.
 

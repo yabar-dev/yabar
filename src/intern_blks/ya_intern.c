@@ -98,17 +98,11 @@ void ya_int_uptime(ya_block_t *blk) {
 void ya_int_thermal(ya_block_t *blk) {
 	FILE *tfile;
 	int temp, wrntemp, crttemp, space;
-	uint32_t oldbg, oldfg;
 	uint32_t wrnbg, wrnfg; //warning colors
 	uint32_t crtbg, crtfg; //critical colors
 	char *startstr = blk->buf;
 	size_t prflen=0,suflen=0;
 	ya_setup_prefix_suffix(blk, &prflen, &suflen, &startstr);
-	if(blk->attr & BLKA_BGCOLOR)
-		oldbg = blk->bgcolor;
-	else
-		oldbg = blk->bar->bgcolor;
-	oldfg = blk->fgcolor;
 	if(blk->internal->spacing)
 		space = 3;
 	else
@@ -144,18 +138,26 @@ void ya_int_thermal(ya_block_t *blk) {
 		}
 		temp/=1000;
 
+#ifdef YA_DYN_COL
 		if(temp > crttemp) {
+			blk->bgcolor = crtbg;
 			xcb_change_gc(ya.c, blk->gc, XCB_GC_FOREGROUND, (const uint32_t[]){crtbg});
+			blk->attr |= BLKA_DIRTY_COL;
 			blk->fgcolor = crtfg;
 		}
 		else if (temp > wrntemp) {
+			blk->bgcolor = wrnbg;
 			xcb_change_gc(ya.c, blk->gc, XCB_GC_FOREGROUND, (const uint32_t[]){wrnbg});
+			blk->attr |= BLKA_DIRTY_COL;
 			blk->fgcolor = wrnfg;
 		}
 		else {
-			xcb_change_gc(ya.c, blk->gc, XCB_GC_FOREGROUND, (const uint32_t[]){oldbg});
-			blk->fgcolor = oldfg;
+			blk->bgcolor = blk->bgcolor_old;
+			xcb_change_gc(ya.c, blk->gc, XCB_GC_FOREGROUND, (const uint32_t[]){blk->bgcolor});
+			blk->attr &= ~BLKA_DIRTY_COL;
+			blk->fgcolor = blk->fgcolor_old;
 		}
+#endif //YA_DYN_COL
 
 		sprintf(startstr, "%*d", space, temp);
 		if(suflen)

@@ -89,13 +89,15 @@ enum {
 	BLKA_OVERLINE 		= 1<<13,
 	BLKA_INHERIT		= 1<<14,
 	BLKA_INTERN_X_EV	= 1<<15,
-	BLKA_ICON			= 1<<16
+	BLKA_ICON			= 1<<16,
+	BLKA_DIRTY_COL		= 1<<17
 };
 
 
 enum {
 	BARA_INHERIT = 1<<0,
-	BARA_INHERIT_ALL = 1<<1
+	BARA_INHERIT_ALL = 1<<1,
+	BARA_DYN_COL = 1<<2
 };
 
 #ifdef YA_INTERNAL_EWMH
@@ -193,6 +195,7 @@ struct ya_block {
 	double ic_scale_w;
 	double ic_scale_h;
 #endif //YA_ICON
+	//pthread_mutex_t mutex;
 };
 
 
@@ -239,6 +242,12 @@ struct ya_bar {
 	uint8_t attr; //bar attributes
 
 	ya_monitor_t *mon;
+	
+	//pthread_mutex_t mutex;
+#ifdef YA_NOWIN_COL
+	xcb_gcontext_t gc;
+	uint32_t bgcolor_none;
+#endif //YA_NOWIN_COL
 };
 
 
@@ -292,4 +301,5 @@ void ya_handle_button( xcb_button_press_event_t *eb);
 void ya_handle_prop_notify(xcb_property_notify_event_t *ep);
 
 cairo_surface_t * ya_draw_graphics(ya_block_t *blk);
+void ya_redraw_bar(ya_bar_t *bar);
 #endif /*YABAR_H*/
