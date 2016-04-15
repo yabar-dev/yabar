@@ -129,6 +129,7 @@ typedef struct ya_monitor ya_monitor_t;
 typedef struct ya_bar ya_bar_t;
 typedef struct ya_block ya_block_t;
 typedef struct blk_intern blk_intern_t;
+typedef struct blk_img blk_img_t;
 typedef struct intern_ewmh_blk ya_ewmh_blk;
 typedef void(*funcp)(ya_block_t *);
 
@@ -190,11 +191,7 @@ struct ya_block {
 #endif
 
 #ifdef YA_ICON
-	char *icon_path;
-	uint16_t ic_x;
-	uint16_t ic_y;
-	double ic_scale_w;
-	double ic_scale_h;
+	blk_img_t *img;
 #endif //YA_ICON
 	//pthread_mutex_t mutex;
 };
@@ -206,6 +203,14 @@ struct blk_intern {
 	char *option[3];
 	uint8_t index;
 	bool spacing;
+};
+
+struct blk_img {
+	char path[CFILELEN];
+	uint16_t x;
+	uint16_t y;
+	double scale_w;
+	double scale_h;
 };
 
 

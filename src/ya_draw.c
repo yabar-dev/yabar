@@ -182,13 +182,13 @@ void ya_draw_pango_text(struct ya_block *blk) {
 	if((blk->attr & BLKA_ICON)) {
 		cairo_surface_t *iconsrf = ya_draw_graphics(blk);
 		if (iconsrf) {
-			cairo_scale(cr, blk->ic_scale_w, blk->ic_scale_h);
+			cairo_scale(cr, blk->img->scale_w, blk->img->scale_h);
 			cairo_set_source_surface(cr, iconsrf,
-					(double)(blk->ic_x)/(blk->ic_scale_w),
-					(double)(blk->ic_y)/(blk->ic_scale_h));
+					(double)(blk->img->x)/(blk->img->scale_w),
+					(double)(blk->img->y)/(blk->img->scale_h));
 			cairo_paint(cr);
 			cairo_surface_destroy(iconsrf);
-			cairo_scale(cr, 1.0/(blk->ic_scale_w), 1.0/(blk->ic_scale_h));
+			cairo_scale(cr, 1.0/(blk->img->scale_w), 1.0/(blk->img->scale_h));
 		}
 	}
 #endif //YA_ICON
@@ -425,7 +425,7 @@ static cairo_surface_t * ya_draw_surface_from_pixbuf(GdkPixbuf *buf) {
 cairo_surface_t * ya_draw_graphics(ya_block_t *blk) {
 	GError *gerr =NULL;
 	cairo_surface_t *ret = NULL;
-	GdkPixbuf *gbuf = gdk_pixbuf_new_from_file(blk->icon_path, &gerr);
+	GdkPixbuf *gbuf = gdk_pixbuf_new_from_file(blk->img->path, &gerr);
 	if(gbuf == NULL) {
 		fprintf(stderr, "Cannot allocate pixbuf for block (%s.%s)\n. %s\n", blk->bar->name, blk->name, gerr->message);
 		return NULL;

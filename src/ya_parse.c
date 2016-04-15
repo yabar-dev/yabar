@@ -79,13 +79,21 @@ static void ya_copy_blk_members(ya_block_t *dstb, ya_block_t *srcb) {
 	dstb->ulcolor = srcb->ulcolor;
 	dstb->olcolor = srcb->olcolor;
 	dstb->bufsize = srcb->bufsize;
-	if(srcb->attr & BLKA_INTERNAL) {
+	if((srcb->attr & BLKA_INTERNAL)) {
 		dstb->internal = calloc(1, sizeof(blk_intern_t));
 		dstb->internal->prefix = srcb->internal->prefix;
 		dstb->internal->suffix = srcb->internal->suffix;
 		for(int i=0; i < 3; i++)
 			dstb->internal->option[i] = srcb->internal->option[i];
 		dstb->internal->index = srcb->internal->index;
+	}
+	if((srcb->attr & BLKA_ICON)) {
+		dstb->img = calloc(1, sizeof(blk_img_t));
+		strncpy(dstb->img->path, srcb->img->path, CFILELEN);
+		dstb->img->x = srcb->img->x;
+		dstb->img->y = srcb->img->y;
+		dstb->img->scale_w = srcb->img->scale_w;
+		dstb->img->scale_h = srcb->img->scale_h;
 	}
 }
 
@@ -514,26 +522,27 @@ skip_type:
 #ifdef YA_ICON
 	retcnf = config_setting_lookup_string(set, "image", &retstr);
 	if(retcnf == CONFIG_TRUE) {
-		blk->icon_path = strdup(retstr);
+		blk->img = calloc(1, sizeof(blk_img_t));
+		strncpy(blk->img->path, retstr, CFILELEN);
 		blk->attr |= BLKA_ICON;
 		double retflt;
 		if(config_setting_lookup_float(set, "image-scale-width", &retflt)==CONFIG_TRUE) {
-			blk->ic_scale_w = retflt;
+			blk->img->scale_w = retflt;
 		}
 		else {
-			blk->ic_scale_w = 1.0;
+			blk->img->scale_w = 1.0;
 		}
 		if(config_setting_lookup_float(set, "image-scale-height", &retflt)==CONFIG_TRUE) {
-			blk->ic_scale_h = retflt;
+			blk->img->scale_h = retflt;
 		}
 		else {
-			blk->ic_scale_h = 1.0;
+			blk->img->scale_h = 1.0;
 		}
 		if(config_setting_lookup_int(set, "image-shift-x", &retint)==CONFIG_TRUE) {
-			blk->ic_x = retint;
+			blk->img->x = retint;
 		}
 		if(config_setting_lookup_int(set, "image-shift-y", &retint)==CONFIG_TRUE) {
-			blk->ic_y = retint;
+			blk->img->y = retint;
 		}
 	}
 #endif //YA_ICON
