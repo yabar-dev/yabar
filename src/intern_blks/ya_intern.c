@@ -17,6 +17,7 @@ void ya_int_bandwidth(ya_block_t *blk);
 void ya_int_cpu(ya_block_t *blk);
 void ya_int_diskio(ya_block_t *blk);
 void ya_int_network(ya_block_t *blk);
+void ya_int_battery(ya_block_t *blk);
 
 struct reserved_blk ya_reserved_blks[YA_INTERNAL_LEN] = {
 	{"YABAR_DATE", ya_int_date},
@@ -28,6 +29,7 @@ struct reserved_blk ya_reserved_blks[YA_INTERNAL_LEN] = {
 	{"YABAR_CPU", ya_int_cpu},
 	{"YABAR_DISKIO", ya_int_diskio},
 	{"YABAR_NETWORK", ya_int_network},
+	{"YABAR_BATTERY", ya_int_battery},
 #ifdef YA_INTERNAL_EWMH
 	{"YABAR_TITLE", NULL},
 	{"YABAR_WORKSPACE", NULL}
@@ -426,6 +428,62 @@ void ya_int_diskio(ya_block_t *blk) {
 		sleep(blk->sleep);
 	}
 
+}
+
+void ya_int_battery(ya_block_t *blk) {
+	int bat, space;
+	char stat;
+	char bat_25str[20], bat_50str[20], bat_75str[20], bat_100str[20], bat_chargestr[20];
+	char *startstr = blk->buf;
+	size_t prflen=0,suflen=0;
+	ya_setup_prefix_suffix(blk, &prflen, &suflen, &startstr);
+	FILE *cfile, *sfile;
+	if(blk->internal->spacing)
+		space = 3;
+	else
+		space = 0;
+	char cpath[128], spath[128];
+	snprintf(cpath, 128, "/sys/class/power_supply/%s/capacity", blk->internal->option[0]);
+	snprintf(spath, 128, "/sys/class/power_supply/%s/status", blk->internal->option[0]);
+	if(blk->internal->option[1]) {
+		sscanf(blk->internal->option[1], "%s %s %s %s %s", bat_25str, bat_50str, bat_75str, bat_100str, bat_chargestr);
+	}
+	cfile = fopen(cpath, "r");
+	sfile = fopen(spath, "r");
+	if (cfile == NULL || sfile == NULL) {
+		fprintf(stderr, "Error opening file %s or %s\n", cpath, spath);
+		strncpy(blk->buf, "BLOCK ERROR!", strlen("BLOCK ERROR!"));
+		ya_draw_pango_text(blk);
+		pthread_detach(blk->thread);
+		pthread_exit(NULL);
+	}
+	fclose(cfile);
+	fclose(sfile);
+	while(1) {
+		cfile = fopen(cpath, "r");
+		sfile = fopen(spath, "r");
+		if(fscanf(cfile, "%d", &bat) != 1)
+			fprintf(stderr, "Error getting values from file (%s)\n", cpath);
+		if(fscanf(sfile, "%c", &stat) != 1)
+			fprintf(stderr, "Error getting values from file (%s)\n", spath);
+		if(bat <= 25)
+			strcpy(startstr, bat_25str);
+		else if(bat <= 50)
+			strcpy(startstr, bat_50str);
+		else if(bat <= 75)
+			strcpy(startstr, bat_75str);
+		else
+			strcpy(startstr, bat_100str);
+		if(stat == 'C')
+			strcat(strcat(startstr, " "), bat_chargestr);
+		sprintf(startstr+strlen(startstr), "%*d", space, bat);
+		if(suflen)
+			strcat(blk->buf, blk->internal->suffix);
+		ya_draw_pango_text(blk);
+		fclose(cfile);
+		fclose(sfile);
+		sleep(blk->sleep);
+	}
 }
 
 #define _GNU_SOURCE

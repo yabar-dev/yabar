@@ -101,9 +101,9 @@ enum {
 };
 
 #ifdef YA_INTERNAL_EWMH
-#define YA_INTERNAL_LEN 11
+#define YA_INTERNAL_LEN 12
 #else
-#define YA_INTERNAL_LEN 9
+#define YA_INTERNAL_LEN 10
 #endif
 enum {
 	YA_INT_DATE = 0,
@@ -115,6 +115,7 @@ enum {
 	YA_INT_CPU,
 	YA_INT_DISKIO,
 	YA_INT_NETWORK,
+	YA_INT_BATTERY,
 	YA_INT_TITLE,
 	YA_INT_WORKSPACE
 };
