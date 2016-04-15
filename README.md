@@ -221,6 +221,7 @@ Internal blocks have 5 additional block-specific options:
 		internal-option1 # block-specific  
 		internal-option2 # block-specific
 		internal-option3 # block-specific
+		internal-spacing # takes a true or false value, used to add space pads to prevent uncomfortable numerical values from moving (only useful for monospace fonts!)
 
 Yabar has a growing set of useful blocks. You can try out the sampe config located in `examples/internal1.config`. The current blocks are:
 
@@ -276,6 +277,7 @@ Yabar has a growing set of useful blocks. You can try out the sampe config locat
 		interval: 2;
 		internal-prefix: " ";
 		internal-suffix: "%";
+		internal-spacing: true;
 
 * Disk IO activity: It checks out the file `/sys/class/block/NAME/stat` and then computes the read and write rates. Example:
 		
@@ -283,6 +285,14 @@ Yabar has a growing set of useful blocks. You can try out the sampe config locat
 		internal-option1: "sda"; #i.e. Replace NAME with your corresponding name
 		internal-option2: " "; #Two Strings (usually 2 font icons) to be injected before down/up values
 		interval: 1;
+
+* Battery: (Added thanks to @NBonaparte!) It checks out the files `/sys/class/power_supply/NAME/capacity` and `/sys/class/power_supply/NAME/status` and extracts the capacity value. Example:
+
+		exec: "YABAR_BATTERY";
+		internal-option1: "BAT0"; #i.e. Replace NAME with your corresponding name
+		internal-option2: "        ";
+		internal-suffix: "%";
+		internal-spacing: true;
 
 
 ## License
