@@ -231,6 +231,11 @@ void ya_int_bandwidth(ya_block_t * blk) {
 		fprintf(stderr, "Error opening file %s or %s\n", rxpath, txpath);
 		strncpy(blk->buf, "BLOCK ERROR!", strlen("BLOCK ERROR!"));
 		ya_draw_pango_text(blk);
+		//Close if one of the files is opened
+		if(rxfile)
+			fclose(rxfile);
+		if(txfile)
+			fclose(txfile);
 		pthread_detach(blk->thread);
 		pthread_exit(NULL);
 	}
@@ -454,6 +459,11 @@ void ya_int_battery(ya_block_t *blk) {
 		fprintf(stderr, "Error opening file %s or %s\n", cpath, spath);
 		strncpy(blk->buf, "BLOCK ERROR!", strlen("BLOCK ERROR!"));
 		ya_draw_pango_text(blk);
+		//Close if one of the files is opened
+		if(cfile)
+			fclose(cfile);
+		if(sfile)
+			fclose(sfile);
 		pthread_detach(blk->thread);
 		pthread_exit(NULL);
 	}
