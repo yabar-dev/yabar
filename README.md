@@ -190,6 +190,10 @@ Each block can have its command/script, background, foreground (i.e. font), unde
 		image-scale-width: 0.4; #float value
 		image-scale-height: 0.4; #float value
 
+* Variable width: Use this optional feature in order to fit the block width into the current text width and subsequently save empty space inside the bar. Example:
+
+		variable-size: true;
+
 ### Dynamic colors for blocks
 
 You can change block colors(background, foreground, underline and overline) within runtime. Along with pango markup format, you can fully control how a block looks throughout yabar's session. 

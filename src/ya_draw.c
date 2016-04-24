@@ -109,10 +109,15 @@ void ya_create_block(ya_block_t *blk) {
 	}
 	blk->bar->curblk[blk->align] = blk;
 	blk->pixmap = xcb_generate_id(ya.c);
+	int blk_width = 0;
+	if ((blk->attr & BLKA_VAR_WIDTH))
+		blk_width = blk->bar->mon->pos.width;
+	else
+		blk_width = blk->width;
 	xcb_create_pixmap(ya.c,
 			ya.depth,
 			blk->pixmap,
-			blk->bar->win, blk->width, blk->bar->height);
+			blk->bar->win, blk_width, blk->bar->height);
 	blk->gc = xcb_generate_id(ya.c);
 	xcb_create_gc(ya.c, blk->gc, blk->pixmap, XCB_GC_FOREGROUND, (const uint32_t[]){blk->bgcolor});
 }
@@ -215,15 +220,29 @@ void ya_draw_pango_text(struct ya_block *blk) {
 #endif
 	pango_layout_set_alignment(layout, blk->justify);
 	cairo_set_operator(cr, CAIRO_OPERATOR_SOURCE);
+	pango_layout_set_auto_dir(layout, false);
+
+	pango_layout_set_height(layout, blk->bar->height);
+#ifdef YA_VAR_WIDTH
+	int ht;
+	pango_layout_get_pixel_size(layout, &blk->curwidth, &ht);
+	if(SHOULD_REDRAW(blk)) {
+		xcb_flush(ya.c);
+		g_object_unref(layout);
+		g_object_unref(context);
+		cairo_destroy(cr);
+		cairo_surface_destroy(surface);
+		ya_resetup_bar(blk);
+		return;
+	}
+#else
+	int wd, ht;
+	pango_layout_get_pixel_size(layout, &wd, &ht);
+#endif 
+
 	pango_layout_set_width(layout, blk->width * PANGO_SCALE);
 	pango_layout_set_wrap(layout, PANGO_WRAP_WORD);
 	pango_layout_set_ellipsize(layout, PANGO_ELLIPSIZE_END);
-	pango_layout_set_auto_dir(layout, false);
-
-	int wd, ht;
-	pango_layout_set_height(layout, blk->bar->height);
-	pango_layout_get_pixel_size(layout, &wd, &ht);
-
 	int offset = (blk->bar->height - ht)/2;
 	cairo_move_to(cr, 0, offset);
 	pango_cairo_show_layout(cr, layout);
@@ -448,7 +467,6 @@ void ya_redraw_bar(ya_bar_t *bar) {
 	for(int i=0; i<3; i++) {
 		if((blk = bar->curblk[i])) {
 			for(;blk;blk = blk->next_blk) {
-				//pthread_mutex_lock(&blk->mutex);
 #ifdef YA_DYN_COL
 				if(!(blk->attr & BLKA_BGCOLOR)) {
 					if((!(blk->attr & BLKA_DIRTY_COL))) {
@@ -467,9 +485,95 @@ void ya_redraw_bar(ya_bar_t *bar) {
 				}
 #endif //YA_DYN_COL
 				ya_draw_pango_text(blk);
-				//pthread_mutex_unlock(&blk->mutex);
 			}
 		}
 	}
 }
 #endif //YA_NOWIN_COL
+
+
+#ifdef YA_VAR_WIDTH
+/*
+ *Calculate the max allowed width for the variable-sized block that does not minimize
+ *area from the neighboring alignment.
+ */
+void ya_set_width_resetup(ya_block_t *blk) {
+	int width_init = blk->curwidth;
+	int scrw = blk->bar->mon->pos.width;
+	int maxw = scrw;
+	int othw = 0;
+	switch(blk->align) {
+		case A_LEFT:
+			for(ya_block_t *cblk = blk->next_blk; cblk; cblk = cblk->next_blk) {
+				othw +=cblk->width + cblk->bar->slack;
+			}
+			if(blk->bar->curblk[1]) {
+				maxw = (scrw - blk->bar->occupied_width[1])/2 -othw;
+				if (blk->curwidth > maxw)
+					blk->curwidth = maxw;
+			}
+			else if (blk->bar->curblk[2]) {
+				maxw = scrw - blk->bar->occupied_width[2];
+			}
+			break;
+		case A_CENTER:
+			for(ya_block_t *cblk = blk->bar->curblk[1]; cblk; cblk = cblk->next_blk) {
+				if(cblk != blk)
+					othw +=cblk->width + cblk->bar->slack;
+			}
+			if(blk->bar->curblk[0] || blk->bar->curblk[2]) {
+				int maxsw = GET_MAX(blk->bar->occupied_width[0], blk->bar->occupied_width[2]);
+				maxw = scrw -2*maxsw -othw;
+			}
+			break;
+		case A_RIGHT:
+			for(ya_block_t *cblk = blk->prev_blk; cblk; cblk = cblk->prev_blk) {
+				othw +=cblk->width + cblk->bar->slack;
+			}
+			if(blk->bar->curblk[1]) {
+				maxw = (scrw - blk->bar->occupied_width[1])/2 - othw;
+				if (blk->curwidth > maxw)
+					blk->curwidth = maxw;
+			}
+			else if (blk->bar->curblk[0]) {
+				maxw = scrw - blk->bar->occupied_width[0] - othw;
+			}
+			break;
+	}
+	blk->curwidth = GET_MIN(width_init, maxw);
+	blk->bar->occupied_width[blk->align] = blk->curwidth + othw;
+}
+
+/*
+ *Calculate the correct shift of blocks and then redraw the bar.
+ */
+void ya_resetup_bar(ya_block_t *blk) {
+	pthread_mutex_lock(&blk->bar->mutex);
+	blk->bar->attr |= BARA_REDRAW;
+	ya_set_width_resetup(blk);
+	int delta = blk->curwidth - blk->width;
+	blk->width = blk->curwidth;
+	switch(blk->align) {
+		case A_LEFT:
+			for(ya_block_t *curblk = blk->next_blk;curblk; curblk = curblk->next_blk) {
+				curblk->shift += delta;
+			}
+			break;
+		case A_CENTER: {
+			ya_block_t *curblk = blk->bar->curblk[1];
+			curblk->shift -= delta/2;
+			for(curblk = curblk->next_blk;curblk;curblk=curblk->next_blk)
+				curblk->shift = curblk->prev_blk->shift+curblk->prev_blk->width;
+			}
+			break;
+		case A_RIGHT: {
+			for(ya_block_t *curblk = blk;curblk; curblk = curblk->prev_blk)
+				curblk->shift -= delta;
+			}
+			break;
+	}
+	ya_redraw_bar(blk->bar);
+	blk->bar->attr &= ~BARA_REDRAW;
+	pthread_mutex_unlock(&blk->bar->mutex);
+}
+#endif //YA_VAR_WIDTH

@@ -344,7 +344,9 @@ static void ya_setup_bar(config_setting_t * set) {
 		bar->button_cmd[4] = strdup(retstr);
 	}
 
-	//pthread_mutex_init(&bar->mutex, NULL);
+#ifdef YA_MUTEX
+	pthread_mutex_init(&bar->mutex, NULL);
+#endif
 	ya_create_bar(bar);
 	if(bar->attr & BARA_INHERIT_ALL) {
 		ya_block_t * dstblk, *srcblk;
@@ -645,6 +647,11 @@ skip_type:
 	}
 
 
+	retcnf = config_setting_lookup_bool(set, "variable-size", &retint);
+	if (retcnf == CONFIG_TRUE && retint) {
+		blk->attr |= BLKA_VAR_WIDTH;
+	}
+
 	if(blk->attr & BLKA_EXTERNAL) {
 		if(blk->attr & BLKA_MARKUP_PANGO)
 			blk->bufsize = BUFSIZE_EXT_PANGO;
@@ -665,7 +672,9 @@ skip_type:
 	blk->strbuf = blk->buf;
 #endif
 
-	//pthread_mutex_init(&blk->mutex, NULL);
+#ifdef YA_MUTEX
+	pthread_mutex_init(&blk->mutex, NULL);
+#endif
 	ya_create_block(blk);
 }
 

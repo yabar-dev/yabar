@@ -58,6 +58,10 @@ extern char *strdup(const char *s); //to suppress implicit decleration warning f
 #define GET_BLUE(c)		((double)(((c)>>8)  & 0xff)/255.0)
 
 
+#define GET_MIN(A, B) ((A) < (B) ? (A) : (B))
+#define GET_MAX(A, B) ((A) > (B) ? (A) : (B))
+
+
 enum {
 	A_LEFT =0,
 	A_CENTER=1,
@@ -90,15 +94,20 @@ enum {
 	BLKA_INHERIT		= 1<<14,
 	BLKA_INTERN_X_EV	= 1<<15,
 	BLKA_ICON			= 1<<16,
-	BLKA_DIRTY_COL		= 1<<17
+	BLKA_DIRTY_COL		= 1<<17,
+	BLKA_VAR_WIDTH		= 1<<18
 };
 
 
 enum {
 	BARA_INHERIT = 1<<0,
 	BARA_INHERIT_ALL = 1<<1,
-	BARA_DYN_COL = 1<<2
+	BARA_DYN_COL = 1<<2,
+	BARA_REDRAW = 1<<3
 };
+
+#define SHOULD_REDRAW(blk) (((blk)->attr & BLKA_VAR_WIDTH) && (!((blk)->bar->attr & BARA_REDRAW)) && ((blk)->curwidth != (blk)->width))
+
 
 #ifdef YA_INTERNAL_EWMH
 #define YA_INTERNAL_LEN 12
@@ -193,7 +202,12 @@ struct ya_block {
 #ifdef YA_ICON
 	blk_img_t *img;
 #endif //YA_ICON
-	//pthread_mutex_t mutex;
+
+#ifdef YA_MUTEX
+	pthread_mutex_t mutex;
+#endif //YA_MUTEX
+
+	int curwidth;
 };
 
 
@@ -249,7 +263,9 @@ struct ya_bar {
 
 	ya_monitor_t *mon;
 	
-	//pthread_mutex_t mutex;
+#ifdef YA_MUTEX
+	pthread_mutex_t mutex;
+#endif //YA_MUTEX
 #ifdef YA_NOWIN_COL
 	xcb_gcontext_t gc;
 	uint32_t bgcolor_none;
@@ -308,4 +324,5 @@ void ya_handle_prop_notify(xcb_property_notify_event_t *ep);
 
 cairo_surface_t * ya_draw_graphics(ya_block_t *blk);
 void ya_redraw_bar(ya_bar_t *bar);
+void ya_resetup_bar(ya_block_t *blk);
 #endif /*YABAR_H*/

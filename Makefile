@@ -1,6 +1,6 @@
 VERSION = $(shell git describe)
 CPPFLAGS += -DVERSION=\"$(VERSION)\" -D_POSIX_C_SOURCE=199309L -DYA_INTERNAL -DYA_DYN_COL \
-			-DYA_ENV_VARS -DYA_INTERNAL_EWMH -DYA_ICON -DYA_NOWIN_COL
+			-DYA_ENV_VARS -DYA_INTERNAL_EWMH -DYA_ICON -DYA_NOWIN_COL -DYA_MUTEX -DYA_VAR_WIDTH
 CFLAGS += -std=c99 -Iinclude -pedantic -Wall -Os `pkg-config --cflags pango pangocairo libconfig gdk-pixbuf-2.0`
 LDLIBS := -lxcb -lpthread -lxcb-randr -lxcb-ewmh `pkg-config --libs pango pangocairo libconfig gdk-pixbuf-2.0`
 PROGRAM := yabar

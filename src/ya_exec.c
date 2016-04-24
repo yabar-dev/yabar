@@ -41,9 +41,13 @@ inline static void ya_exec_intern_ewmh_blk(ya_block_t *blk) {
 	switch(blk->internal->index) {
 		case YA_INT_TITLE: {
 			ya_get_cur_window_title(blk);
-			//pthread_mutex_lock(&blk->mutex);
+#ifdef YA_MUTEX
+			pthread_mutex_lock(&blk->mutex);
+#endif
 			ya_draw_pango_text(blk);
-			//pthread_mutex_unlock(&blk->mutex);
+#ifdef YA_MUTEX
+			pthread_mutex_unlock(&blk->mutex);
+#endif
 			break;
 		}
 		case YA_INT_WORKSPACE: {
@@ -55,9 +59,14 @@ inline static void ya_exec_intern_ewmh_blk(ya_block_t *blk) {
 			else {
 				ya_copy_buf_from_index(blk, current_desktop);
 			}
-			//pthread_mutex_lock(&blk->mutex);
+
+#ifdef YA_MUTEX
+			pthread_mutex_lock(&blk->mutex);
+#endif
 			ya_draw_pango_text(blk);
-			//pthread_mutex_unlock(&blk->mutex);
+#ifdef YA_MUTEX
+			pthread_mutex_unlock(&blk->mutex);
+#endif
 			break;
 		}
 	}
@@ -88,9 +97,14 @@ static void ya_exec_redir_once(ya_block_t *blk) {
 #ifdef YA_DYN_COL
 		ya_buf_color_parse(blk);
 #endif
-		//pthread_mutex_lock(&blk->mutex);
-		ya_draw_pango_text(blk);
-		//pthread_mutex_unlock(&blk->mutex);
+
+#ifdef YA_MUTEX
+			pthread_mutex_lock(&blk->mutex);
+#endif
+			ya_draw_pango_text(blk);
+#ifdef YA_MUTEX
+			pthread_mutex_unlock(&blk->mutex);
+#endif
 	}
 }
 
@@ -123,9 +137,14 @@ static void ya_exec_redir_period(ya_block_t *blk) {
 #ifdef YA_DYN_COL
 			ya_buf_color_parse(blk);
 #endif
-			//pthread_mutex_lock(&blk->mutex);
+
+#ifdef YA_MUTEX
+			pthread_mutex_lock(&blk->mutex);
+#endif
 			ya_draw_pango_text(blk);
-			//pthread_mutex_unlock(&blk->mutex);
+#ifdef YA_MUTEX
+			pthread_mutex_unlock(&blk->mutex);
+#endif
 		}
 		sleep(blk->sleep);
 	}
@@ -163,9 +182,14 @@ static void ya_exec_redir_persist(ya_block_t *blk) {
 #ifdef YA_DYN_COL
 			ya_buf_color_parse(blk);
 #endif
-			//pthread_mutex_lock(&blk->mutex);
+
+#ifdef YA_MUTEX
+			pthread_mutex_lock(&blk->mutex);
+#endif
 			ya_draw_pango_text(blk);
-			//pthread_mutex_unlock(&blk->mutex);
+#ifdef YA_MUTEX
+			pthread_mutex_unlock(&blk->mutex);
+#endif
 		}
 	}
 }
