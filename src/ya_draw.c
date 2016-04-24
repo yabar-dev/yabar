@@ -19,6 +19,9 @@ enum {
 	NET_WM_STATE_ABOVE,
 };
 
+/*
+ *Setup correct properties for a bar's window.
+ */
 static void ya_setup_ewmh(ya_bar_t *bar) {
 	// I really hope I understood this correctly from lemonbar code :| 
 	const char *atom_names[] = {
@@ -70,6 +73,9 @@ static void ya_setup_ewmh(ya_bar_t *bar) {
 	xcb_change_property(ya.c, XCB_PROP_MODE_REPLACE, bar->win, XCB_ATOM_WM_NAME, XCB_ATOM_STRING, 8, strlen("yabar"), "yabar");
 }
 
+/*
+ * Setup X variables(pixmap and graphical context) and the position of a block
+ */
 void ya_create_block(ya_block_t *blk) {
 	ya_block_t *tmpblk;
 	if (blk->bar->curblk[blk->align]) {
@@ -110,6 +116,8 @@ void ya_create_block(ya_block_t *blk) {
 	blk->bar->curblk[blk->align] = blk;
 	blk->pixmap = xcb_generate_id(ya.c);
 	int blk_width = 0;
+	//If variable width attribute is enabled, use the maximum available width for a block
+	//which is the monitor width to create a pixmap.
 	if ((blk->attr & BLKA_VAR_WIDTH))
 		blk_width = blk->bar->mon->pos.width;
 	else
@@ -122,6 +130,9 @@ void ya_create_block(ya_block_t *blk) {
 	xcb_create_gc(ya.c, blk->gc, blk->pixmap, XCB_GC_FOREGROUND, (const uint32_t[]){blk->bgcolor});
 }
 
+/*
+ *Create the bar's window using xcb
+ */
 void ya_create_bar(ya_bar_t * bar) {
 	bar->win = xcb_generate_id(ya.c);
 	int x=0, y=0;
@@ -165,6 +176,10 @@ void ya_create_bar(ya_bar_t * bar) {
 	ya_setup_ewmh(bar);
 }
 
+/*
+ * Get the first visualtype that uses the depth ya.depth, starts as 32 and may fallback to 24
+ * if no depth=32
+ */
 xcb_visualtype_t * ya_get_visualtype() {
 	xcb_depth_iterator_t depth_iter;
 	depth_iter = xcb_screen_allowed_depths_iterator (ya.scr);
@@ -178,8 +193,11 @@ xcb_visualtype_t * ya_get_visualtype() {
 	return NULL;
 }
 
+/*
+ * Here is how the text buffer of a block is rendered on the screen
+ */
 void ya_draw_pango_text(struct ya_block *blk) {
-	//ya_redraw_bar(blk->bar);
+	//First override the block area with its background color in order to not draw the new text above the old one.
 	xcb_poly_fill_rectangle(ya.c, blk->pixmap, blk->gc, 1, (const xcb_rectangle_t[]) { {0,0,blk->width, blk->bar->height} });
 	cairo_surface_t *surface = cairo_xcb_surface_create(ya.c, blk->pixmap, ya.visualtype, blk->width, blk->bar->height);
 	cairo_t *cr = cairo_create(surface);
@@ -187,6 +205,8 @@ void ya_draw_pango_text(struct ya_block *blk) {
 	if((blk->attr & BLKA_ICON)) {
 		cairo_surface_t *iconsrf = ya_draw_graphics(blk);
 		if (iconsrf) {
+			//Copy a newly created temporary surface that contains the scaled image to our surface and then 
+			//destroy that temporary surface and return to our normal cairo scale.
 			cairo_scale(cr, blk->img->scale_w, blk->img->scale_h);
 			cairo_set_source_surface(cr, iconsrf,
 					(double)(blk->img->x)/(blk->img->scale_w),
@@ -208,6 +228,7 @@ void ya_draw_pango_text(struct ya_block *blk) {
 			GET_ALPHA(blk->fgcolor));
 
 #ifdef YA_DYN_COL
+	//Start drawing text at strbuf member, where !Y COLORS Y! config ends
 	if (!(blk->attr & BLKA_MARKUP_PANGO))
 		pango_layout_set_text(layout, blk->strbuf, strlen(blk->strbuf));
 	else
@@ -225,8 +246,11 @@ void ya_draw_pango_text(struct ya_block *blk) {
 	pango_layout_set_height(layout, blk->bar->height);
 #ifdef YA_VAR_WIDTH
 	int ht;
+	//Get the width that text can be drawn comfortably and put it in curwidth member.
 	pango_layout_get_pixel_size(layout, &blk->curwidth, &ht);
 	if(SHOULD_REDRAW(blk)) {
+		//Now if the bar should be redrawn due to a modified text width, we free pango and cairo memory and then do 
+		//a total redraw for the bar.
 		xcb_flush(ya.c);
 		g_object_unref(layout);
 		g_object_unref(context);
@@ -248,6 +272,7 @@ void ya_draw_pango_text(struct ya_block *blk) {
 	pango_cairo_show_layout(cr, layout);
 	cairo_move_to(cr, 0, offset);
 
+	//Draw overline if defined
 	if(blk->attr & BLKA_OVERLINE) {
 		cairo_set_source_rgba(cr, 
 			GET_RED(blk->olcolor), 
@@ -257,6 +282,7 @@ void ya_draw_pango_text(struct ya_block *blk) {
 		cairo_rectangle(cr, 0, 0, blk->width, blk->bar->olsize);
 		cairo_fill(cr);
 	}
+	//Draw underline if defined
 	if(blk->attr & BLKA_UNDERLINE) {
 		cairo_set_source_rgba(cr, 
 			GET_RED(blk->ulcolor), 
@@ -277,7 +303,9 @@ void ya_draw_pango_text(struct ya_block *blk) {
 	cairo_surface_destroy(surface);
 }
 
-
+/*
+ * Handle button press event, called from ya_main after every button press event.
+ */
 void ya_handle_button( xcb_button_press_event_t *eb) {
 	ya_bar_t *curbar = ya.curbar;
 	ya_block_t *curblk;
@@ -309,6 +337,10 @@ void ya_handle_button( xcb_button_press_event_t *eb) {
 	}
 }
 
+/*
+ * Parse color(background, foreground, underline and overline) 
+ * from text buffer and then relocate start of designated text to strbuf member.
+ */
 #ifdef YA_DYN_COL
 void ya_buf_color_parse(ya_block_t *blk) {
 	char *cur = blk->buf;
@@ -366,6 +398,9 @@ void ya_buf_color_parse(ya_block_t *blk) {
 #endif //YA_DYN_COL
 
 #ifdef YA_INTERNAL_EWMH
+/*
+ * Get current window title using EWMH
+ */
 inline void ya_get_cur_window_title(ya_block_t * blk) {
 	xcb_ewmh_get_utf8_strings_reply_t reply;
 	if(ya.curwin == XCB_NONE)
@@ -375,7 +410,7 @@ inline void ya_get_cur_window_title(ya_block_t * blk) {
 		wm_ck = xcb_ewmh_get_wm_name(ya.ewmh, ya.curwin);
 		wmvis_ck = xcb_ewmh_get_wm_visible_name(ya.ewmh, ya.curwin);
 		if (xcb_ewmh_get_wm_name_reply(ya.ewmh, wm_ck, &reply, NULL) == 1 || xcb_ewmh_get_wm_visible_name_reply(ya.ewmh, wmvis_ck, &reply, NULL) == 1) {
-			int len = blk->bufsize < reply.strings_len ? blk->bufsize : reply.strings_len;
+			int len = GET_MIN(blk->bufsize, reply.strings_len);
 			strncpy(blk->buf, reply.strings, len);
 			blk->buf[len]='\0';
 		}
@@ -439,6 +474,10 @@ static cairo_surface_t * ya_draw_surface_from_pixbuf(GdkPixbuf *buf) {
 }
 
 
+/*
+ * Open the image/icon file and then copy its data to a temporary surface, this function is called from
+ * ya_draw_pango_text()
+ */
 cairo_surface_t * ya_draw_graphics(ya_block_t *blk) {
 	GError *gerr =NULL;
 	cairo_surface_t *ret = NULL;
@@ -453,10 +492,15 @@ cairo_surface_t * ya_draw_graphics(ya_block_t *blk) {
 }
 #endif //YA_ICON
 
+/*
+ * Redraw the entire bar
+ */
 #ifdef YA_NOWIN_COL
 void ya_redraw_bar(ya_bar_t *bar) {
 	uint32_t col = 0x0;
 	ya_block_t *blk;
+	//If there is no current window, set color to bgcolor_none
+	//Otherwise set it to the normal bar background color
 	if(ya.curwin == XCB_NONE)
 		col = bar->bgcolor_none;
 	else
@@ -467,6 +511,8 @@ void ya_redraw_bar(ya_bar_t *bar) {
 	for(int i=0; i<3; i++) {
 		if((blk = bar->curblk[i])) {
 			for(;blk;blk = blk->next_blk) {
+				//For blocks that have no background color, inherit the background color
+				//for the bar.
 #ifdef YA_DYN_COL
 				if(!(blk->attr & BLKA_BGCOLOR)) {
 					if((!(blk->attr & BLKA_DIRTY_COL))) {
@@ -548,6 +594,9 @@ void ya_set_width_resetup(ya_block_t *blk) {
  *Calculate the correct shift of blocks and then redraw the bar.
  */
 void ya_resetup_bar(ya_block_t *blk) {
+	//Lock the bar!
+	//occupied_width member will be modified after calculating the maximum
+	//allowed size of block width using ya_set_width_resetup()
 	pthread_mutex_lock(&blk->bar->mutex);
 	blk->bar->attr |= BARA_REDRAW;
 	ya_set_width_resetup(blk);
