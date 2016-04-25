@@ -647,10 +647,14 @@ skip_type:
 	}
 
 
+#ifdef YA_VAR_WIDTH
 	retcnf = config_setting_lookup_bool(set, "variable-size", &retint);
 	if (retcnf == CONFIG_TRUE && retint) {
 		blk->attr |= BLKA_VAR_WIDTH;
+		//override the initial width if inserted.
+		blk->width = 0;
 	}
+#endif //YA_VAR_WIDTH
 
 	if(blk->attr & BLKA_EXTERNAL) {
 		if(blk->attr & BLKA_MARKUP_PANGO)
