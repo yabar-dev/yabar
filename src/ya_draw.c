@@ -546,36 +546,29 @@ void ya_redraw_bar(ya_bar_t *bar) {
 void ya_set_width_resetup(ya_block_t *blk) {
 	int width_init = blk->curwidth;
 	int scrw = blk->bar->mon->pos.width;
+	//maxw is used to deduce the maximum allowed width for the block without minimizing
+	//the area for all other blocks
 	int maxw = scrw;
-	int othw = 0;
+	//othw is the total width for all blocks but blk in its alignment
+	int othw = blk->bar->occupied_width[blk->align] - blk->width;
 	switch(blk->align) {
 		case A_LEFT:
-			for(ya_block_t *cblk = blk->next_blk; cblk; cblk = cblk->next_blk) {
-				othw +=cblk->width + cblk->bar->slack;
-			}
 			if(blk->bar->curblk[1]) {
 				maxw = (scrw - blk->bar->occupied_width[1])/2 -othw;
 				if (blk->curwidth > maxw)
 					blk->curwidth = maxw;
 			}
 			else if (blk->bar->curblk[2]) {
-				maxw = scrw - blk->bar->occupied_width[2];
+				maxw = scrw - blk->bar->occupied_width[2] -othw;
 			}
 			break;
 		case A_CENTER:
-			for(ya_block_t *cblk = blk->bar->curblk[1]; cblk; cblk = cblk->next_blk) {
-				if(cblk != blk)
-					othw +=cblk->width + cblk->bar->slack;
-			}
 			if(blk->bar->curblk[0] || blk->bar->curblk[2]) {
 				int maxsw = GET_MAX(blk->bar->occupied_width[0], blk->bar->occupied_width[2]);
 				maxw = scrw -2*maxsw -othw;
 			}
 			break;
 		case A_RIGHT:
-			for(ya_block_t *cblk = blk->prev_blk; cblk; cblk = cblk->prev_blk) {
-				othw +=cblk->width + cblk->bar->slack;
-			}
 			if(blk->bar->curblk[1]) {
 				maxw = (scrw - blk->bar->occupied_width[1])/2 - othw;
 				if (blk->curwidth > maxw)
