@@ -12,6 +12,9 @@ char conf_file[CFILELEN];
 static const char * const yashell = "/bin/sh";
 
 #ifdef YA_INTERNAL_EWMH
+//This function is used for YA_INT_WORKSPACE internal block
+//Copy the current workspace string name from blk->internal->option[0] to blk->buf
+//Names are separated by space
 inline static void ya_copy_buf_from_index(ya_block_t *blk, uint32_t cur_desktop) {
 	char *cur = blk->internal->option[0];
 	uint32_t index =0;
@@ -37,6 +40,10 @@ inline static void ya_copy_buf_from_index(ya_block_t *blk, uint32_t cur_desktop)
 	sprintf(blk->buf, "%u", cur_desktop+1);
 }
 
+/*
+ * similar to any ya_exec function in this file, this function is used to obtain text buffer and 
+ * draw it. However, this function is called upon X events.
+ */
 inline static void ya_exec_intern_ewmh_blk(ya_block_t *blk) {
 	switch(blk->internal->index) {
 		case YA_INT_TITLE: {
@@ -272,6 +279,9 @@ static void ya_process_path(char *cpath) {
 	}
 }
 
+/*
+ * Initialize RandR and obtain current monitors
+ */
 static int ya_init_randr() {
 	xcb_randr_get_screen_resources_current_reply_t *res_reply;
 	res_reply = xcb_randr_get_screen_resources_current_reply(ya.c,
@@ -336,6 +346,9 @@ void ya_process_opt(int argc, char *argv[]) {
 	}
 }
 
+/*
+ * Initialize yabar
+ */
 void ya_init() {
 	signal(SIGTERM, ya_sighandler);
 	signal(SIGINT, ya_sighandler);
@@ -378,6 +391,9 @@ void ya_init() {
 	ya_config_parse();
 }
 
+/*
+ * After yabar initialization, we create a thread for each block.
+ */
 void ya_execute() {
 	ya_bar_t *curbar;
 	ya_block_t *curblk;
@@ -403,6 +419,7 @@ void ya_execute() {
 				curbar->curblk[align] = curblk;
 				for(;curblk; curblk = curblk->next_blk) {
 #ifdef YA_INTERNAL_EWMH
+					// BLKA_INTERN_X_EV blocks don't have threads! they are inovoked when events occur.
 					if(!(curblk->attr & BLKA_INTERN_X_EV))
 						pthread_create(&curblk->thread, NULL, ya_exec, (void *) curblk);
 #else
@@ -414,9 +431,13 @@ void ya_execute() {
 	}
 }
 
+/*
+ * Invoke process on button press.
+ */
 inline void ya_exec_button(ya_block_t * blk, xcb_button_press_event_t *eb) {
 	if (fork() == 0) {
 #ifdef YA_ENV_VARS
+		//Setup environment variables.
 		char blkx[6], blky[6], blkw[6];
 		snprintf(blkx, 6, "%d", eb->root_x - eb->event_x + blk->shift);
 		if (blk->bar->position == YA_TOP)
@@ -439,6 +460,9 @@ inline void ya_exec_button(ya_block_t * blk, xcb_button_press_event_t *eb) {
 }
 
 #ifdef YA_INTERNAL_EWMH
+/*
+ * Handle property notify events, called from ya_main when such events occur.
+ */
 void ya_handle_prop_notify(xcb_property_notify_event_t *ep) {
 	uint32_t no_ev_val = XCB_EVENT_MASK_NO_EVENT;
 	uint32_t pr_ev_val = XCB_EVENT_MASK_PROPERTY_CHANGE;
@@ -460,13 +484,14 @@ void ya_handle_prop_notify(xcb_property_notify_event_t *ep) {
 #endif //YA_NOWIN_COL
 		}
 		else if(ya.curwin==XCB_NONE && ya.lstwin==XCB_NONE) {
-			//Don't exit, used when switch between two empty workspaces
+			//Don't return, used when switch between two empty workspaces
 		}
 		else {
 			return;
 		}
 	}
 	else if ((ep->atom == ya.ewmh->_NET_WM_NAME) || (ep->atom == ya.ewmh->_NET_WM_VISIBLE_NAME)) {
+		//Same window, but title changed. Therefore don't return.
 	}
 	else {
 		return;
