@@ -99,6 +99,7 @@ enum {
 };
 
 
+// Flags of bar attributes; stored in bar->attr
 enum {
 	BARA_INHERIT = 1<<0,
 	BARA_INHERIT_ALL = 1<<1,
@@ -106,6 +107,7 @@ enum {
 	BARA_REDRAW = 1<<3
 };
 
+//for variable-width blocks, check for whether the bar should be redrawn.
 #define SHOULD_REDRAW(blk) (((blk)->attr & BLKA_VAR_WIDTH) && (!((blk)->bar->attr & BARA_REDRAW)) && ((blk)->curwidth != (blk)->width))
 
 
@@ -147,6 +149,9 @@ struct reserved_blk {
 	funcp function;
 };
 
+//Instead of searching for block that has BLKA_INTERN_X_EV enabled in all bars and all their blocks,
+//this struct is introduced to add such blocks in a small linked list in order to quickly
+//handle when an event occurs.
 struct intern_ewmh_blk {
 	ya_block_t * blk;
 	struct intern_ewmh_blk *prev_ewblk;
@@ -207,10 +212,13 @@ struct ya_block {
 	pthread_mutex_t mutex;
 #endif //YA_MUTEX
 
+#ifdef YA_VAR_WIDTH
 	int curwidth;
+#endif //YA_VAR_WIDTH
 };
 
 
+//Internal block data struct
 struct blk_intern {
 	char *prefix;
 	char *suffix;
@@ -219,6 +227,7 @@ struct blk_intern {
 	bool spacing;
 };
 
+//Icon data struct
 struct blk_img {
 	char path[CFILELEN];
 	uint16_t x;
@@ -266,6 +275,7 @@ struct ya_bar {
 #ifdef YA_MUTEX
 	pthread_mutex_t mutex;
 #endif //YA_MUTEX
+
 #ifdef YA_NOWIN_COL
 	xcb_gcontext_t gc;
 	uint32_t bgcolor_none;
@@ -273,6 +283,7 @@ struct ya_bar {
 };
 
 
+//Falgs of gen_flag in yabar_gen_info struct
 enum {
 	GEN_EXT_CONF	= 1 << 0,
 	GEN_RANDR		= 1 << 1,
@@ -291,8 +302,8 @@ struct yabar_gen_info {
 	ya_monitor_t *curmon;
 #ifdef YA_INTERNAL_EWMH
 	xcb_ewmh_connection_t *ewmh;
-	xcb_window_t curwin;
-	xcb_window_t lstwin;
+	xcb_window_t curwin; //current window
+	xcb_window_t lstwin; //last window
 	ya_ewmh_blk *ewmh_blk;
 #endif //YA_INTERNAL_EWMH
 };
