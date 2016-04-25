@@ -113,6 +113,9 @@ static void ya_exec_redir_once(ya_block_t *blk) {
 			pthread_mutex_unlock(&blk->mutex);
 #endif
 	}
+	//Cleanup and exit thread
+	pthread_detach(blk->thread);
+	pthread_exit(NULL);
 }
 
 
