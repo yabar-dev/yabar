@@ -51,26 +51,34 @@ inline static void ya_exec_intern_ewmh_blk(ya_block_t *blk) {
 #ifdef YA_MUTEX
 			pthread_mutex_lock(&blk->mutex);
 #endif
+#ifdef YA_VAR_WIDTH
+			DRAW_TEXT(blk);
+#else
 			ya_draw_pango_text(blk);
+#endif //YA_VAR_WIDTH
 #ifdef YA_MUTEX
 			pthread_mutex_unlock(&blk->mutex);
 #endif
 			break;
 		}
 		case YA_INT_WORKSPACE: {
-			uint32_t current_desktop;
-			xcb_get_property_cookie_t ck = xcb_ewmh_get_current_desktop(ya.ewmh, 0);
-			xcb_ewmh_get_current_desktop_reply(ya.ewmh, ck, &current_desktop, NULL);
+			//uint32_t current_desktop;
+			//xcb_get_property_cookie_t ck = xcb_ewmh_get_current_desktop(ya.ewmh, 0);
+			//xcb_ewmh_get_current_desktop_reply(ya.ewmh, ck, &current_desktop, NULL);
 			if(blk->internal->option[0]==NULL)
-				sprintf(blk->buf, "%u", current_desktop+1);
+				sprintf(blk->buf, "%u", ya.curws+1);
 			else {
-				ya_copy_buf_from_index(blk, current_desktop);
+				ya_copy_buf_from_index(blk, ya.curws);
 			}
 
 #ifdef YA_MUTEX
 			pthread_mutex_lock(&blk->mutex);
 #endif
+#ifdef YA_VAR_WIDTH
+			DRAW_TEXT(blk);
+#else
 			ya_draw_pango_text(blk);
+#endif //YA_VAR_WIDTH
 #ifdef YA_MUTEX
 			pthread_mutex_unlock(&blk->mutex);
 #endif
@@ -108,7 +116,11 @@ static void ya_exec_redir_once(ya_block_t *blk) {
 #ifdef YA_MUTEX
 			pthread_mutex_lock(&blk->mutex);
 #endif
+#ifdef YA_VAR_WIDTH
+			DRAW_TEXT(blk);
+#else
 			ya_draw_pango_text(blk);
+#endif //YA_VAR_WIDTH
 #ifdef YA_MUTEX
 			pthread_mutex_unlock(&blk->mutex);
 #endif
@@ -151,7 +163,11 @@ static void ya_exec_redir_period(ya_block_t *blk) {
 #ifdef YA_MUTEX
 			pthread_mutex_lock(&blk->mutex);
 #endif
+#ifdef YA_VAR_WIDTH
+			DRAW_TEXT(blk);
+#else
 			ya_draw_pango_text(blk);
+#endif //YA_VAR_WIDTH
 #ifdef YA_MUTEX
 			pthread_mutex_unlock(&blk->mutex);
 #endif
@@ -196,7 +212,11 @@ static void ya_exec_redir_persist(ya_block_t *blk) {
 #ifdef YA_MUTEX
 			pthread_mutex_lock(&blk->mutex);
 #endif
+#ifdef YA_VAR_WIDTH
+			DRAW_TEXT(blk);
+#else
 			ya_draw_pango_text(blk);
+#endif //YA_VAR_WIDTH
 #ifdef YA_MUTEX
 			pthread_mutex_unlock(&blk->mutex);
 #endif
@@ -385,10 +405,13 @@ void ya_init() {
 
 	ya.lstwin = XCB_NONE;
 	uint32_t evm = XCB_EVENT_MASK_PROPERTY_CHANGE;
-	xcb_get_property_cookie_t prop_ck = xcb_ewmh_get_active_window(ya.ewmh, 0);
-	xcb_ewmh_get_active_window_reply(ya.ewmh, prop_ck, &ya.curwin, NULL);
 	xcb_change_window_attributes(ya.c, ya.curwin, XCB_CW_EVENT_MASK, &evm);
 	xcb_change_window_attributes(ya.c, ya.scr->root, XCB_CW_EVENT_MASK, &evm);
+	xcb_get_property_cookie_t prop_ck = xcb_ewmh_get_active_window(ya.ewmh, 0);
+	xcb_ewmh_get_active_window_reply(ya.ewmh, prop_ck, &ya.curwin, NULL);
+	xcb_get_property_cookie_t ws_ck = xcb_ewmh_get_current_desktop(ya.ewmh, 0);
+	xcb_ewmh_get_current_desktop_reply(ya.ewmh, ws_ck, &ya.curws, NULL);
+	fprintf(stderr, "WINNN = %x DESK= %x\n", ya.curwin, ya.curws);
 #endif //YA_INTERNAL_EWMH
 
 	ya_config_parse();
@@ -398,15 +421,16 @@ void ya_init() {
  * After yabar initialization, we create a thread for each block.
  */
 void ya_execute() {
-	ya_bar_t *curbar;
-	ya_block_t *curblk;
-	curbar = ya.curbar;
+	ya_bar_t *curbar = ya.curbar;
+	ya_block_t *curblk = NULL;
 #ifdef YA_INTERNAL_EWMH
 	if(ya.ewmh_blk) {
 		for(;ya.ewmh_blk->prev_ewblk; ya.ewmh_blk = ya.ewmh_blk->prev_ewblk);
-		//ya_ewmh_blk *ewmh_blk = ya.ewmh_blk;
-		//for(;ewmh_blk; ewmh_blk = ewmh_blk->next_ewblk)
-		//	ya_exec_intern_ewmh_blk(ewmh_blk->blk);
+		ya_ewmh_blk *ewmh_blk = ya.ewmh_blk;
+		for(;ewmh_blk; ewmh_blk = ewmh_blk->next_ewblk) {
+			fprintf(stderr, "H %s\n", ewmh_blk->blk->name);
+			ya_exec_intern_ewmh_blk(ewmh_blk->blk);
+		}
 	}
 #endif //YA_INTERNAL_EWMH
 	for(; curbar->prev_bar; curbar = curbar->prev_bar);
@@ -471,8 +495,12 @@ void ya_handle_prop_notify(xcb_property_notify_event_t *ep) {
 	uint32_t pr_ev_val = XCB_EVENT_MASK_PROPERTY_CHANGE;
 	ya_ewmh_blk *ewblk;
 	if(ep->atom == ya.ewmh->_NET_ACTIVE_WINDOW) {
-		xcb_get_property_cookie_t prop_ck = xcb_ewmh_get_active_window(ya.ewmh, 0);
-		xcb_ewmh_get_active_window_reply(ya.ewmh, prop_ck, &ya.curwin, NULL);
+		xcb_get_property_cookie_t win_ck = xcb_ewmh_get_active_window(ya.ewmh, 0);
+		xcb_ewmh_get_active_window_reply(ya.ewmh, win_ck, &ya.curwin, NULL);
+
+		xcb_get_property_cookie_t ws_ck = xcb_ewmh_get_current_desktop(ya.ewmh, 0);
+		xcb_ewmh_get_current_desktop_reply(ya.ewmh, ws_ck, &ya.curws, NULL);
+
 		if (ya.curwin != ya.lstwin) {
 			xcb_change_window_attributes(ya.c, ya.lstwin, XCB_CW_EVENT_MASK, &no_ev_val);
 			xcb_change_window_attributes(ya.c, ya.curwin, XCB_CW_EVENT_MASK, &pr_ev_val);
@@ -503,5 +531,6 @@ void ya_handle_prop_notify(xcb_property_notify_event_t *ep) {
 		ya_exec_intern_ewmh_blk(ewblk->blk);
 	}
 	ya.lstwin = ya.curwin;
+	ya.lstws = ya.curws;
 }
 #endif //YA_INTERNAL_EWMH
