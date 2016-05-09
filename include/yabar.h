@@ -345,8 +345,8 @@ cairo_surface_t * ya_draw_graphics(ya_block_t *blk);
 void ya_redraw_bar(ya_bar_t *bar);
 void ya_resetup_bar(ya_block_t *blk);
 void ya_draw_text_var_width(ya_block_t * blk);
-void ya_get_text_max_width(ya_block_t *blk);
-void ya_draw_bar_var(ya_block_t *blk);
+//void ya_get_text_max_width(ya_block_t *blk);
+//void ya_draw_bar_var(ya_block_t *blk);
 void ya_inherit_bar_bgcol(ya_block_t *blk);
 void ya_draw_bar_curwin(ya_bar_t *bar);
 #endif /*YABAR_H*/

@@ -194,116 +194,6 @@ xcb_visualtype_t * ya_get_visualtype() {
 	}
 	return NULL;
 }
-
-/*
- * Here is how the text buffer of a block is rendered on the screen
- */
-void ya_draw_pango_text(struct ya_block *blk) {
-	//fprintf(stderr, "001=%s\n", blk->name);
-#ifdef YA_MUTEX
-	pthread_mutex_lock(&blk->bar->mutex);
-#endif
-	if((blk->bar->attr & BARA_REDRAW)) {
-		//fprintf(stderr, "E: %s\n", blk->name);
-		ya_inherit_bar_bgcol(blk);
-	}
-	//First override the block area with its background color in order to not draw the new text above the old one.
-	xcb_poly_fill_rectangle(ya.c, blk->pixmap, blk->gc, 1, (const xcb_rectangle_t[]) { {0,0,blk->width, blk->bar->height} });
-	cairo_surface_t *surface = cairo_xcb_surface_create(ya.c, blk->pixmap, ya.visualtype, blk->width, blk->bar->height);
-	cairo_t *cr = cairo_create(surface);
-#ifdef YA_ICON
-	if((blk->attr & BLKA_ICON)) {
-		cairo_surface_t *iconsrf = ya_draw_graphics(blk);
-		if (iconsrf) {
-			//Copy a newly created temporary surface that contains the scaled image to our surface and then 
-			//destroy that temporary surface and return to our normal cairo scale.
-			cairo_scale(cr, blk->img->scale_w, blk->img->scale_h);
-			cairo_set_source_surface(cr, iconsrf,
-					(double)(blk->img->x)/(blk->img->scale_w),
-					(double)(blk->img->y)/(blk->img->scale_h));
-			cairo_paint(cr);
-			cairo_surface_destroy(iconsrf);
-			cairo_scale(cr, 1.0/(blk->img->scale_w), 1.0/(blk->img->scale_h));
-		}
-	}
-#endif //YA_ICON
-	PangoContext *context = pango_cairo_create_context(cr);
-	PangoLayout *layout = pango_layout_new(context);
-	pango_layout_set_font_description(layout, blk->bar->desc);
-
-	cairo_set_source_rgba(cr, 
-			GET_RED(blk->fgcolor), 
-			GET_BLUE(blk->fgcolor),
-			GET_GREEN(blk->fgcolor),
-			GET_ALPHA(blk->fgcolor));
-
-	//fprintf(stderr, "010=%s\n", blk->name);
-#ifdef YA_DYN_COL
-	//Start drawing text at strbuf member, where !Y COLORS Y! config ends.
-	//strbuf member is initialized to buf member by default. So it will work
-	//well with internal blocks.
-	if (!(blk->attr & BLKA_MARKUP_PANGO))
-		pango_layout_set_text(layout, blk->strbuf, strlen(blk->strbuf));
-	else
-		pango_layout_set_markup(layout, blk->strbuf, strlen(blk->strbuf));
-#else
-	if (!(blk->attr & BLKA_MARKUP_PANGO))
-		pango_layout_set_text(layout, blk->buf, strlen(blk->buf));
-	else
-		pango_layout_set_markup(layout, blk->buf, strlen(blk->buf));
-#endif
-	//fprintf(stderr, "020=%s\n", blk->name);
-	pango_layout_set_alignment(layout, blk->justify);
-	cairo_set_operator(cr, CAIRO_OPERATOR_SOURCE);
-	pango_layout_set_auto_dir(layout, false);
-
-	pango_layout_set_height(layout, blk->bar->height);
-
-	int wd, ht;
-	pango_layout_get_pixel_size(layout, &wd, &ht);
-
-	pango_layout_set_width(layout, blk->width * PANGO_SCALE);
-	pango_layout_set_wrap(layout, PANGO_WRAP_WORD);
-	pango_layout_set_ellipsize(layout, PANGO_ELLIPSIZE_END);
-	int offset = (blk->bar->height - ht)/2;
-	cairo_move_to(cr, 0, offset);
-	pango_cairo_show_layout(cr, layout);
-	cairo_move_to(cr, 0, offset);
-
-	//Draw overline if defined
-	if(blk->attr & BLKA_OVERLINE) {
-		cairo_set_source_rgba(cr, 
-			GET_RED(blk->olcolor), 
-			GET_BLUE(blk->olcolor),
-			GET_GREEN(blk->olcolor),
-			GET_ALPHA(blk->olcolor));
-		cairo_rectangle(cr, 0, 0, blk->width, blk->bar->olsize);
-		cairo_fill(cr);
-	}
-	//Draw underline if defined
-	if(blk->attr & BLKA_UNDERLINE) {
-		cairo_set_source_rgba(cr, 
-			GET_RED(blk->ulcolor), 
-			GET_BLUE(blk->ulcolor),
-			GET_GREEN(blk->ulcolor),
-			GET_ALPHA(blk->ulcolor));
-		cairo_rectangle(cr, 0, blk->bar->height - blk->bar->ulsize, blk->width, blk->bar->ulsize);
-		cairo_fill(cr);
-	}
-
-	cairo_surface_flush(surface);
-	xcb_copy_area(ya.c, blk->pixmap, blk->bar->win, blk->gc, 0,0,blk->shift, 0, blk->width, blk->bar->height);
-	xcb_flush(ya.c);
-#ifdef YA_MUTEX
-	pthread_mutex_unlock(&blk->bar->mutex);
-#endif
-	
-	g_object_unref(layout);
-	g_object_unref(context);
-	cairo_destroy(cr);
-	cairo_surface_destroy(surface);
-}
-
 /*
  * Parse color(background, foreground, underline and overline) 
  * from text buffer and then relocate start of designated text to strbuf member.
@@ -460,9 +350,6 @@ cairo_surface_t * ya_draw_graphics(ya_block_t *blk) {
 }
 #endif //YA_ICON
 
-/*
- * Redraw the entire bar
- */
 #ifdef YA_NOWIN_COL
 inline void ya_inherit_bar_bgcol(ya_block_t *blk) {
 	//if (ya.curwin == ya.lstwin)
@@ -508,6 +395,9 @@ inline void ya_draw_bar_curwin(ya_bar_t *bar) {
 			(const xcb_rectangle_t[]) { {0,0,bar->width, bar->height} });
 }
 
+/*
+ * Redraw the entire bar
+ */
 void ya_redraw_bar(ya_bar_t *bar) {
 	bar->attr |= BARA_REDRAW;
 	ya_draw_bar_curwin(bar);
@@ -528,12 +418,120 @@ void ya_redraw_bar(ya_bar_t *bar) {
 #endif //YA_NOWIN_COL
 
 
+
+
+
+
+
+
 #ifdef YA_VAR_WIDTH
+/*
+ *Calculate the correct shift of blocks and then redraw the bar.
+ */
+/*
+void ya_resetup_bar(ya_block_t *blk) {
+	//Lock the bar!
+	//occupied_width member will be modified after calculating the maximum
+	//allowed size of block width using ya_set_width_resetup()
+#ifdef YA_MUTEX
+	pthread_mutex_lock(&blk->bar->mutex);
+#endif 
+	ya_set_width_resetup(blk);
+	ya_redraw_bar(blk->bar);
+#ifdef YA_MUTEX
+	pthread_mutex_unlock(&blk->bar->mutex);
+#endif
+}
+*/
+
+
+/*
+ * Compute the maximum width for text as if there were no width
+ * restriction
+ */
+static inline void ya_get_text_max_width(ya_block_t *blk) {
+	cairo_surface_t *surface = cairo_xcb_surface_create(ya.c,
+			blk->pixmap, ya.visualtype, 
+			blk->width, blk->bar->height);
+	cairo_t *cr = cairo_create(surface);
+	PangoContext *context = pango_cairo_create_context(cr);
+	PangoLayout *layout = pango_layout_new(context);
+	pango_layout_set_font_description(layout, blk->bar->desc);
+
+#ifdef YA_DYN_COL
+	//Start drawing text at strbuf member, where !Y COLORS Y! config ends
+	if (!(blk->attr & BLKA_MARKUP_PANGO))
+		pango_layout_set_text(layout, blk->strbuf, strlen(blk->strbuf));
+	else
+		pango_layout_set_markup(layout, blk->strbuf, strlen(blk->strbuf));
+#else
+	if (!(blk->attr & BLKA_MARKUP_PANGO))
+		pango_layout_set_text(layout, blk->buf, strlen(blk->buf));
+	else
+		pango_layout_set_markup(layout, blk->buf, strlen(blk->buf));
+#endif
+	//pango_layout_set_alignment(layout, blk->justify);
+	cairo_set_operator(cr, CAIRO_OPERATOR_SOURCE);
+	pango_layout_set_auto_dir(layout, false);
+
+	//pango_layout_set_height(layout, blk->bar->height);
+	int ht;
+	//Get the width that text can be drawn comfortably and put it in curwidth member.
+	pango_layout_get_pixel_size(layout, &blk->curwidth, &ht);
+	cairo_surface_flush(surface);
+	xcb_flush(ya.c);
+	
+	g_object_unref(layout);
+	g_object_unref(context);
+	cairo_destroy(cr);
+	cairo_surface_destroy(surface);
+}
+
+/*
+ * Redraw the bar for the specific area to be redrawn.
+ */
+static inline void ya_draw_bar_var(ya_block_t *blk) {
+	int start =0, end=0;
+	int scrw = blk->bar->mon->pos.width;
+	switch(blk->align) {
+		case A_LEFT:
+			start = blk->shift;
+			if(blk->bar->curblk[1]) {
+				end = (scrw - blk->bar->occupied_width[1])/2;
+			}
+			else if (blk->bar->curblk[2]) {
+				end = scrw - blk->bar->occupied_width[2];
+			}
+			else {
+				end = scrw;
+			}
+			break;
+		case A_CENTER:
+			start = (scrw - blk->bar->occupied_width[1])/2;
+			end = (scrw + blk->bar->occupied_width[1])/2;
+			break;
+		case A_RIGHT:
+			if(blk->bar->curblk[1]) {
+				start = (scrw + blk->bar->occupied_width[1])/2;
+			}
+			else if (blk->bar->curblk[0]) {
+				start = blk->bar->occupied_width[0];
+			}
+			else
+				start = 0;
+			end = blk->shift + blk->width;
+			break;
+	}
+	xcb_poly_fill_rectangle(ya.c, blk->bar->win,
+			blk->bar->gc, 1, 
+			(const xcb_rectangle_t[]) { {start,0, end-start, blk->bar->height} });
+	//fprintf(stderr, "WIDTH DRWN=%d\n", end-start);
+}
 /*
  *Calculate the max allowed width for the variable-sized block that does not minimize
  *area from the neighboring alignment.
  */
-void ya_set_width_resetup(ya_block_t *blk) {
+static inline void ya_set_width_resetup(ya_block_t *blk) {
 	int width_init = blk->curwidth;
 	int scrw = blk->bar->mon->pos.width;
 	//maxw is used to deduce the maximum allowed width for the block without minimizing
@@ -598,23 +596,9 @@ void ya_set_width_resetup(ya_block_t *blk) {
 }
 
 /*
- *Calculate the correct shift of blocks and then redraw the bar.
+ * Equivalent to ya_draw_pango_text() but also redraw all
+ * other necessary blocks in the designated alignment of the current block
  */
-void ya_resetup_bar(ya_block_t *blk) {
-	//Lock the bar!
-	//occupied_width member will be modified after calculating the maximum
-	//allowed size of block width using ya_set_width_resetup()
-#ifdef YA_MUTEX
-	pthread_mutex_lock(&blk->bar->mutex);
-#endif 
-	ya_set_width_resetup(blk);
-	ya_redraw_bar(blk->bar);
-#ifdef YA_MUTEX
-	pthread_mutex_unlock(&blk->bar->mutex);
-#endif
-}
-
-
 void ya_draw_text_var_width(ya_block_t * blk) {
 	//pthread_mutex_lock(&blk->bar->mutex);
 	ya_get_text_max_width(blk);
@@ -644,55 +628,55 @@ void ya_draw_text_var_width(ya_block_t * blk) {
 	//pthread_mutex_unlock(&blk->bar->mutex);
 }
 
-void ya_draw_bar_var(ya_block_t *blk) {
-	int start =0, end=0;
-	int scrw = blk->bar->mon->pos.width;
-	switch(blk->align) {
-		case A_LEFT:
-			start = blk->shift;
-			if(blk->bar->curblk[1]) {
-				end = (scrw - blk->bar->occupied_width[1])/2;
-			}
-			else if (blk->bar->curblk[2]) {
-				end = scrw - blk->bar->occupied_width[2];
-			}
-			else {
-				end = scrw;
-			}
-			break;
-		case A_CENTER:
-			start = (scrw - blk->bar->occupied_width[1])/2;
-			end = (scrw + blk->bar->occupied_width[1])/2;
-			break;
-		case A_RIGHT:
-			if(blk->bar->curblk[1]) {
-				start = (scrw + blk->bar->occupied_width[1])/2;
-			}
-			else if (blk->bar->curblk[0]) {
-				start = blk->bar->occupied_width[0];
-			}
-			else
-				start = 0;
-			end = blk->shift + blk->width;
-			break;
-	}
-	xcb_poly_fill_rectangle(ya.c, blk->bar->win,
-			blk->bar->gc, 1, 
-			(const xcb_rectangle_t[]) { {start,0, end-start, blk->bar->height} });
-	fprintf(stderr, "WIDTH DRWN=%d\n", end-start);
-}
+#endif //YA_VAR_WIDTH
 
-void ya_get_text_max_width(ya_block_t *blk) {
-	cairo_surface_t *surface = cairo_xcb_surface_create(ya.c,
-			blk->pixmap, ya.visualtype, 
-			blk->width, blk->bar->height);
+/*
+ * Here is how the text buffer of a block is rendered on the screen
+ */
+void ya_draw_pango_text(struct ya_block *blk) {
+	//fprintf(stderr, "001=%s\n", blk->name);
+#ifdef YA_MUTEX
+	pthread_mutex_lock(&blk->bar->mutex);
+#endif
+	if((blk->bar->attr & BARA_REDRAW)) {
+		//fprintf(stderr, "E: %s\n", blk->name);
+		ya_inherit_bar_bgcol(blk);
+	}
+	//First override the block area with its background color in order to not draw the new text above the old one.
+	xcb_poly_fill_rectangle(ya.c, blk->pixmap, blk->gc, 1, (const xcb_rectangle_t[]) { {0,0,blk->width, blk->bar->height} });
+	cairo_surface_t *surface = cairo_xcb_surface_create(ya.c, blk->pixmap, ya.visualtype, blk->width, blk->bar->height);
 	cairo_t *cr = cairo_create(surface);
+#ifdef YA_ICON
+	if((blk->attr & BLKA_ICON)) {
+		cairo_surface_t *iconsrf = ya_draw_graphics(blk);
+		if (iconsrf) {
+			//Copy a newly created temporary surface that contains the scaled image to our surface and then 
+			//destroy that temporary surface and return to our normal cairo scale.
+			cairo_scale(cr, blk->img->scale_w, blk->img->scale_h);
+			cairo_set_source_surface(cr, iconsrf,
+					(double)(blk->img->x)/(blk->img->scale_w),
+					(double)(blk->img->y)/(blk->img->scale_h));
+			cairo_paint(cr);
+			cairo_surface_destroy(iconsrf);
+			cairo_scale(cr, 1.0/(blk->img->scale_w), 1.0/(blk->img->scale_h));
+		}
+	}
+#endif //YA_ICON
 	PangoContext *context = pango_cairo_create_context(cr);
 	PangoLayout *layout = pango_layout_new(context);
 	pango_layout_set_font_description(layout, blk->bar->desc);
 
+	cairo_set_source_rgba(cr, 
+			GET_RED(blk->fgcolor), 
+			GET_BLUE(blk->fgcolor),
+			GET_GREEN(blk->fgcolor),
+			GET_ALPHA(blk->fgcolor));
+
+	//fprintf(stderr, "010=%s\n", blk->name);
 #ifdef YA_DYN_COL
-	//Start drawing text at strbuf member, where !Y COLORS Y! config ends
+	//Start drawing text at strbuf member, where !Y COLORS Y! config ends.
+	//strbuf member is initialized to buf member by default. So it will work
+	//well with internal blocks.
 	if (!(blk->attr & BLKA_MARKUP_PANGO))
 		pango_layout_set_text(layout, blk->strbuf, strlen(blk->strbuf));
 	else
@@ -703,20 +687,55 @@ void ya_get_text_max_width(ya_block_t *blk) {
 	else
 		pango_layout_set_markup(layout, blk->buf, strlen(blk->buf));
 #endif
-	//pango_layout_set_alignment(layout, blk->justify);
+	//fprintf(stderr, "020=%s\n", blk->name);
+	pango_layout_set_alignment(layout, blk->justify);
 	cairo_set_operator(cr, CAIRO_OPERATOR_SOURCE);
 	pango_layout_set_auto_dir(layout, false);
 
-	//pango_layout_set_height(layout, blk->bar->height);
-	int ht;
-	//Get the width that text can be drawn comfortably and put it in curwidth member.
-	pango_layout_get_pixel_size(layout, &blk->curwidth, &ht);
+	pango_layout_set_height(layout, blk->bar->height);
+
+	int wd, ht;
+	pango_layout_get_pixel_size(layout, &wd, &ht);
+
+	pango_layout_set_width(layout, blk->width * PANGO_SCALE);
+	pango_layout_set_wrap(layout, PANGO_WRAP_WORD);
+	pango_layout_set_ellipsize(layout, PANGO_ELLIPSIZE_END);
+	int offset = (blk->bar->height - ht)/2;
+	cairo_move_to(cr, 0, offset);
+	pango_cairo_show_layout(cr, layout);
+	cairo_move_to(cr, 0, offset);
+
+	//Draw overline if defined
+	if(blk->attr & BLKA_OVERLINE) {
+		cairo_set_source_rgba(cr, 
+			GET_RED(blk->olcolor), 
+			GET_BLUE(blk->olcolor),
+			GET_GREEN(blk->olcolor),
+			GET_ALPHA(blk->olcolor));
+		cairo_rectangle(cr, 0, 0, blk->width, blk->bar->olsize);
+		cairo_fill(cr);
+	}
+	//Draw underline if defined
+	if(blk->attr & BLKA_UNDERLINE) {
+		cairo_set_source_rgba(cr, 
+			GET_RED(blk->ulcolor), 
+			GET_BLUE(blk->ulcolor),
+			GET_GREEN(blk->ulcolor),
+			GET_ALPHA(blk->ulcolor));
+		cairo_rectangle(cr, 0, blk->bar->height - blk->bar->ulsize, blk->width, blk->bar->ulsize);
+		cairo_fill(cr);
+	}
+
 	cairo_surface_flush(surface);
+	xcb_copy_area(ya.c, blk->pixmap, blk->bar->win, blk->gc, 0,0,blk->shift, 0, blk->width, blk->bar->height);
 	xcb_flush(ya.c);
+#ifdef YA_MUTEX
+	pthread_mutex_unlock(&blk->bar->mutex);
+#endif
 	
 	g_object_unref(layout);
 	g_object_unref(context);
 	cairo_destroy(cr);
 	cairo_surface_destroy(surface);
 }
-#endif //YA_VAR_WIDTH
+
