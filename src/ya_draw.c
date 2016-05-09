@@ -128,7 +128,7 @@ void ya_create_block(ya_block_t *blk) {
 			blk->bar->win, blk_width, blk->bar->height);
 	blk->gc = xcb_generate_id(ya.c);
 	xcb_create_gc(ya.c, blk->gc, blk->pixmap, XCB_GC_FOREGROUND, (const uint32_t[]){blk->bgcolor});
-	//ya_inherit_bar_bgcol(blk);
+	ya_inherit_bar_bgcol(blk);
 }
 
 /*
@@ -173,8 +173,8 @@ void ya_create_bar(ya_bar_t * bar) {
 #ifdef YA_NOWIN_COL
 	bar->gc = xcb_generate_id(ya.c);
 	xcb_create_gc(ya.c, bar->gc, bar->win, XCB_GC_FOREGROUND, (const uint32_t[]){bar->bgcolor});
-#endif //YA_NOWIN_COL
 	ya_draw_bar_curwin(bar);
+#endif //YA_NOWIN_COL
 	ya_setup_ewmh(bar);
 }
 
@@ -199,8 +199,14 @@ xcb_visualtype_t * ya_get_visualtype() {
  * Here is how the text buffer of a block is rendered on the screen
  */
 void ya_draw_pango_text(struct ya_block *blk) {
-	if((blk->bar->attr & BARA_REDRAW))
+	//fprintf(stderr, "001=%s\n", blk->name);
+#ifdef YA_MUTEX
+	pthread_mutex_lock(&blk->bar->mutex);
+#endif
+	if((blk->bar->attr & BARA_REDRAW)) {
+		//fprintf(stderr, "E: %s\n", blk->name);
 		ya_inherit_bar_bgcol(blk);
+	}
 	//First override the block area with its background color in order to not draw the new text above the old one.
 	xcb_poly_fill_rectangle(ya.c, blk->pixmap, blk->gc, 1, (const xcb_rectangle_t[]) { {0,0,blk->width, blk->bar->height} });
 	cairo_surface_t *surface = cairo_xcb_surface_create(ya.c, blk->pixmap, ya.visualtype, blk->width, blk->bar->height);
@@ -231,8 +237,11 @@ void ya_draw_pango_text(struct ya_block *blk) {
 			GET_GREEN(blk->fgcolor),
 			GET_ALPHA(blk->fgcolor));
 
+	//fprintf(stderr, "010=%s\n", blk->name);
 #ifdef YA_DYN_COL
-	//Start drawing text at strbuf member, where !Y COLORS Y! config ends
+	//Start drawing text at strbuf member, where !Y COLORS Y! config ends.
+	//strbuf member is initialized to buf member by default. So it will work
+	//well with internal blocks.
 	if (!(blk->attr & BLKA_MARKUP_PANGO))
 		pango_layout_set_text(layout, blk->strbuf, strlen(blk->strbuf));
 	else
@@ -243,22 +252,15 @@ void ya_draw_pango_text(struct ya_block *blk) {
 	else
 		pango_layout_set_markup(layout, blk->buf, strlen(blk->buf));
 #endif
+	//fprintf(stderr, "020=%s\n", blk->name);
 	pango_layout_set_alignment(layout, blk->justify);
 	cairo_set_operator(cr, CAIRO_OPERATOR_SOURCE);
 	pango_layout_set_auto_dir(layout, false);
 
 	pango_layout_set_height(layout, blk->bar->height);
-/*
-		cairo_destroy(cr);
-		cairo_surface_destroy(surface);
-		ya_resetup_bar(blk);
-		return;
-	}
-#else
-*/
+
 	int wd, ht;
 	pango_layout_get_pixel_size(layout, &wd, &ht);
-//#endif 
 
 	pango_layout_set_width(layout, blk->width * PANGO_SCALE);
 	pango_layout_set_wrap(layout, PANGO_WRAP_WORD);
@@ -292,6 +294,9 @@ void ya_draw_pango_text(struct ya_block *blk) {
 	cairo_surface_flush(surface);
 	xcb_copy_area(ya.c, blk->pixmap, blk->bar->win, blk->gc, 0,0,blk->shift, 0, blk->width, blk->bar->height);
 	xcb_flush(ya.c);
+#ifdef YA_MUTEX
+	pthread_mutex_unlock(&blk->bar->mutex);
+#endif
 	
 	g_object_unref(layout);
 	g_object_unref(context);
@@ -399,8 +404,9 @@ void ya_buf_color_parse(ya_block_t *blk) {
  */
 inline void ya_get_cur_window_title(ya_block_t * blk) {
 	xcb_ewmh_get_utf8_strings_reply_t reply;
-	if(ya.curwin == XCB_NONE)
+	if(ya.curwin == XCB_NONE) {
 		blk->buf[0] = '\0';
+	}
 	else {
 		xcb_get_property_cookie_t wm_ck, wmvis_ck;
 		wm_ck = xcb_ewmh_get_wm_name(ya.ewmh, ya.curwin);
@@ -495,19 +501,20 @@ cairo_surface_t * ya_draw_graphics(ya_block_t *blk) {
 inline void ya_inherit_bar_bgcol(ya_block_t *blk) {
 	//if (ya.curwin == ya.lstwin)
 	//	return;
-	uint32_t col = 0x0;
+#ifdef YA_DYN_COL
 	//If there is no current window, set color to bgcolor_none
 	//Otherwise set it to the normal bar background color
+	uint32_t col = 0x0;
 	if(ya.curwin == XCB_NONE)
 		col = blk->bar->bgcolor_none;
 	else
 		col = blk->bar->bgcolor;
-#ifdef YA_DYN_COL
 	if(!(blk->attr & BLKA_BGCOLOR)) {
 		if((!(blk->attr & BLKA_DIRTY_COL))) {
 			blk->bgcolor = col;
 			blk->bgcolor_old = col;
 			xcb_change_gc(ya.c, blk->gc, XCB_GC_FOREGROUND, (const uint32_t[]){col});
+			fprintf(stderr, "INH %s\n", blk->name);
 		}
 		else {
 			blk->bgcolor_old = col;
@@ -515,8 +522,8 @@ inline void ya_inherit_bar_bgcol(ya_block_t *blk) {
 	}
 #else 
 	if(!(blk->attr & BLKA_BGCOLOR)) {
-		blk->bgcolor = col;
-		xcb_change_gc(ya.c, blk->gc, XCB_GC_FOREGROUND, (const uint32_t[]){col});
+		blk->bgcolor = blk->bar->bgcolor;
+		xcb_change_gc(ya.c, blk->gc, XCB_GC_FOREGROUND, (const uint32_t[]){blk->bgcolor});
 	}
 #endif //YA_DYN_COL
 }
@@ -599,6 +606,8 @@ void ya_set_width_resetup(ya_block_t *blk) {
 	blk->curwidth = GET_MIN(width_init, maxw);
 	blk->bar->occupied_width[blk->align] = blk->curwidth + othw;
 
+	//Now, we adjust the shift of every other block in the designated alignment to its new
+	//value depending on the new width of the new width of our variable-width block.
 	int delta = blk->curwidth - blk->width;
 	switch(blk->align) {
 		case A_LEFT:
@@ -641,6 +650,7 @@ void ya_resetup_bar(ya_block_t *blk) {
 
 
 void ya_draw_text_var_width(ya_block_t * blk) {
+	//pthread_mutex_lock(&blk->bar->mutex);
 	ya_get_text_max_width(blk);
 	if (blk->curwidth == blk->width) {
 		ya_draw_pango_text(blk);
@@ -665,6 +675,7 @@ void ya_draw_text_var_width(ya_block_t * blk) {
 			}
 			break;
 	}
+	//pthread_mutex_unlock(&blk->bar->mutex);
 }
 
 void ya_draw_bar_var(ya_block_t *blk) {
@@ -702,6 +713,7 @@ void ya_draw_bar_var(ya_block_t *blk) {
 	xcb_poly_fill_rectangle(ya.c, blk->bar->win,
 			blk->bar->gc, 1, 
 			(const xcb_rectangle_t[]) { {start,0, end-start, blk->bar->height} });
+	fprintf(stderr, "WIDTH DRWN=%d\n", end-start);
 }
 
 void ya_get_text_max_width(ya_block_t *blk) {

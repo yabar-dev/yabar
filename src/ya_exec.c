@@ -48,17 +48,17 @@ inline static void ya_exec_intern_ewmh_blk(ya_block_t *blk) {
 	switch(blk->internal->index) {
 		case YA_INT_TITLE: {
 			ya_get_cur_window_title(blk);
-#ifdef YA_MUTEX
-			pthread_mutex_lock(&blk->mutex);
-#endif
+//#ifdef YA_MUTEX
+//			pthread_mutex_lock(&blk->mutex);
+//#endif
 #ifdef YA_VAR_WIDTH
 			DRAW_TEXT(blk);
 #else
 			ya_draw_pango_text(blk);
 #endif //YA_VAR_WIDTH
-#ifdef YA_MUTEX
-			pthread_mutex_unlock(&blk->mutex);
-#endif
+//#ifdef YA_MUTEX
+//			pthread_mutex_unlock(&blk->mutex);
+//#endif
 			break;
 		}
 		case YA_INT_WORKSPACE: {
@@ -71,17 +71,17 @@ inline static void ya_exec_intern_ewmh_blk(ya_block_t *blk) {
 				ya_copy_buf_from_index(blk, ya.curws);
 			}
 
-#ifdef YA_MUTEX
-			pthread_mutex_lock(&blk->mutex);
-#endif
+//#ifdef YA_MUTEX
+//			pthread_mutex_lock(&blk->mutex);
+//#endif
 #ifdef YA_VAR_WIDTH
 			DRAW_TEXT(blk);
 #else
 			ya_draw_pango_text(blk);
 #endif //YA_VAR_WIDTH
-#ifdef YA_MUTEX
-			pthread_mutex_unlock(&blk->mutex);
-#endif
+//#ifdef YA_MUTEX
+//			pthread_mutex_unlock(&blk->mutex);
+//#endif
 			break;
 		}
 	}
@@ -113,17 +113,17 @@ static void ya_exec_redir_once(ya_block_t *blk) {
 		ya_buf_color_parse(blk);
 #endif
 
-#ifdef YA_MUTEX
-			pthread_mutex_lock(&blk->mutex);
-#endif
+//#ifdef YA_MUTEX
+//			pthread_mutex_lock(&blk->mutex);
+//#endif
 #ifdef YA_VAR_WIDTH
 			DRAW_TEXT(blk);
 #else
 			ya_draw_pango_text(blk);
 #endif //YA_VAR_WIDTH
-#ifdef YA_MUTEX
-			pthread_mutex_unlock(&blk->mutex);
-#endif
+//#ifdef YA_MUTEX
+//			pthread_mutex_unlock(&blk->mutex);
+//#endif
 	}
 	//Cleanup and exit thread
 	pthread_detach(blk->thread);
@@ -160,17 +160,17 @@ static void ya_exec_redir_period(ya_block_t *blk) {
 			ya_buf_color_parse(blk);
 #endif
 
-#ifdef YA_MUTEX
-			pthread_mutex_lock(&blk->mutex);
-#endif
+//#ifdef YA_MUTEX
+//			pthread_mutex_lock(&blk->mutex);
+//#endif
 #ifdef YA_VAR_WIDTH
 			DRAW_TEXT(blk);
 #else
 			ya_draw_pango_text(blk);
 #endif //YA_VAR_WIDTH
-#ifdef YA_MUTEX
-			pthread_mutex_unlock(&blk->mutex);
-#endif
+//#ifdef YA_MUTEX
+//			pthread_mutex_unlock(&blk->mutex);
+//#endif
 		}
 		sleep(blk->sleep);
 	}
@@ -209,17 +209,17 @@ static void ya_exec_redir_persist(ya_block_t *blk) {
 			ya_buf_color_parse(blk);
 #endif
 
-#ifdef YA_MUTEX
-			pthread_mutex_lock(&blk->mutex);
-#endif
+//#ifdef YA_MUTEX
+//			pthread_mutex_lock(&blk->mutex);
+//#endif
 #ifdef YA_VAR_WIDTH
 			DRAW_TEXT(blk);
 #else
 			ya_draw_pango_text(blk);
 #endif //YA_VAR_WIDTH
-#ifdef YA_MUTEX
-			pthread_mutex_unlock(&blk->mutex);
-#endif
+//#ifdef YA_MUTEX
+//			pthread_mutex_unlock(&blk->mutex);
+//#endif
 		}
 	}
 }

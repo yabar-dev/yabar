@@ -359,6 +359,9 @@ static void ya_setup_bar(config_setting_t * set) {
 					dstblk = calloc(1, sizeof(ya_block_t));
 					ya_copy_blk_members(dstblk, srcblk);
 					dstblk->buf = calloc(1, dstblk->bufsize);
+#ifdef YA_NOWIN_COL
+					dstblk->strbuf = dstblk->buf;
+#endif
 					ya_create_block(dstblk);
 				}
 			}
@@ -594,9 +597,6 @@ skip_type:
 		blk->bgcolor = retint | 0xff000000;
 		blk->attr |= BLKA_BGCOLOR;
 	}
-	//If not background rgb or argb not defined, inherit bar bgcolor
-	if(!(blk->attr & BLKA_BGCOLOR))
-		blk->bgcolor = blk->bar->bgcolor;
 	retcnf = config_setting_lookup_int(set, "foreground-color-argb", &retint);
 	if(retcnf == CONFIG_TRUE) {
 		blk->fgcolor = retint;
