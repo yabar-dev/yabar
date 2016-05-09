@@ -333,7 +333,7 @@ void ya_create_block(ya_block_t *blk);
 
 void ya_buf_color_parse(ya_block_t *blk);
 void ya_draw_pango_text(struct ya_block *blk);
-void ya_exec_button(ya_block_t * blk, xcb_button_press_event_t *eb);
+//void ya_exec_button(ya_block_t * blk, xcb_button_press_event_t *eb);
 
 ya_block_t * ya_get_blk_from_event( xcb_button_press_event_t *eb);
 

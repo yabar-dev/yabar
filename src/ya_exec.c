@@ -461,7 +461,7 @@ void ya_execute() {
 /*
  * Invoke process on button press.
  */
-inline void ya_exec_button(ya_block_t * blk, xcb_button_press_event_t *eb) {
+static inline void ya_exec_button(ya_block_t * blk, xcb_button_press_event_t *eb) {
 	if (fork() == 0) {
 #ifdef YA_ENV_VARS
 		//Setup environment variables.
@@ -484,6 +484,40 @@ inline void ya_exec_button(ya_block_t * blk, xcb_button_press_event_t *eb) {
 	}
 	else
 		wait(NULL);
+}
+
+/*
+ * Handle button press event, called from ya_main after every button press event.
+ */
+void ya_handle_button( xcb_button_press_event_t *eb) {
+	ya_bar_t *curbar = ya.curbar;
+	ya_block_t *curblk;
+	for (;curbar; curbar = curbar->next_bar) {
+		if ( curbar->win == eb->event) {
+			for(int align = 0; align < 3; align++) {
+				for(curblk = curbar->curblk[align]; curblk; curblk = curblk->next_blk) {
+					if ((curblk->shift <= eb->event_x) && ((curblk->shift + curblk->width) >= eb->event_x)) {
+						if(curblk->button_cmd[eb->detail-1]) {
+							ya_exec_button(curblk, eb);
+							return;
+						}
+					}
+				}
+			}	
+			//If block button not found or not defined, execute button for bar(if defined).
+			//We reach this path only if function has not yet returned because no blk has been found.
+			if(curbar->button_cmd[eb->detail-1]) {
+				if(fork()==0) {
+					execl(yashell, yashell, "-c", curbar->button_cmd[eb->detail-1], (char *) NULL);
+					_exit(EXIT_SUCCESS);
+				}
+				else {
+					wait(NULL);
+				}
+			}
+			return;
+		}
+	}
 }
 
 #ifdef YA_INTERNAL_EWMH
