@@ -612,6 +612,7 @@ void ya_draw_text_var_width(ya_block_t * blk) {
 		case A_LEFT:
 			for(ya_block_t *curblk = blk; curblk; curblk = curblk->next_blk) {
 				ya_draw_pango_text(curblk);
+				//fprintf(stderr, "BLKK= %s\n", curblk->name);
 			}
 			break;
 		case A_CENTER:
@@ -639,7 +640,7 @@ void ya_draw_pango_text(struct ya_block *blk) {
 	pthread_mutex_lock(&blk->bar->mutex);
 #endif
 	if((blk->bar->attr & BARA_REDRAW)) {
-		//fprintf(stderr, "E: %s\n", blk->name);
+		fprintf(stderr, "E: %s\n", blk->name);
 		ya_inherit_bar_bgcol(blk);
 	}
 	//First override the block area with its background color in order to not draw the new text above the old one.

@@ -411,7 +411,7 @@ void ya_init() {
 	xcb_ewmh_get_active_window_reply(ya.ewmh, prop_ck, &ya.curwin, NULL);
 	xcb_get_property_cookie_t ws_ck = xcb_ewmh_get_current_desktop(ya.ewmh, 0);
 	xcb_ewmh_get_current_desktop_reply(ya.ewmh, ws_ck, &ya.curws, NULL);
-	fprintf(stderr, "WINNN = %x DESK= %x\n", ya.curwin, ya.curws);
+	//fprintf(stderr, "WINNN = %x DESK= %x\n", ya.curwin, ya.curws);
 #endif //YA_INTERNAL_EWMH
 
 	ya_config_parse();
@@ -428,7 +428,7 @@ void ya_execute() {
 		for(;ya.ewmh_blk->prev_ewblk; ya.ewmh_blk = ya.ewmh_blk->prev_ewblk);
 		ya_ewmh_blk *ewmh_blk = ya.ewmh_blk;
 		for(;ewmh_blk; ewmh_blk = ewmh_blk->next_ewblk) {
-			fprintf(stderr, "H %s\n", ewmh_blk->blk->name);
+			//fprintf(stderr, "H %s\n", ewmh_blk->blk->name);
 			ya_exec_intern_ewmh_blk(ewmh_blk->blk);
 		}
 	}
