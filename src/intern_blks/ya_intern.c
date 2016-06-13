@@ -61,6 +61,9 @@ void ya_int_date(ya_block_t * blk) {
 	char *startstr = blk->buf;
 	size_t prflen=0,suflen=0;
 	ya_setup_prefix_suffix(blk, &prflen, &suflen, &startstr);
+	if(blk->internal->option[0]==NULL) {
+		blk->internal->option[0] = "%c";
+	}
 	while(1) {
 		time(&rawtime);
 		ya_tm = localtime(&rawtime);
