@@ -409,14 +409,19 @@ inline void ya_get_cur_window_title(ya_block_t * blk) {
 		xcb_get_property_cookie_t wm_ck, wmvis_ck;
 		wm_ck = xcb_ewmh_get_wm_name(ya.ewmh, ya.curwin);
 		wmvis_ck = xcb_ewmh_get_wm_visible_name(ya.ewmh, ya.curwin);
-                if (xcb_ewmh_get_wm_name_reply(ya.ewmh, wm_ck, &reply, NULL) == 1) {
+        if (xcb_ewmh_get_wm_name_reply(ya.ewmh, wm_ck, &reply, NULL) == 1) {
 			if (xcb_ewmh_get_wm_visible_name_reply(ya.ewmh, wmvis_ck, &reply, NULL) == 1) {
 				int len = GET_MIN(blk->bufsize, reply.strings_len);
 				strncpy(blk->buf, reply.strings, len);
 				blk->buf[len]='\0';
 			}
+			else {
+				int len = GET_MIN(blk->bufsize, reply.strings_len);
+				strncpy(blk->buf, reply.strings, len);
+				blk->buf[len]='\0';
+			}
 			xcb_ewmh_get_utf8_strings_reply_wipe(&reply);
-                }
+        }
 	}
 
 }
