@@ -61,6 +61,9 @@ void ya_int_date(ya_block_t * blk) {
 	char *startstr = blk->buf;
 	size_t prflen=0,suflen=0;
 	ya_setup_prefix_suffix(blk, &prflen, &suflen, &startstr);
+	if(blk->internal->option[0]==NULL) {
+		blk->internal->option[0] = "%c";
+	}
 	while(1) {
 		time(&rawtime);
 		ya_tm = localtime(&rawtime);
@@ -113,13 +116,13 @@ void ya_int_thermal(ya_block_t *blk) {
 	snprintf(fpath, 128, "/sys/class/thermal/%s/temp", blk->internal->option[0]);
 
 	if((blk->internal->option[1]==NULL) ||
-			(sscanf(blk->internal->option[1], "%d %u %u", &crttemp, &crtfg, &crtbg)!=3)) {
+			(sscanf(blk->internal->option[1], "%d %x %x", &crttemp, &crtfg, &crtbg)!=3)) {
 		crttemp = 70;
 		crtbg = 0xFFED303C;
 		crtfg = blk->fgcolor;
 	}
 	if((blk->internal->option[2]==NULL) ||
-			(sscanf(blk->internal->option[2], "%d %u %u", &wrntemp, &wrnfg, &wrnbg)!=3)) {
+			(sscanf(blk->internal->option[2], "%d %x %x", &wrntemp, &wrnfg, &wrnbg)!=3)) {
 		wrntemp = 58;
 		wrnbg = 0xFFF4A345;
 		wrnfg = blk->fgcolor;

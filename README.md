@@ -39,14 +39,14 @@ You can install yabar as follows:
 		$ make
 		$ sudo make install
 
-If you use libconfig 1.4.x (still used in Ubuntu 14.04 and Debian), please type `export CPPFLAGS=-DOLD_LIBCONFIG` then build using `make` as usual. 
+If you use libconfig 1.4.x (still used in Ubuntu 14.04 and Debian), please type `export CPPFLAGS=-DOLD_LIBCONFIG` then build using `make` as usual.
 
 ## Configuration
 
 Yabar currently by default accepts configuration from the config file `~/.config/yabar/yabar.conf` or using `yabar -c [CONFIG_FILE]`. The config file should like something like this:
 
     bar-list: ["bar1", "bar2", ...];
-    
+
     bar1: {
         //bar-specific options//
         block-list: ["block1", "block2", ...];
@@ -77,11 +77,11 @@ Each bar can have its font, position (currently only top and bottom), background
 
         gap-horizontal: 20;
         gap-vertical: 5;
-    
+
 * Height: Default is 20 pixels. Example:
 
         height: 25;
-        
+
 * Width: The default bar width is `screen size - 2 * horizontal gap`. However, if this option is used, the bar starts at `horizontal gap` and ends at `horizontal gap + width`. Example:
 
 		width: 800;
@@ -116,10 +116,10 @@ Each bar can have its font, position (currently only top and bottom), background
 		inherit: "bar1";
 
 	You can also inherit a bar with not only its bar-specific options, but also with its blocks and their block-specific options as well using the `inherit-all` bar-specific option. Example:
-		
+
 		inherit-all: "bar1";
-	
-* Button commands: Yabar already supports mouse button commands for each block (See [block-specific options](https://github.com/geommer/yabar#block-specific-options)). Moreover, yabar seeks to make the entire bar clickable even if the pressed area does not belong to any block or the corresponding button command for that block is not defined. Example: 
+
+* Button commands: Yabar already supports mouse button commands for each block (See [block-specific options](https://github.com/geommer/yabar#block-specific-options)). Moreover, yabar seeks to make the entire bar clickable even if the pressed area does not belong to any block or the corresponding button command for that block is not defined. Example:
 
 		command-button4: "xbacklight -inc 1";
 		command-button5: "xbacklight -dec 1";
@@ -186,7 +186,7 @@ Each block can have its command/script, background, foreground (i.e. font), unde
 
 		image: "/usr/share/icons/Numix/16/apps/google.svg";
 		image-shift-x: 2; #integer value
-		image-shift-y: 1; #integer value 
+		image-shift-y: 1; #integer value
 		image-scale-width: 0.4; #float value
 		image-scale-height: 0.4; #float value
 
@@ -196,7 +196,7 @@ Each block can have its command/script, background, foreground (i.e. font), unde
 
 ### Dynamic colors for blocks
 
-You can change block colors(background, foreground, underline and overline) within runtime. Along with pango markup format, you can fully control how a block looks throughout yabar's session. 
+You can change block colors(background, foreground, underline and overline) within runtime. Along with pango markup format, you can fully control how a block looks throughout yabar's session.
 
 If you wish to change one or more of the 4 color types, you must begin your string-to-be-drawn (i.e. the output string to stdout by your shell script) with `!Y FORMAT Y!`. the `FORMAT` statement should contain contain the color type (`BG` or `bg` for background, `FG` or `fg` for foreground, `U` or `u` for underline and `O` or `o` for overline). The color must be in hex AARRGGBB (So if you want to add an rgb color just make it `FFxxxxxx`). Examples:
 
@@ -217,12 +217,12 @@ Yabar sets a handful of environment variables before executing your commands/scr
 
 ## Internal blocks
 
-Yabar has several internal blocks developed in plain c. This feature is optional and can be disabled before building the code using the compilation conditional flag `-DYA_INTERNAL` in `Makefile`. Yabar scans the string value in the `exec` entry to check whether it is a reserved internal block or a normal command/script. 
+Yabar has several internal blocks developed in plain c. This feature is optional and can be disabled before building the code using the compilation conditional flag `-DYA_INTERNAL` in `Makefile`. Yabar scans the string value in the `exec` entry to check whether it is a reserved internal block or a normal command/script.
 Internal blocks have 5 additional block-specific options:
 
 		internal-prefix  # Inject a string (usually a font icon) before the output string
 		internal-suffix  # Inject a string (usually a font icon) after the output string
-		internal-option1 # block-specific  
+		internal-option1 # block-specific
 		internal-option2 # block-specific
 		internal-option3 # block-specific
 		internal-spacing # takes a true or false value, used to add space pads to prevent uncomfortable numerical values from moving (only useful for monospace fonts!)
@@ -255,6 +255,8 @@ Yabar has a growing set of useful blocks. You can try out the sampe config locat
 
 		exec: "YABAR_THERMAL";
 		internal-option1: "thermal_zone0"; #i.e. Replace `NAME` with your corresponding name
+		internal-option2: "70 0xFFFFFFFF 0xFFED303C"; #Critical Temperature, fg, bg
+		internal-option3: "58 0xFFFFFFFF 0xFFF4A345"; #Warning Temperature, fg, bg
 		interval: 1;
 
 * Brightness: It checks out the brightness value in the file `/sys/class/backlight/NAME/brightness`. Example:
@@ -275,7 +277,7 @@ Yabar has a growing set of useful blocks. You can try out the sampe config locat
 		exec: "YABAR_MEMORY";
 		interval: 1;
 
-* CPU total load: It checks out the file `/proc/stat` and then computes the total load percentage: Example: 
+* CPU total load: It checks out the file `/proc/stat` and then computes the total load percentage: Example:
 
 		exec: "YABAR_CPU";
 		interval: 2;
@@ -284,7 +286,7 @@ Yabar has a growing set of useful blocks. You can try out the sampe config locat
 		internal-spacing: true;
 
 * Disk IO activity: It checks out the file `/sys/class/block/NAME/stat` and then computes the read and write rates. Example:
-		
+
 		exec: "YABAR_DISKIO";
 		internal-option1: "sda"; #i.e. Replace NAME with your corresponding name
 		internal-option2: " "; #Two Strings (usually 2 font icons) to be injected before down/up values
