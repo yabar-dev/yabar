@@ -25,6 +25,6 @@ uninstall:
 	rm -f "$(DESTDIR)$(BINPREFIX)/$(PROGRAM)"
 	rm -f "$(DESTDIR)$(MANPREFIX)"/man1/yabar.1
 clean:
-	rm -f src/*.o $(PROGRAM)
+	rm -f src/*.o src/intern_blks/*.o $(PROGRAM)
 
 .PHONY: all install uninstall clean
