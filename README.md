@@ -30,7 +30,10 @@ Yabar is a modern and lightweight status bar that is intended to be used along w
 A Yabar session should contain one or more *bars* within the same session. Each bar should contain one or more *blocks*. Each block should display some useful info to the user (free memory, CPU temperature, etc...).
 
 ## Installation
-Yabar initially requires libconfig, cairo and pango. The feature `DYA_INTERNAL_EWMH` in `Makefile` additionaly xcb-ewmh (or xcb-util-wm in some distros) and the feature `-DYA_ICON` requires gdk-pixbuf. These dependencies can be installed through your distribution's package manager, such as `dnf install libconfig-devel cairo-devel pango-devel` on Fedora or `sudo apt-get install libcairo2-dev libpango1.0-dev libconfig-dev libxcb-randr0-dev libxcb-ewmh-dev` on Ubuntu.
+Yabar initially requires libconfig, cairo and pango. The feature `DYA_INTERNAL_EWMH` in `Makefile` additionaly xcb-ewmh (or xcb-util-wm in some distros) and the feature `-DYA_ICON` requires gdk-pixbuf2. These dependencies can be installed through your distribution's package manager:
+
+* Fedora: `dnf install libconfig-devel cairo-devel pango-devel gdk-pixbuf2-devel`
+* Debian / Ubuntu: `apt-get install libcairo2-dev libpango1.0-dev libconfig-dev libxcb-randr0-dev libxcb-ewmh-dev libgdk-pixbuf2.0-dev`
 
 You can install yabar as follows:
 
@@ -39,7 +42,9 @@ You can install yabar as follows:
 		$ make
 		$ sudo make install
 
-If you use libconfig 1.4.x (still used in Ubuntu 14.04 and Debian), please type `export CPPFLAGS=-DOLD_LIBCONFIG` then build using `make` as usual.
+If you use libconfig 1.4.x (still used in Ubuntu 14.04 and Debian Jessie), please type `export CPPFLAGS=-DOLD_LIBCONFIG` then build using `make` as usual.
+
+For Arch Linux users there are AUR packages available: [yabar](https://aur.archlinux.org/packages/yabar/) and [yabar-git](https://aur.archlinux.org/packages/yabar-git/)
 
 ## Configuration
 
