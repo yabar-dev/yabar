@@ -120,8 +120,7 @@ static int ya_inherit_blk(ya_block_t *dstb, const char *name) {
 	ya_block_t *srcb;
 	int nlen = strlen(name);
 	if(nlen < 1) {
-		fprintf(stderr, "No inherit entry. ");
-		fprintf(stderr, per);
+		fprintf(stderr, "No inherit entry. %s", per);
 		return -1;
 	}
 	for(int i = 0; i < nlen; i++) {
@@ -131,7 +130,7 @@ static int ya_inherit_blk(ya_block_t *dstb, const char *name) {
 		}
 	}
 	if(barnamelen == 0) {
-		fprintf(stderr, per);
+		fprintf(stderr, "%s", per);
 		return -1;
 	}
 
