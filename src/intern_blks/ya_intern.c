@@ -15,6 +15,7 @@ void ya_int_thermal(ya_block_t *blk);
 void ya_int_brightness(ya_block_t *blk);
 void ya_int_bandwidth(ya_block_t *blk);
 void ya_int_cpu(ya_block_t *blk);
+void ya_int_loadavg(ya_block_t *blk);
 void ya_int_diskio(ya_block_t *blk);
 void ya_int_network(ya_block_t *blk);
 void ya_int_battery(ya_block_t *blk);
@@ -27,6 +28,7 @@ struct reserved_blk ya_reserved_blks[YA_INTERNAL_LEN] = {
 	{"YABAR_BANDWIDTH", ya_int_bandwidth},
 	{"YABAR_MEMORY", ya_int_memory},
 	{"YABAR_CPU", ya_int_cpu},
+	{"YABAR_LOADAVG", ya_int_loadavg},
 	{"YABAR_DISKIO", ya_int_diskio},
 	{"YABAR_NETWORK", ya_int_network},
 	{"YABAR_BATTERY", ya_int_battery},
@@ -374,7 +376,71 @@ void ya_int_cpu(ya_block_t *blk) {
 		fclose(tfile);
 		sleep(blk->sleep);
 	}
+}
 
+void ya_int_loadavg(ya_block_t *blk) {
+	int space, avg = 0;
+	char fpath[] = "/proc/loadavg";
+	FILE *tfile;
+	long double cur[4], ya_avg = 0.0;
+	char *startstr = blk->buf;
+	size_t prflen = 0,suflen = 0;
+	char avgstr[20];
+	ya_setup_prefix_suffix(blk, &prflen, &suflen, &startstr);
+	if(blk->internal->spacing)
+		space = 3;
+	else
+		space = 0;
+#ifdef YA_DYN_COL
+	long double crttemp;
+	uint32_t crtbg, crtfg;
+	if(blk->internal->option[0]) {
+		avg = atoi(blk->internal->option[0]);
+		switch (avg) {
+			case 15:
+				avg = 2;
+				break;
+			case 5:
+				avg = 1;
+				break;
+			default:
+				avg = 0;
+				break;
+		}
+	}
+	if((blk->internal->option[1]==NULL) ||
+			(sscanf(blk->internal->option[1], "%Lf %x %x", &crttemp, &crtfg, &crtbg)!=3)) {
+		crttemp = 1.0;
+		crtbg = 0xFFED303C;
+		crtfg = blk->fgcolor;
+	}
+#endif
+	while(1) {
+		tfile = fopen(fpath, "r");
+		if(fscanf(tfile,"%Lf %Lf %Lf %s %Lf", &cur[0],&cur[1],&cur[2],avgstr,&cur[3])!=5)
+			fprintf(stderr, "Error getting values from file (%s)\n", fpath);
+		ya_avg = cur[avg];
+#ifdef YA_DYN_COL
+		if(ya_avg > crttemp) {
+			blk->bgcolor = crtbg;
+			xcb_change_gc(ya.c, blk->gc, XCB_GC_FOREGROUND, (const uint32_t[]){crtbg});
+			blk->attr |= BLKA_DIRTY_COL;
+			blk->fgcolor = crtfg;
+		}
+		else {
+			blk->bgcolor = blk->bgcolor_old;
+			xcb_change_gc(ya.c, blk->gc, XCB_GC_FOREGROUND, (const uint32_t[]){blk->bgcolor});
+			blk->attr &= ~BLKA_DIRTY_COL;
+			blk->fgcolor = blk->fgcolor_old;
+		}
+#endif
+		sprintf(startstr, "%*.2Lf", space, ya_avg);
+		if(suflen)
+			strcat(blk->buf, blk->internal->suffix);
+		ya_draw_pango_text(blk);
+		fclose(tfile);
+		sleep(blk->sleep);
+	}
 }
 
 
