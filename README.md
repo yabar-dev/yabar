@@ -269,7 +269,7 @@ Yabar has a growing set of useful blocks. You can try out the sampe config locat
 
 		exec: "YABAR_BANDWIDTH";
 		internal-option1: "enp2s0"; #i.e. Replace NAME with your corresponding name
-		internal-option2: " "; #Two Strings (usually 2 font icons) to be injected before down/up values
+		internal-option2: " "; #Two Strings (usually 2 font icons) to be injected before down/up values
 		interval: 2;
 
 * Used RAM: It checks out the file `/proc/meminfo` and then computes the total used memory. Example:
