@@ -356,6 +356,7 @@ static void ya_setup_bar(config_setting_t * set) {
 					dstblk = calloc(1, sizeof(ya_block_t));
 					ya_copy_blk_members(dstblk, srcblk);
 					dstblk->buf = calloc(1, dstblk->bufsize);
+					dstblk->bar = bar;
 					ya_create_block(dstblk);
 				}
 			}
@@ -462,8 +463,8 @@ static void ya_setup_block(config_setting_t * set) {
 		blk->attr |= BLKA_EXTERNAL;
 #endif //YA_INTERNAL
 		if (blk->attr & BLKA_EXTERNAL) {
-				blk->cmd = strdup(retstr);
-			}
+			blk->cmd = strdup(retstr);
+		}
 	}
 	if (blk->attr & BLKA_INTERNAL)
 		goto skip_type;
@@ -685,7 +686,7 @@ void ya_config_parse() {
 	int ret;
 	const char * const envhome = getenv("HOME");
 	if ((ya.gen_flag & GEN_EXT_CONF) == 0)
-	    snprintf(conf_file, CFILELEN, "%s/.config/yabar/yabar.conf", envhome);
+		snprintf(conf_file, CFILELEN, "%s/.config/yabar/yabar.conf", envhome);
 	struct stat st;
 	if(stat(conf_file, &st) == -1) {
 		fprintf(stderr, "Error opening file (%s). Please make sure that this file really exists or use the command `yabar -c [CONFIG_FILE_PATH]`. Exiting...\n", conf_file);
