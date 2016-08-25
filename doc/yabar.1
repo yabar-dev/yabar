@@ -310,7 +310,7 @@ Icons and images: Yabar supports drawing icons and images inside blocks using gd
 .nf
 image: "/usr/share/icons/Numix/16/apps/google.svg";
 image-shift-x: 2; #integer value
-image-shift-y: 1; #integer value 
+image-shift-y: 1; #integer value
 image-scale-width: 0.4; #float value
 image-scale-height: 0.4; #float value
 .fi
@@ -332,7 +332,7 @@ variable-size: true;
 You can change block colors(background, foreground, underline and overline) within runtime. Along with pango markup format, you can fully control how a block looks throughout yabar's session.
 
 .PP
-If you wish to change one or more of the 4 color types, you must begin your string\-to\-be\-drawn (i.e. the output string to stdout by your shell script) with \fB\fC!Y FORMAT Y!\fR\&. the \fB\fCFORMAT\fR statement should contain contain the color type (\fB\fCBG\fR or \fB\fCbg\fR for background, \fB\fCFG\fR or \fB\fCfg\fR for foreground, \fB\fCU\fR or \fB\fCu\fR for underline and \fB\fCO\fR or \fB\fCo\fR for overline). The color must be in hex AARRGGBB (So if you want to add an rgb color just make it \fB\fCFFxxxxxx\fR). Examples:
+If you wish to change one or more of the 4 color types, you must begin your string\-to\-be\-drawn (i.e. the output string to stdout by your shell script) with \fB\fC!Y FORMAT Y!\fR\&. the \fB\fCFORMAT\fR statement should contain the color type (\fB\fCBG\fR or \fB\fCbg\fR for background, \fB\fCFG\fR or \fB\fCfg\fR for foreground, \fB\fCU\fR or \fB\fCu\fR for underline and \fB\fCO\fR or \fB\fCo\fR for overline). The color must be in hex AARRGGBB (So if you want to add an rgb color just make it \fB\fCFFxxxxxx\fR). Examples:
 
 .PP
 .RS
@@ -355,7 +355,7 @@ Yabar sets a handful of environment variables before executing your commands/scr
 .RS
 
 .nf
-    ${YABAR\_BLOCK\_X} #The begining x axis for the block
+    ${YABAR\_BLOCK\_X} #The beginning x axis for the block
     ${YABAR\_BLOCK\_Y} #It returns just the bottom y value of the block in case of topbar or just the top y value of the block in case of bottombar
     ${YABAR\_BLOCK\_WIDTH} #Block width
 
@@ -373,7 +373,7 @@ Internal blocks have 5 additional block\-specific options:
 .nf
     internal\-prefix  # Inject a string (usually a font icon) before the output string
     internal\-suffix  # Inject a string (usually a font icon) after the output string
-    internal\-option1 # block\-specific  
+    internal\-option1 # block\-specific
     internal\-option2 # block\-specific
     internal\-option3 # block\-specific
     internal\-spacing # takes a true or false value, used to add space pads to prevent uncomfortable numerical values from moving (only useful for monospace fonts!)
@@ -384,8 +384,8 @@ Internal blocks have 5 additional block\-specific options:
 .PP
 Yabar has a growing set of useful blocks. The current blocks are:
 .IP \(bu 2
-Date and time: Maybe the most essential block. You can control the output format using the 
-standard c libary format in time.h. Example:
+Date and time: Maybe the most essential block. You can control the output format using the
+standard C library format in time.h. Example:
 .PP
 .RS
 

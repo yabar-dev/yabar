@@ -45,7 +45,7 @@ extern char *strdup(const char *s); //to suppress implicit decleration warning f
 
 #define BUFSIZE_EXT 512 //buffer size for external blocks
 #define BUFSIZE_EXT_PANGO 1024 //buffer size for extern blocks with pango markup
-#define BUFSIZE_INT 256 //initial value of buffer size for internal blocks, can be overriden in runtime if needed
+#define BUFSIZE_INT 256 //initial value of buffer size for internal blocks, can be overridden in runtime if needed
 
 #define CFILELEN 256
 #define YA_DEF_FONT "sans bold 9"
