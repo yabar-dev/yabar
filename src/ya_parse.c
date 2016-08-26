@@ -87,6 +87,7 @@ static void ya_copy_blk_members(ya_block_t *dstb, ya_block_t *srcb) {
 			dstb->internal->option[i] = srcb->internal->option[i];
 		dstb->internal->index = srcb->internal->index;
 	}
+#ifdef YA_ICON
 	if((srcb->attr & BLKA_ICON)) {
 		dstb->img = calloc(1, sizeof(blk_img_t));
 		strncpy(dstb->img->path, srcb->img->path, CFILELEN);
@@ -95,6 +96,7 @@ static void ya_copy_blk_members(ya_block_t *dstb, ya_block_t *srcb) {
 		dstb->img->scale_w = srcb->img->scale_w;
 		dstb->img->scale_h = srcb->img->scale_h;
 	}
+#endif //YA_ICON
 }
 
 static int ya_inherit_bar(ya_bar_t *dstb, const char *srcname, bool inherit_all, ya_bar_t **inherit_bar) {
@@ -357,6 +359,9 @@ static void ya_setup_bar(config_setting_t * set) {
 					ya_copy_blk_members(dstblk, srcblk);
 					dstblk->buf = calloc(1, dstblk->bufsize);
 					dstblk->bar = bar;
+#ifdef YA_NOWIN_COL
+					dstblk->strbuf = dstblk->buf;
+#endif
 					ya_create_block(dstblk);
 				}
 			}
@@ -372,6 +377,8 @@ inline static void ya_setup_ewmh_intern_blk(ya_block_t *blk) {
 		case YA_INT_TITLE:
 			blk->attr |= BLKA_INTERN_X_EV;
 			break;
+		default:
+			return;
 	}
 	cur = calloc(1, sizeof(ya_ewmh_blk));
 	cur->blk = blk;
@@ -590,9 +597,6 @@ skip_type:
 		blk->bgcolor = retint | 0xff000000;
 		blk->attr |= BLKA_BGCOLOR;
 	}
-	//If not background rgb or argb not defined, inherit bar bgcolor
-	if(!(blk->attr & BLKA_BGCOLOR))
-		blk->bgcolor = blk->bar->bgcolor;
 	retcnf = config_setting_lookup_int(set, "foreground-color-argb", &retint);
 	if(retcnf == CONFIG_TRUE) {
 		blk->fgcolor = retint;

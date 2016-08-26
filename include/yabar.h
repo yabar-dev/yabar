@@ -62,6 +62,12 @@ extern char *strdup(const char *s); //to suppress implicit decleration warning f
 #define GET_MAX(A, B) ((A) > (B) ? (A) : (B))
 
 
+#define DRAW_TEXT(blk) if((blk->attr & BLKA_VAR_WIDTH)) \
+							ya_draw_text_var_width(blk);\
+						else							\
+							ya_draw_pango_text(blk);
+
+
 enum {
 	A_LEFT =0,
 	A_CENTER=1,
@@ -305,6 +311,8 @@ struct yabar_gen_info {
 	xcb_ewmh_connection_t *ewmh;
 	xcb_window_t curwin; //current window
 	xcb_window_t lstwin; //last window
+	uint32_t curws;
+	uint32_t lstws;
 	ya_ewmh_blk *ewmh_blk;
 #endif //YA_INTERNAL_EWMH
 };
@@ -326,7 +334,7 @@ void ya_create_block(ya_block_t *blk);
 
 void ya_buf_color_parse(ya_block_t *blk);
 void ya_draw_pango_text(struct ya_block *blk);
-void ya_exec_button(ya_block_t * blk, xcb_button_press_event_t *eb);
+//void ya_exec_button(ya_block_t * blk, xcb_button_press_event_t *eb);
 
 ya_block_t * ya_get_blk_from_event( xcb_button_press_event_t *eb);
 
@@ -337,4 +345,9 @@ void ya_handle_prop_notify(xcb_property_notify_event_t *ep);
 cairo_surface_t * ya_draw_graphics(ya_block_t *blk);
 void ya_redraw_bar(ya_bar_t *bar);
 void ya_resetup_bar(ya_block_t *blk);
+void ya_draw_text_var_width(ya_block_t * blk);
+//void ya_get_text_max_width(ya_block_t *blk);
+//void ya_draw_bar_var(ya_block_t *blk);
+void ya_inherit_bar_bgcol(ya_block_t *blk);
+void ya_draw_bar_curwin(ya_bar_t *bar);
 #endif /*YABAR_H*/
