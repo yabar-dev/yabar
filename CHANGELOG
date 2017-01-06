@@ -1,0 +1,32 @@
+NEXT:
+* Soft fork of yabar
+* Better window title handling
+* Variable with block support
+* Spacing feature for internal blocks
+* New internal blocks:
+  - load average
+  - battery charge
+
+
+0.4.0 (2016-04-08):
+* Support for dynamic color change
+* Prefix and suffix options for internal blocks
+* New internal blocks:
+  - window title
+  - workspaces
+  - CPU load
+  - disk I/O
+  - RAM usage (memory)
+  - network usage (bandwith)
+  - uptime
+  - temperature (thermal)
+  - display brightness
+  - time and date
+
+0.3.0 (2016-03-24):
+* Support for justifying text left, center and right
+* Support for bar borders
+
+
+0.2.3 (2016-03-21):
+* Changed license from ISC to MIT
