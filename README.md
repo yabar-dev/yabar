@@ -1,7 +1,7 @@
 # Yabar
 
 A modern and lightweight status bar for X window managers.
-[![Build Status](https://travis-ci.org/geommer/yabar.svg?branch=master)](https://travis-ci.org/geommer/yabar)
+[![Build Status](https://travis-ci.org/yabar-dev/yabar.svg?branch=master)](https://travis-ci.org/yabar-dev/yabar)
 
 ## Screenshots
 
@@ -53,7 +53,7 @@ Yabar initially requires libconfig, cairo and pango. The feature `DYA_INTERNAL_E
 
 You can install yabar as follows:
 
-		$ git clone https://github.com/geommer/yabar
+		$ git clone https://github.com/yabar-dev/yabar
 		$ cd yabar
 		$ make
 		$ sudo make install
