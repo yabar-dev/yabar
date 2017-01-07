@@ -274,8 +274,8 @@ Yabar has a growing set of useful blocks. You can try out the sampe config locat
 
 		exec: "YABAR_THERMAL";
 		internal-option1: "thermal_zone0"; #i.e. Replace `NAME` with your corresponding name
-		internal-option2: "70 0xFFFFFFFF 0xFFED303C"; #Critical Temperature, fg, bg
-		internal-option3: "58 0xFFFFFFFF 0xFFF4A345"; #Warning Temperature, fg, bg
+		internal-option2: "70; 0xFFFFFFFF; 0xFFED303C"; #Critical Temperature, fg, bg
+		internal-option3: "58; 0xFFFFFFFF; 0xFFF4A345"; #Warning Temperature, fg, bg
 		interval: 1;
 
 * Brightness: It checks out the brightness value in the file `/sys/class/backlight/NAME/brightness`. Example:
@@ -288,7 +288,7 @@ Yabar has a growing set of useful blocks. You can try out the sampe config locat
 
 		exec: "YABAR_BANDWIDTH";
 		internal-option1: "enp2s0"; #i.e. Replace NAME with your corresponding name
-		internal-option2: " "; #Two Strings (usually 2 font icons) to be injected before down/up values
+		internal-option2: "; "; #Two Strings (usually 2 font icons) to be injected before down/up values
 		interval: 2;
 
 * Used RAM: It checks out the file `/proc/meminfo` and then computes the total used memory. Example:
@@ -308,14 +308,14 @@ Yabar has a growing set of useful blocks. You can try out the sampe config locat
 
 		exec: "YABAR_DISKIO";
 		internal-option1: "sda"; #i.e. Replace NAME with your corresponding name
-		internal-option2: " "; #Two Strings (usually 2 font icons) to be injected before down/up values
+		internal-option2: "; "; #Two Strings (usually 2 font icons) to be injected before down/up values
 		interval: 1;
 
 * Battery: (Added thanks to @NBonaparte!) It checks out the files `/sys/class/power_supply/NAME/capacity` and `/sys/class/power_supply/NAME/status` and extracts the capacity value. Example:
 
 		exec: "YABAR_BATTERY";
 		internal-option1: "BAT0"; #i.e. Replace NAME with your corresponding name
-		internal-option2: "        ";
+		internal-option2: " ;   ;   ;   ;  ";
 		internal-suffix: "%";
 		internal-spacing: true;
 

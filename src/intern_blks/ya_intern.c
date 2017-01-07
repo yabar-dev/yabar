@@ -118,13 +118,13 @@ void ya_int_thermal(ya_block_t *blk) {
 	snprintf(fpath, 128, "/sys/class/thermal/%s/temp", blk->internal->option[0]);
 
 	if((blk->internal->option[1]==NULL) ||
-			(sscanf(blk->internal->option[1], "%d %x %x", &crttemp, &crtfg, &crtbg)!=3)) {
+			(sscanf(blk->internal->option[1], "%d; %x; %x", &crttemp, &crtfg, &crtbg)!=3)) {
 		crttemp = 70;
 		crtbg = 0xFFED303C;
 		crtfg = blk->fgcolor;
 	}
 	if((blk->internal->option[2]==NULL) ||
-			(sscanf(blk->internal->option[2], "%d %x %x", &wrntemp, &wrnfg, &wrnbg)!=3)) {
+			(sscanf(blk->internal->option[2], "%d; %x; %x", &wrntemp, &wrnfg, &wrnbg)!=3)) {
 		wrntemp = 58;
 		wrnbg = 0xFFF4A345;
 		wrnfg = blk->fgcolor;
@@ -228,7 +228,7 @@ void ya_int_bandwidth(ya_block_t * blk) {
 	snprintf(rxpath, 128, "/sys/class/net/%s/statistics/rx_bytes", blk->internal->option[0]);
 	snprintf(txpath, 128, "/sys/class/net/%s/statistics/tx_bytes", blk->internal->option[0]);
 	if(blk->internal->option[1]) {
-		sscanf(blk->internal->option[1], "%s %s", dnstr, upstr);
+		sscanf(blk->internal->option[1], "%[^;]; %[^;]", dnstr, upstr);
 	}
 	rxfile = fopen(rxpath, "r");
 	txfile = fopen(txpath, "r");
@@ -460,7 +460,7 @@ void ya_int_diskio(ya_block_t *blk) {
 	else
 		space = 0;
 	if(blk->internal->option[1]) {
-		sscanf(blk->internal->option[1], "%s %s", dnstr, upstr);
+		sscanf(blk->internal->option[1], "%[^;]; %[^;]", dnstr, upstr);
 	}
 	snprintf(tpath, 100, "/sys/class/block/%s/stat", blk->internal->option[0]);
 	tfile = fopen(tpath, "r");
@@ -520,7 +520,7 @@ void ya_int_battery(ya_block_t *blk) {
 	snprintf(cpath, 128, "/sys/class/power_supply/%s/capacity", blk->internal->option[0]);
 	snprintf(spath, 128, "/sys/class/power_supply/%s/status", blk->internal->option[0]);
 	if(blk->internal->option[1]) {
-		sscanf(blk->internal->option[1], "%s %s %s %s %s", bat_25str, bat_50str, bat_75str, bat_100str, bat_chargestr);
+		sscanf(blk->internal->option[1], "%[^;]; %[^;]; %[^;]; %[^;]; %[^;]", bat_25str, bat_50str, bat_75str, bat_100str, bat_chargestr);
 	}
 	cfile = fopen(cpath, "r");
 	sfile = fopen(spath, "r");
@@ -553,8 +553,8 @@ void ya_int_battery(ya_block_t *blk) {
 			strcpy(startstr, bat_75str);
 		else
 			strcpy(startstr, bat_100str);
-		if(stat == 'C' && blk->internal->option[1])
-			strcat(strcat(startstr, " "), bat_chargestr);
+		if((stat == 'C' || stat == 'U') && bat != 100)
+			strcat(startstr, bat_chargestr);
 		sprintf(startstr+strlen(startstr), "%*d", space, bat);
 		if(suflen)
 			strcat(blk->buf, blk->internal->suffix);
