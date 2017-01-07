@@ -1,5 +1,6 @@
 NEXT:
 * Soft fork of yabar
+* Delimiter for config entries changed from space to semicolon
 * Better window title handling
 * Variable with block support
 * Spacing feature for internal blocks
