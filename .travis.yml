@@ -1,11 +1,16 @@
-sudo: required
+sudo: false
 dist: trusty
 language: c
 compiler:
     - gcc
+addons:
+  apt:
+    packages:
+      - libxcb-randr0-dev
+      - libconfig-dev
+      - libcairo2-dev
+      - libpango1.0-dev
+      - libxcb-ewmh-dev
 before_install:
-    - sudo apt-get update -qq
-    - sudo apt-get install -y libxcb-randr0-dev libconfig-dev libcairo2-dev libpango1.0-dev libxcb-ewmh-dev
     - export CPPFLAGS=-DOLD_LIBCONFIG
 script: make
-
