@@ -1,13 +1,13 @@
 NEXT:
 * Soft fork of yabar
-* Delimiter for config entries changed from space to semicolon
+* Delimiter for config entries changed from space to semicolon (breaking change)
+* Absolute path for blocks YABAR_THERMAL and YABAR_BRIGHTNESS (breaking change)
 * Better window title handling
 * Variable with block support
 * Spacing feature for internal blocks
 * New internal blocks:
   - load average
   - battery charge
-
 
 0.4.0 (2016-04-08):
 * Support for dynamic color change
