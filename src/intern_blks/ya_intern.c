@@ -114,8 +114,7 @@ void ya_int_thermal(ya_block_t *blk) {
 		space = 3;
 	else
 		space = 0;
-	char fpath[128];
-	snprintf(fpath, 128, "/sys/class/thermal/%s/temp", blk->internal->option[0]);
+	char *fpath = blk->internal->option[0];
 
 	if((blk->internal->option[1]==NULL) ||
 			(sscanf(blk->internal->option[1], "%d; %x; %x", &crttemp, &crtfg, &crtbg)!=3)) {
@@ -186,8 +185,7 @@ void ya_int_brightness(ya_block_t *blk) {
 		space = 3;
 	else
 		space = 0;
-	char fpath[128];
-	snprintf(fpath, 128, "/sys/class/backlight/%s/brightness", blk->internal->option[0]);
+	char *fpath = blk->internal->option[0];
 	tfile = fopen(fpath, "r");
 	if (tfile == NULL) {
 		fprintf(stderr, "Error opening file %s\n", fpath);
