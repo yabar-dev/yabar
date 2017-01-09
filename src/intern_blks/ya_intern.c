@@ -207,62 +207,72 @@ void ya_int_brightness(ya_block_t *blk) {
 	}
 }
 
+
+void ya_str_get_default_net_interface(char* if_name, size_t len) {
+        FILE *route_h = NULL;
+        char buffer[255] = { 0 };
+
+        route_h = fopen("/proc/net/route", "r");
+        if(route_h) {
+                //Ignore first line as it is headers
+                fgets(buffer, sizeof(buffer), route_h);
+                fgets(buffer, sizeof(buffer), route_h);
+                char *it = (char*) memchr(buffer, '\t', strlen(buffer));
+                *it = '\0';
+        }
+
+        // Fallback to loopback interface if nothing
+        // has been found yet
+        if (strcmp(buffer, "Iface") == 0 || buffer[0] == '\0') {
+                strcpy(buffer, "lo");
+        }
+
+        strncpy(if_name, buffer, len);
+        if_name[len-1] = '\0';
+        fclose(route_h);
+
+}
+
 void ya_int_bandwidth(ya_block_t * blk) {
 	int space;
 	unsigned long rx, tx, orx, otx;
+        rx = tx = orx = otx = 0;
 	unsigned int rxrate, txrate;
 	FILE *rxfile, *txfile;
 	char rxpath[128];
 	char txpath[128];
+	char if_buffer[25];
 	char rxc, txc;
 	char *startstr = blk->buf;
 	size_t prflen=0,suflen=0;
 	char dnstr[20], upstr[20];
 	ya_setup_prefix_suffix(blk, &prflen, &suflen, &startstr);
-	if(blk->internal->spacing)
-		space = 4;
-	else
-		space = 0;
-	snprintf(rxpath, 128, "/sys/class/net/%s/statistics/rx_bytes", blk->internal->option[0]);
-	snprintf(txpath, 128, "/sys/class/net/%s/statistics/tx_bytes", blk->internal->option[0]);
+        space = (blk->internal->spacing) ? 4 : 0;
+        char *if_name = blk->internal->option[0];
+
 	if(blk->internal->option[1]) {
 		sscanf(blk->internal->option[1], "%[^;]; %[^;]", dnstr, upstr);
 	}
-	rxfile = fopen(rxpath, "r");
-	txfile = fopen(txpath, "r");
-	if (rxfile == NULL || txfile == NULL) {
-		fprintf(stderr, "Error opening file %s or %s\n", rxpath, txpath);
-		strncpy(blk->buf, "BLOCK ERROR!", strlen("BLOCK ERROR!"));
-		ya_draw_pango_text(blk);
-		//Close if one of the files is opened
-		if(rxfile)
-			fclose(rxfile);
-		if(txfile)
-			fclose(txfile);
-		pthread_detach(blk->thread);
-		pthread_exit(NULL);
-	}
-	else {
-		if(fscanf(rxfile, "%lu", &orx)!=1)
-			fprintf(stderr, "Error getting values from file (%s)\n", rxpath);
-		if(fscanf(txfile, "%lu", &otx)!=1)
-			fprintf(stderr, "Error getting values from file (%s)\n", txpath);
-	}
-	fclose(rxfile);
-	fclose(txfile);
-	while(1) {
+
+	for(;;) {
+                if(if_name == NULL || if_name[0] == '\0') {
+                        ya_str_get_default_net_interface(if_buffer, sizeof(if_buffer));
+                        if_name = if_buffer;
+                }
+                snprintf(rxpath, sizeof(rxpath), "/sys/class/net/%s/statistics/rx_bytes", if_name);
+                snprintf(txpath, sizeof(txpath), "/sys/class/net/%s/statistics/tx_bytes", if_name);
+
+                rxfile = fopen(rxpath, "r");
+                txfile = fopen(txpath, "r");
+                if(rxfile == NULL || txfile == NULL) break;
+
+		if(fscanf(rxfile, "%lu", &rx)!=1) fprintf(stderr, "Error getting values from file (%s)\n", rxpath);
+		if(fscanf(txfile, "%lu", &tx)!=1) fprintf(stderr, "Error getting values from file (%s)\n", txpath);
+
+		rxrate = (rx - orx) / (blk->sleep * 1024);
+		txrate = (tx - otx) / (blk->sleep * 1024);
+
 		txc = rxc = 'K';
-		rxfile = fopen(rxpath, "r");
-		txfile = fopen(txpath, "r");
-
-		if(fscanf(rxfile, "%lu", &rx)!=1)
-			fprintf(stderr, "Error getting values from file (%s)\n", rxpath);
-		if(fscanf(txfile, "%lu", &tx)!=1)
-			fprintf(stderr, "Error getting values from file (%s)\n", txpath);
-
-		rxrate = (rx - orx)/((blk->sleep)*1024);
-		txrate = (tx - otx)/((blk->sleep)*1024);
-
 		if(rxrate > 1024) {
 			rxrate/=1024;
 			rxc = 'M';
@@ -277,14 +287,22 @@ void ya_int_bandwidth(ya_block_t * blk) {
 		otx = tx;
 
 		sprintf(startstr, "%s%*u%c %s%*u%c", dnstr, space, rxrate, rxc, upstr, space, txrate, txc);
-		if(suflen)
-			strcat(blk->buf, blk->internal->suffix);
+		if(suflen) strcat(blk->buf, blk->internal->suffix);
 		ya_draw_pango_text(blk);
-		fclose(rxfile);
-		fclose(txfile);
+
+		if(rxfile) fclose(rxfile);
+		if(txfile) fclose(txfile);
 		sleep(blk->sleep);
 	}
 
+        if(rxfile) fclose(rxfile);
+        if(txfile) fclose(txfile);
+
+        strncpy(blk->buf, "BLOCK ERROR!", strlen("BLOCK ERROR!"));
+        ya_draw_pango_text(blk);
+        pthread_detach(blk->thread);
+        pthread_exit(NULL);
+        return;
 }
 
 void ya_int_memory(ya_block_t *blk) {
