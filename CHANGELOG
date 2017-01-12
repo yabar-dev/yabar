@@ -2,6 +2,7 @@ NEXT:
 * Soft fork of yabar
 * Delimiter for config entries changed from space to semicolon (breaking change)
 * Absolute path for blocks YABAR_THERMAL and YABAR_BRIGHTNESS (breaking change)
+* Automatic network interface detection for bandwidth block
 * Better window title handling
 * Variable with block support
 * Spacing feature for internal blocks
