@@ -19,6 +19,7 @@ void ya_int_loadavg(ya_block_t *blk);
 void ya_int_diskio(ya_block_t *blk);
 void ya_int_network(ya_block_t *blk);
 void ya_int_battery(ya_block_t *blk);
+void ya_int_volume(ya_block_t *blk);
 
 struct reserved_blk ya_reserved_blks[YA_INTERNAL_LEN] = {
 	{"YABAR_DATE", ya_int_date},
@@ -32,6 +33,7 @@ struct reserved_blk ya_reserved_blks[YA_INTERNAL_LEN] = {
 	{"YABAR_DISKIO", ya_int_diskio},
 	{"YABAR_NETWORK", ya_int_network},
 	{"YABAR_BATTERY", ya_int_battery},
+	{"YABAR_VOLUME", ya_int_volume},
 #ifdef YA_INTERNAL_EWMH
 	{"YABAR_TITLE", NULL},
 	{"YABAR_WORKSPACE", NULL}
@@ -579,6 +581,100 @@ void ya_int_battery(ya_block_t *blk) {
 		fclose(sfile);
 		sleep(blk->sleep);
 	}
+}
+
+#include <alsa/asoundlib.h>
+void ya_int_volume(ya_block_t *blk) {
+	char *startstr = blk->buf;
+	size_t prflen = 0, suflen = 0;
+	ya_setup_prefix_suffix(blk, &prflen, &suflen, &startstr);
+	char on[20], off[20], device[64], mixer_name[64];
+	int mixer_index = 0, avg_vol = 0, ret = 0, pb_switch = 0;
+	long range_min = 0, range_max = 0, pb_volume = 0;
+	snd_mixer_t *mixer_handle = NULL;
+	snd_mixer_elem_t *elem;
+	snd_mixer_selem_id_t *sid;
+	if( blk->internal->option[0] ) {
+		sscanf(blk->internal->option[0], "%s", device);
+	} else {
+		fprintf(stderr,"YABAR_VOLUME : internal-option1 is mandatory\n");
+		goto ya_volume_error;
+	}
+	if( blk->internal->option[1] ) {
+		sscanf(blk->internal->option[1], "%s %d", mixer_name, &mixer_index);
+	} else {
+		fprintf(stderr, "YABAR_VOLUME : internal-option2 is mandatory\n");
+		goto ya_volume_error;
+	}
+	if( blk->internal->option[2] ) {
+		sscanf(blk->internal->option[2], "%s %s", on, off);
+	}
+	if ( (ret = snd_mixer_open(&mixer_handle, 0)) < 0 ) {
+		fprintf(stderr, "YABAR_VOLUME: unable to open mixer: %s\n",
+				snd_strerror(ret));
+		goto ya_volume_error;
+	}
+	if ( (ret = snd_mixer_attach(mixer_handle, device)) < 0 ) {
+		fprintf(stderr, "YABAR_VOLUME: unable to attach mixer to device: %s\n",
+				snd_strerror(ret));
+		goto ya_volume_error;
+	}
+	if ( (ret = snd_mixer_selem_register(mixer_handle, NULL, NULL)) < 0 ) {
+		fprintf(stderr, "YABAR_VOLUME: unable to register mixer: %s\n",
+				snd_strerror(ret));
+		goto ya_volume_error;
+	}
+	if ( (ret = snd_mixer_load(mixer_handle)) < 0 ) {
+		fprintf(stderr, "YABAR_VOLUME: unable to load mixer elements: %s\n",
+				snd_strerror(ret));
+		goto ya_volume_error;
+	}
+	snd_mixer_selem_id_malloc(&sid);
+	if ( sid == NULL ) {
+		goto ya_volume_error;
+	}
+	snd_mixer_selem_id_set_index(sid, mixer_index);
+	snd_mixer_selem_id_set_name(sid, mixer_name);
+	elem = snd_mixer_find_selem(mixer_handle, sid);
+	if ( elem == NULL ) {
+		fprintf(stderr, "YABAR_VOLUME: unable to find index %i of mixer %s \n",
+				snd_mixer_selem_id_get_index(sid),
+				snd_mixer_selem_id_get_name(sid));
+		snd_mixer_selem_id_free(sid);
+		goto ya_volume_error;
+	}
+	snd_mixer_selem_get_playback_volume_range(elem, &range_min, &range_max);
+	while (1) {
+		snd_mixer_handle_events(mixer_handle);
+		snd_mixer_selem_get_playback_volume(elem, 0, &pb_volume);
+		if ( range_max != 100 ) {
+			float avg_volf = ( (float) pb_volume / range_max ) * 100;
+			avg_vol = (int) avg_volf;
+			avg_vol = (avg_volf - avg_vol < 0.5 ? avg_vol : (avg_vol + 1));
+		} else {
+			avg_vol = (int) pb_volume;
+		}
+		if ( snd_mixer_selem_has_playback_switch(elem) ) {
+			snd_mixer_selem_get_playback_switch(elem, 0, &pb_switch);
+		}
+		if ( pb_switch == 0 ) {
+			sprintf(startstr, "%s -", off);
+		} else {
+			sprintf(startstr, "%s %d", on, avg_vol);
+		}
+		if ( suflen )
+			strcat(blk->buf, blk->internal->suffix);
+		ya_draw_pango_text(blk);
+		sleep(blk->sleep);
+	}
+ya_volume_error:
+	if ( mixer_handle != NULL ) {
+		snd_mixer_close(mixer_handle);
+	}
+	strncpy(blk->buf, "BLOCK ERROR!", strlen("BLOCK ERROR!"));
+	ya_draw_pango_text(blk);
+	pthread_detach(blk->thread);
+	pthread_exit(NULL);
 }
 
 #define _GNU_SOURCE

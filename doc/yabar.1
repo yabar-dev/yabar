@@ -520,6 +520,21 @@ internal-option2: "        ";
 internal-suffix: "%";
 internal-spacing: true;
 
+.fi
+.RE
+.IP \(bu 2
+Volume: It uses ALSA to display sound volume in percentage. Example:
+.PP
+.RS
+
+.nf
+exec: "YABAR_VOLUME";
+interval: 1;
+internal-option1 : "default"; # device
+internal-option2 : "Master 0"; # Mixer index (separated by a space)
+internal-option3 : " "; # characters to display when sound is on or off (separated by a space)
+internal-suffix: "%";
+
 .SH LICENSE
 .PP
 Yabar is licensed under the MIT license. For more info check out the file \fB\fCLICENSE\fR\&.
