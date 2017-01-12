@@ -461,7 +461,10 @@ Network bandwidth: It checks out the total transmitted and received bytes in the
 
 .nf
 exec: "YABAR\_BANDWIDTH";
-internal\-option1: "enp2s0"; #i.e. Replace NAME with your corresponding name
+internal\-option1: ""; #Auto mode
+internal\-option1: "enp2s0"; #By default if you put nothing, yabar will choose the most appropriate
+                              interface for you (based on your default route). But you can override
+                              that by specifying yourself the name of the interface to pick
 internal\-option2: " "; #Two Strings (usually 2 font icons) to be injected before down/up values
 interval: 2;
 
