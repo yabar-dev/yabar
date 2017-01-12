@@ -601,13 +601,13 @@ void ya_int_volume(ya_block_t *blk) {
 		goto ya_volume_error;
 	}
 	if( blk->internal->option[1] ) {
-		sscanf(blk->internal->option[1], "%s %d", mixer_name, &mixer_index);
+		sscanf(blk->internal->option[1], "%[^;];%d", mixer_name, &mixer_index);
 	} else {
 		fprintf(stderr, "YABAR_VOLUME : internal-option2 is mandatory\n");
 		goto ya_volume_error;
 	}
 	if( blk->internal->option[2] ) {
-		sscanf(blk->internal->option[2], "%s %s", on, off);
+		sscanf(blk->internal->option[2], "%[^;];%[^;]", on, off);
 	}
 	if ( (ret = snd_mixer_open(&mixer_handle, 0)) < 0 ) {
 		fprintf(stderr, "YABAR_VOLUME: unable to open mixer: %s\n",

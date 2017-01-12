@@ -531,8 +531,8 @@ Volume: It uses ALSA to display sound volume in percentage. Example:
 exec: "YABAR_VOLUME";
 interval: 1;
 internal-option1 : "default"; # device
-internal-option2 : "Master 0"; # Mixer index (separated by a space)
-internal-option3 : " "; # characters to display when sound is on or off (separated by a space)
+internal-option2 : "Master;0"; # Mixer index (separated by a semicolon)
+internal-option3 : " ;"; # characters to display when sound is on or off (separated by a semicolon)
 internal-suffix: "%";
 
 .SH LICENSE
