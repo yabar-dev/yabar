@@ -213,19 +213,20 @@ void ya_int_brightness(ya_block_t *blk) {
 void ya_str_get_default_net_interface(char* if_name, size_t len) {
         FILE *route_h = NULL;
         char buffer[255] = { 0 };
+        char *ret = NULL;
 
         route_h = fopen("/proc/net/route", "r");
         if(route_h) {
                 //Ignore first line as it is headers
-                fgets(buffer, sizeof(buffer), route_h);
-                fgets(buffer, sizeof(buffer), route_h);
+                ret = fgets(buffer, sizeof(buffer), route_h);
+                ret = fgets(buffer, sizeof(buffer), route_h);
                 char *it = (char*) memchr(buffer, '\t', strlen(buffer));
                 *it = '\0';
         }
 
         // Fallback to loopback interface if nothing
         // has been found yet
-        if (strcmp(buffer, "Iface") == 0 || buffer[0] == '\0') {
+        if (ret == NULL || strcmp(buffer, "Iface") == 0 || buffer[0] == '\0') {
                 strcpy(buffer, "lo");
         }
 

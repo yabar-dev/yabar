@@ -258,7 +258,7 @@ void ya_buf_color_parse(ya_block_t *blk) {
 /*
  * Get current window title using EWMH
  */
-inline void ya_get_cur_window_title(ya_block_t * blk) {
+void ya_get_cur_window_title(ya_block_t * blk) {
 	xcb_ewmh_get_utf8_strings_reply_t reply;
 	if(ya.curwin == XCB_NONE) {
 		blk->buf[0] = '\0';
