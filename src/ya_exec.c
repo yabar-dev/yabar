@@ -284,6 +284,8 @@ static void ya_cleanup_blocks() {
 }
 
 static void ya_sighandler(int signum) {
+        (void) signum;
+
 	ya_cleanup_x();
 	ya_cleanup_blocks();
 	exit(EXIT_SUCCESS);
@@ -377,6 +379,7 @@ void ya_init() {
 	signal(SIGINT, ya_sighandler);
 	signal(SIGKILL, ya_sighandler);
 	signal(SIGHUP, ya_sighandler);
+        memset(&ya, 0, sizeof(ya));
 	ya.depth = 32;
 	ya.c 	= xcb_connect(NULL, NULL);
 	ya.scr 	= xcb_setup_roots_iterator(xcb_get_setup(ya.c)).data;
