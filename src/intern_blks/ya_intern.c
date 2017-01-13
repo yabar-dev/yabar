@@ -20,6 +20,7 @@ void ya_int_diskio(ya_block_t *blk);
 void ya_int_network(ya_block_t *blk);
 void ya_int_battery(ya_block_t *blk);
 void ya_int_volume(ya_block_t *blk);
+void ya_int_diskspace(ya_block_t *blk);
 
 struct reserved_blk ya_reserved_blks[YA_INTERNAL_LEN] = {
 	{"YABAR_DATE", ya_int_date},
@@ -34,6 +35,7 @@ struct reserved_blk ya_reserved_blks[YA_INTERNAL_LEN] = {
 	{"YABAR_NETWORK", ya_int_network},
 	{"YABAR_BATTERY", ya_int_battery},
 	{"YABAR_VOLUME", ya_int_volume},
+	{"YABAR_DISKSPACE", ya_int_diskspace},
 #ifdef YA_INTERNAL_EWMH
 	{"YABAR_TITLE", NULL},
 	{"YABAR_WORKSPACE", NULL}
@@ -676,6 +678,77 @@ ya_volume_error:
 	ya_draw_pango_text(blk);
 	pthread_detach(blk->thread);
 	pthread_exit(NULL);
+}
+
+/* -- Disk usage block -- */
+static const char const symbols[5] = {0, 'K', 'M', 'G', 'T'};
+/* bytes to human-readable str: convert an amount of bytes to a string with the
+   corresponding suffix. e.g. "123456789" -> "117.7M" (bytes) */
+static int btohstr(char *str, uint64_t bytes)
+{
+	double size = bytes;
+	int exp = 0;
+	while (size >= 1024 && exp < 4) {
+		size /= 1024;
+		exp++;
+	}
+	return sprintf(str, "%.1f%c", size, symbols[exp]);
+}
+#include <mntent.h>
+#include <sys/statvfs.h>
+#define MAX_MOUNTPOINTS 15
+void ya_int_diskspace(ya_block_t *blk) {
+	char *startstr = blk->buf;
+	size_t prflen = 0, suflen = 0;
+	ya_setup_prefix_suffix(blk, &prflen, &suflen, &startstr);
+	char *mountpoints[MAX_MOUNTPOINTS];
+	int8_t mntpntcount = -1;
+	FILE *mntentfile = setmntent("/etc/mtab", "r");;
+	struct mntent *m;
+	/* read /etc/mtab to get all mountpoints where the underlying device or
+	   volume group matches the internal-option1 */
+	while ( (m = getmntent(mntentfile)) != NULL ) {
+		if (strncmp(m->mnt_fsname, blk->internal->option[0],
+					strlen(blk->internal->option[0])) == 0) {
+			mountpoints[++mntpntcount] = strdup(m->mnt_dir);
+		}
+		if ( mntpntcount == (MAX_MOUNTPOINTS - 1)) {
+			fprintf(stderr, "max mount points reached");
+			break;
+		}
+	}
+	endmntent(mntentfile);
+	if ( mntpntcount == -1 ) {
+		fprintf(stderr, "no mount points found for prefix \"%s\"\n",
+				blk->internal->option[0]);
+		strncpy(blk->buf, "BLOCK ERROR!", strlen("BLOCK ERROR!"));
+		ya_draw_pango_text(blk);
+		pthread_detach(blk->thread);
+		pthread_exit(NULL);
+	}
+	uint64_t free, total;
+	struct statvfs stat;
+	char sizebuf[7];
+	while (1) {
+		free = 0;
+		total = 0;
+        /* get and sum used / total space of every mountpoints */
+		for( int i = 0; i <= mntpntcount; i++) {
+			if ( statvfs(mountpoints[i], &stat) != -1 ) {
+				free += (uint64_t)(stat.f_bfree * stat.f_bsize);
+				total += (uint64_t)(stat.f_blocks * stat.f_bsize);
+			}
+		}
+		btohstr(sizebuf, total - free);
+		sprintf(startstr, sizebuf);
+		strcat(startstr, "/");
+		btohstr(sizebuf, total);
+		strcat(startstr, sizebuf);
+		if(suflen)
+			strcat(blk->buf, blk->internal->suffix);
+		ya_draw_pango_text(blk);
+		sleep(blk->sleep);
+	}
 }
 
 #define _GNU_SOURCE

@@ -535,6 +535,26 @@ internal-option2 : "Master;0"; # Mixer index (separated by a semicolon)
 internal-option3 : " ;"; # characters to display when sound is on or off (separated by a semicolon)
 internal-suffix: "%";
 
+.fi
+.RE
+.IP \(bu 2
+Disk space usage: Display used/total space (e.g. 84G/320G) for one or multiple file systems. Example:
+.PP
+.RS
+
+.nf
+exec: "YABAR_DISKSPACE";
+align: "right";
+interval: 10;
+internal\-prefix: " ";
+internal\-option1: "/dev/sda";
+
+internal-option1 is used to match the first column of \fB\fC/etc/mtab\fR so there are multiple cases:
+	"/dev/sda1"           first partition of device sda
+	"/dev/sdb"            all mounted partitions of device sdb
+	"/dev/mapper/vgc-"    all mounted logical volumes of volume group vgc
+	"/dev"                all mounted partitions / logical volumes
+
 .SH LICENSE
 .PP
 Yabar is licensed under the MIT license. For more info check out the file \fB\fCLICENSE\fR\&.
